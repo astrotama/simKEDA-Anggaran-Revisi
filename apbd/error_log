@@ -1,0 +1,1 @@
+[18-Jun-2012 07:06:26 UTC] PHP Fatal error:  Call to undefined function db_query() in /home/k5068157/public_html/sites/default/modules/apbd/db-master.php on line 2

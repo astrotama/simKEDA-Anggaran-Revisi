@@ -1,0 +1,4725 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_perm().
+ */
+//onModuleCreationWizard
+function apbd_perm() {
+    return array(
+        'access apbd content',
+		'utilitas access',
+		
+		'setupapp access',
+		'setupapp activate',
+		'setupapp edit',
+		'setupapp tambah',
+		'setupapp penghapusan',
+		
+		'unitkerja access',
+		'unitkerja edit',
+		'unitkerja tambah',
+		'unitkerja penghapusan',
+		'unitkerja pencarian',
+
+		'subunitkerja access',
+		'subunitkerja edit',
+		'subunitkerja tambah',
+		'subunitkerja penghapusan',
+		'subunitkerja pencarian',
+
+		'desa access',
+		'desa edit',
+		'desa tambah',
+		'desa penghapusan',
+		'desa pencarian',
+
+		'urusan access',
+		'urusan edit',
+		'urusan tambah',
+		'urusan penghapusan',
+		'urusan pencarian',
+
+		//'dinas access',
+		//'dinas edit',
+		//'dinas tambah',
+		//'dinas penghapusan',
+		//'dinas pencarian',
+
+		'bidang access',
+		'bidang edit',
+		'bidang tambah',
+		'bidang penghapusan',
+		'bidang pencarian',
+
+		'bidangurusan access',
+		'bidangurusan edit',
+		'bidangurusan tambah',
+		'bidangurusan penghapusan',
+		'bidangurusan pencarian',
+
+		'apbdop access',
+		'apbdop edit',
+		'apbdop tambah',
+		'apbdop penghapusan',
+		'apbdop pencarian',
+		
+		'program access',
+		'program edit',
+		'program tambah',
+		'program penghapusan',
+		'program pencarian',
+
+		'kegiatanlt access',
+		'kegiatanlt edit',
+		'kegiatanlt tambah',
+		'kegiatanlt penghapusan',
+		'kegiatanlt pencarian',
+
+		'kegiatancam access',
+		'kegiatancam edit',
+		'kegiatancam tambah',
+		'kegiatancam penghapusan',
+		'kegiatancam pencarian',
+		'kegiatancam anggaran',
+		
+		'kegiatanskpd access',
+		'kegiatanskpd edit',
+		'kegiatanskpd tambah',
+		'kegiatanskpd penghapusan',
+		'kegiatanskpd pencarian',
+		'kegiatanskpd anggaran',
+		'kegiatanskpd transfer',
+
+		'kegiatanrkpd access',
+		'kegiatanrkpd edit',
+		'kegiatanrkpd tambah',
+		'kegiatanrkpd penghapusan',
+		'kegiatanrkpd pencarian',
+		'kegiatanrkpd anggaran',
+		'kegiatanrkpd transfer',
+
+		'kegiatanppa access',
+		'kegiatanppa edit',
+		'kegiatanppa tambah',
+		'kegiatanppa penghapusan',
+		'kegiatanppa pencarian',
+		'kegiatanppa anggaran',
+		'kegiatanppa transfer',
+		'kegiatanppa bktransfer',
+
+		'laporan access',
+		'laporan musrenbangcam access',
+		'laporan skpd access',
+		'laporan rkpd access',
+		'laporan ppa access',
+		
+		'kegiatanskpdperubahan pencarian',
+		'kegiatanskpdperubahan penghapusan',
+		'kegiatanskpdperubahan edit',
+		'kegiatanskpdperubahan access',
+		
+		'laporan viewer',
+		'kegiatanskpdperubahan editt'
+	);
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+
+function apbd_menu() {
+    $items['apbd'] = array (
+	'title' => 'apbd',	  
+	'title callback' => 'apbd_title_callback',
+	'description' => 'Musrenbang Online',
+	'page callback' => 'apbd_main',
+	'access arguments' => array ('access apbd content'),
+	'type' => MENU_NORMAL_ITEM
+    );
+
+    $items['apbd/setupapp'] = array (
+      'title' => 'Setup Aplikasi',
+	  'description' => 'Setup Aplikasi oleh Superuser',
+	  'title callback' => 'setupapp_title_callback',	  
+      'page callback' => 'setupapp_main',
+      'access arguments' => array ('setupapp access'),
+      'weight' => 1,
+      'file' => 'setupapp/setupapp_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/setupapp/edit'] = array (
+      'title' => 'Edit setupapp',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('setupapp_edit_form'),
+      'access arguments' => array ('setupapp edit'),
+      'file' => 'setupapp/setupapp_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/setupapp/delete'] = array (
+      'title' => 'Delete setupapp',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('setupapp_delete_form'),
+      'access arguments' => array ('setupapp penghapusan'),
+      'file' => 'setupapp/setupapp_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+
+    $items['apbd/unitkerja'] = array (
+		'title' => 'Data SKPD',
+		'description' => 'Pengelolaan Data Unit Kerja',
+		'title callback' => 'unitkerja_title_callback',	  
+		'page callback' => 'unitkerja_main',
+		'access arguments' => array ('unitkerja access'),
+		'weight' => 2,
+		'file' => 'unitkerja/unitkerja_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/unitkerja/edit'] = array (
+      'title' => 'Edit Data SKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('unitkerja_edit_form'),
+      'access arguments' => array ('unitkerja edit'),
+      'file' => 'unitkerja/unitkerja_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/unitkerja/delete'] = array (
+      'title' => 'Penghapusan data Data SKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('unitkerja_delete_form'),
+      'access arguments' => array ('unitkerja penghapusan'),
+      'file' => 'unitkerja/unitkerja_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/unitkerja/find'] = array (
+      'title' => 'Pencarian Data Data SKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('unitkerja_find_form'),
+      'access arguments' => array ('unitkerja pencarian'),
+      'file' => 'unitkerja/unitkerja_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/unitkerja/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'unitkerja_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'unitkerja/unitkerja_utilitas.php',
+    );
+    $items['apbd/unitkerja/utilitas'] = array(
+      'title' => 'utilitas',
+      'page callback' => 'unitkerja_utilitas',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'unitkerja/unitkerja_utilitas.php',
+    );
+    $items['apbd/subunitkerja'] = array (
+      'title' => 'Sub SKPD',
+	  'description' => 'Pengelolaan Data Sub SKPD',
+	  'title callback' => 'subunitkerja_title_callback',	  
+      'page callback' => 'subunitkerja_main',
+      'access arguments' => array ('subunitkerja access'),
+      'weight' => 3,
+      'file' => 'unitkerjasub/subunitkerja_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/subunitkerja/edit'] = array (
+      'title' => 'Edit Data Sub SKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subunitkerja_edit_form'),
+      'access arguments' => array ('subunitkerja edit'),
+      'file' => 'unitkerjasub/subunitkerja_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/subunitkerja/delete'] = array (
+      'title' => 'Delete Data Sub SKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subunitkerja_delete_form'),
+      'access arguments' => array ('subunitkerja penghapusan'),
+      'file' => 'unitkerjasub/subunitkerja_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/subunitkerja/find'] = array (
+      'title' => 'Pencarian Data Sub SKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subunitkerja_find_form'),
+      'access arguments' => array ('subunitkerja pencarian'),
+      'file' => 'unitkerjasub/subunitkerja_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/subunitkerja/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'subunitkerja_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'unitkerjasub/subunitkerja_utilitas.php',
+    );
+    $items['apbd/subunitkerja/utilitas'] = array(
+      'title' => 'utilitas',
+      'page callback' => 'subunitkerja_utilitas',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'unitkerjasub/subunitkerja_utilitas.php',
+    );
+
+//    $items['apbd/dinas'] = array (
+//      'title' => 'Dinas (UKUrusan',
+//	  'description' => 'Pengelolaan data Dinas',
+//	  'title callback' => 'dinas_title_callback',	  
+//      'page callback' => 'dinas_main',
+//      'access arguments' => array ('dinas access'),
+//      'weight' => 4,
+//      'file' => 'dinas/dinas_main.php',
+//      'type' => MENU_NORMAL_ITEM,
+//    );
+//    $items['apbd/dinas/edit'] = array (
+//      'title' => 'Edit Data Dinas',
+//      'page callback' => 'drupal_get_form',
+//      'page arguments' => array('dinas_edit_form'),
+//      'access arguments' => array ('dinas edit'),
+//      'file' => 'dinas/dinas_edit_form.php',
+//      'type' => MENU_CALLBACK,
+//    );
+//    $items['apbd/dinas/delete'] = array (
+//      'title' => 'Delete Data Dinas',
+//      'page callback' => 'drupal_get_form',
+//      'page arguments' => array('dinas_delete_form'),
+//      'access arguments' => array ('dinas penghapusan'),
+//      'file' => 'dinas/dinas_delete_form.php',
+//      'type' => MENU_CALLBACK,
+//    );
+//    $items['apbd/dinas/find'] = array (
+//      'title' => 'Pencarian Data Dinas',
+//      'page callback' => 'drupal_get_form',
+//      'page arguments' => array('dinas_find_form'),
+//      'access arguments' => array ('dinas pencarian'),
+//      'file' => 'dinas/dinas_find_form.php',
+//      'type' => MENU_CALLBACK,
+//    );
+//    $items['apbd/dinas/utils_auto'] = array(
+//      'title' => 'auto completion',
+//      'page callback' => 'dinas_autocomplete',
+//      'access arguments' => array('utilitas access'),
+//      'type' => MENU_CALLBACK,
+//      'file' => 'dinas/dinas_utilitas.php',
+//    );
+//    $items['apbd/dinas/utilitas'] = array(
+//      'title' => 'utilitas',
+//      'page callback' => 'dinas_utilitas',
+//      'access arguments' => array('utilitas access'),
+//      'type' => MENU_CALLBACK,
+//      'file' => 'dinas/dinas_utilitas.php',
+//    );
+    $items['apbd/bidang'] = array (
+      'title' => 'Bidang',
+	  'description' => 'Pengelolaan data bidang',
+	  'title callback' => 'bidang_title_callback',	  
+      'page callback' => 'bidang_main',
+      'access arguments' => array ('bidang access'),
+      'weight' => 5,
+      'file' => 'bidang/bidang_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/bidang/edit'] = array (
+      'title' => 'Edit Data Bidang',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('bidang_edit_form'),
+      'access arguments' => array ('bidang edit'),
+      'file' => 'bidang/bidang_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/bidang/delete'] = array (
+      'title' => 'Delete Data Bidang',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('bidang_delete_form'),
+      'access arguments' => array ('bidang penghapusan'),
+      'file' => 'bidang/bidang_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/bidang/find'] = array (
+      'title' => 'Pencarian Data Bidang',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('bidang_find_form'),
+      'access arguments' => array ('bidang pencarian'),
+      'file' => 'bidang/bidang_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/bidang/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'bidang_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'bidang/bidang_utilitas.php',
+    );
+    $items['apbd/bidang/utilitas'] = array(
+      'title' => 'utilitas',
+      'page callback' => 'bidang_utilitas',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'bidang/bidang_utilitas.php',
+    );
+    $items['apbd/bidangurusan'] = array (
+      'title' => 'bidangurusan',
+	  'description' => 'Pengelolaan data bidangurusan',
+	  'title callback' => 'bidangurusan_title_callback',	  
+      'page callback' => 'bidangurusan_main',
+      'access arguments' => array ('bidangurusan access'),
+      'weight' => 5,
+      'file' => 'bidangurusan/bidangurusan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/bidangurusan/edit'] = array (
+      'title' => 'Edit Data bidangurusan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('bidangurusan_edit_form'),
+      'access arguments' => array ('bidangurusan edit'),
+      'file' => 'bidangurusan/bidangurusan_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/bidangurusan/delete'] = array (
+      'title' => 'Delete Data bidangurusan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('bidangurusan_delete_form'),
+      'access arguments' => array ('bidangurusan penghapusan'),
+      'file' => 'bidangurusan/bidangurusan_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/bidangurusan/find'] = array (
+      'title' => 'Pencarian Data bidangurusan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('bidangurusan_find_form'),
+      'access arguments' => array ('bidangurusan pencarian'),
+      'file' => 'bidangurusan/bidangurusan_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/bidangurusan/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'bidangurusan_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'bidangurusan/bidangurusan_utilitas.php',
+    );
+    $items['apbd/bidangurusan/utilitas'] = array(
+      'title' => 'utilitas',
+      'page callback' => 'bidangurusan_utilitas',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'bidangurusan/bidangurusan_utilitas.php',
+    );
+
+    $items['apbd/desa'] = array (
+      'title' => 'Desa',
+	  'description' => 'Data Desa',
+	  'title callback' => 'desa_title_callback',	  
+      'page callback' => 'desa_main',
+      'access arguments' => array ('desa access'),
+      'weight' => 6,
+      'file' => 'desa/desa_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/desa/edit'] = array (
+      'title' => 'Edit Data Desa',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('desa_edit_form'),
+      'access arguments' => array ('desa edit'),
+      'file' => 'desa/desa_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/desa/delete'] = array (
+      'title' => 'Delete Data Desa',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('desa_delete_form'),
+      'access arguments' => array ('desa penghapusan'),
+      'file' => 'desa/desa_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/desa/find'] = array (
+      'title' => 'Pencarian Desa',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('desa_find_form'),
+      'access arguments' => array ('desa pencarian'),
+      'file' => 'desa/desa_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/desa/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'desa_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'desa/desa_utilitas.php',
+    );
+    $items['apbd/desa/utilitas'] = array(
+      'title' => 'utilitas',
+      'page callback' => 'desa_utilitas',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'desa/desa_utilitas.php',
+    );
+	
+    $items['apbd/urusan'] = array (
+      'title' => 'Urusan',
+	  'description' => 'Data Urusan',
+	  'title callback' => 'urusan_title_callback',	  
+      'page callback' => 'urusan_main',
+      'access arguments' => array ('urusan access'),
+      'weight' => 7,
+      'file' => 'urusan/urusan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/urusan/edit'] = array (
+      'title' => 'Edit Data Urusan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('urusan_edit_form'),
+      'access arguments' => array ('urusan edit'),
+      'file' => 'urusan/urusan_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/urusan/delete'] = array (
+      'title' => 'Delete Data Urusan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('urusan_delete_form'),
+      'access arguments' => array ('urusan penghapusan'),
+      'file' => 'urusan/urusan_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/urusan/find'] = array (
+      'title' => 'Pencarian Data Urusan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('urusan_find_form'),
+      'access arguments' => array ('urusan pencarian'),
+      'file' => 'urusan/urusan_find_form.php',
+      'type' => MENU_CALLBACK,
+    ); 
+    $items['apbd/urusan/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'urusan_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'urusan/urusan_utilitas.php',
+    );
+    $items['apbd/urusan/utilitas'] = array(
+      'title' => 'utilitas',
+      'page callback' => 'urusan_utilitas',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'urusan/urusan_utilitas.php',
+    );
+
+	//**
+    $items['apbd/download'] = array (
+      'title' => 'Downloads Center',
+	  'description' => 'Data Download',
+	  'title callback' => 'download_title_callback',	  
+      'page callback' => 'download_main',
+      'access arguments' => array ('urusan access'),
+      'weight' => 7,
+      'file' => 'download/download_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	
+	$items['apbd/downloadr2'] = array (
+      'title' => 'Downloads Center',
+	  'description' => 'Data Download',
+	  'title callback' => 'download_title_callback',	  
+      'page callback' => 'downloadr2_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'downloadr2/downloadr2_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	
+    $items['apbd/download/edit'] = array (
+      'title' => 'Edit Data Download',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('download_edit_form'),
+      'access arguments' => array ('urusan edit'),
+      'file' => 'download/download_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/download/delete'] = array (
+      'title' => 'Delete Data Download',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('download_delete_form'),
+      'access arguments' => array ('urusan penghapusan'),
+      'file' => 'download/download_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/download/find'] = array (
+      'title' => 'Pencarian Data Download',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('urusan_find_form'),
+      'access arguments' => array ('urusan pencarian'),
+      'file' => 'download/download_find_form.php',
+      'type' => MENU_CALLBACK,
+    ); 
+    $items['apbd/download/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'download_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'download/download_utilitas.php',
+    );
+    $items['apbd/download/utilitas'] = array(
+      'title' => 'utilitas',
+      'page callback' => 'download_utilitas',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'download/download_utilitas.php',
+    );	
+	//**
+
+    $items['apbd/dpa'] = array (
+      'title' => 'DPA SKPD',
+	  'description' => 'Data DPA SKPD',
+	  'title callback' => 'dpa_title_callback',	  
+      'page callback' => 'dpa_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'dpa/dpa_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/dpa/edit'] = array (
+      'title' => 'Penomoran DPA-SKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('dpa_edit_form'),
+      'access arguments' => array ('urusan edit'),
+      'file' => 'dpa/dpa_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/dpaperubahan'] = array (
+      'title' => 'DPPA SKPD',
+	  'description' => 'Data DPPA SKPD',
+	  'title callback' => 'dpaperubahan_title_callback',	  
+      'page callback' => 'dpaperubahan_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'dpaperubahan/dpaperubahan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/dpaperubahan/triwulan'] = array (
+      'title' => 'Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('dpaperubahan_triwulan_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'dpaperubahan/dpaperubahan_triwulan_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+	$items['apbd/belanjadppa'] = array (
+      'title' => 'Belanja Revisi',
+	  'description' => 'Belanja Revisi',
+	  'title callback' => 'dpaperubahan_title_callback',	  
+      'page callback' => 'dpaperubahan_main',
+      'access arguments' => array ('laporan viewer'),
+      'weight' => 7,
+      'file' => 'menuall/dpaperubahan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	 $items['apbd/belanjadpa'] = array (
+      'title' => 'Belanja Penetapan',
+	  'description' => 'Belanja penetapan',
+	  'title callback' => 'dpa_title_callback',	  
+      'page callback' => 'dpa_main',
+      'access arguments' => array ('laporan viewer'),
+      'weight' => 7,
+      'file' => 'menuall/dpa_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	
+    $items['apbd/pengumuman/edit'] = array (
+      'title' => 'Pengumuman',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('pengumuman_edit_form'),
+      'access arguments' => array ('urusan edit'),
+      'file' => 'pengumuman/pengumuman_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+    $items['apbd/manageuser'] = array (
+      'title' => 'Pengelolaan Operator',
+	  'description' => 'Pengelolaan User',
+	  'title callback' => 'apbdop_title_callback',	  
+      'page callback' => 'apbdop_main',
+      'access arguments' => array ('apbdop access'),
+      'weight' => 8,
+      'file' => 'apbdop/apbdop_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/manageuser/edit'] = array (
+      'title' => 'Edit Operator',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('apbdop_edit_form'),
+      'access arguments' => array ('apbdop edit'),
+      'file' => 'apbdop/apbdop_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	$items['apbd/manageuser/upload'] = array (
+      'title' => 'Edit Operator',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('upload_edit_form'),
+      'access arguments' => array ('apbdop edit'),
+      'file' => 'uploadttd/upload_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/manageuser/delete'] = array (
+      'title' => 'Delete Operator',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('apbdop_delete_form'),
+      'access arguments' => array ('apbdop penghapusan'),
+      'file' => 'apbdop/apbdop_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/manageuser/find'] = array (
+      'title' => 'Pencarian Operator',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('apbdop_find_form'),
+      'access arguments' => array ('apbdop pencarian'),
+      'file' => 'apbdop/apbdop_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/manageuser/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'apbdop_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'apbdop/apbdop_utilitas.php',
+    );
+	
+    $items['apbd/program'] = array (
+      'title' => 'Program',
+	  'description' => 'Pengelolaan Data Program',
+	  'title callback' => 'program_title_callback',	  
+      'page callback' => 'program_main',
+      'access arguments' => array ('program access'),
+      'weight' => 9,
+      'file' => 'program/program_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/program/edit'] = array (
+      'title' => 'Edit Data Program',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('program_edit_form'),
+      'access arguments' => array ('program edit'),
+      'file' => 'program/program_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/program/delete'] = array (
+      'title' => 'Delete Data Program',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('program_delete_form'),
+      'access arguments' => array ('program penghapusan'),
+      'file' => 'program/program_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/program/find'] = array (
+      'title' => 'Pencarian Data Program',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('program_find_form'),
+      'access arguments' => array ('program pencarian'),
+      'file' => 'program/program_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/program/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'program_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'program/program_utilitas.php',
+    );
+    $items['apbd/program/utilitas'] = array(
+      'title' => 'utilitas',
+      'page callback' => 'program_utilitas',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'program/program_utilitas.php',
+    );
+
+    $items['apbd/programsasaran'] = array (
+      'title' => 'Sasaran dan Target RPJMD',
+    'description' => 'Pengelolaan data Sasaran dan Target RPJMD',
+    'title callback' => 'programsasaran_title_callback',    
+      'page callback' => 'programsasaran_main',
+      'access arguments' => array ('program edit'),
+      'weight' => 9,
+      'file' => 'programsasaran/programsasaran_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/programsasaran/edit'] = array (
+      'title' => 'Edit Sasaran dan Target RPJMD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('programsasaran_edit_form'),
+      'access arguments' => array ('program edit'),
+      'file' => 'programsasaran/programsasaran_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/programsasaran/delete'] = array (
+      'title' => 'Delete Sasaran dan Target RPJMD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('programsasaran_delete_form'),
+      'access arguments' => array ('program edit'),
+      'file' => 'programsasaran/programsasaran_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/programsasaran/find'] = array (
+      'title' => 'Pencarian Sasaran dan Target RPJMD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('programsasaran_find_form'),
+      'access arguments' => array ('program edit'),
+      'file' => 'programsasaran/programsasaran_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/programsasaran/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'programsasaran_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'programsasaran/programsasaran_utilitas.php',
+    );
+
+    $items['apbd/kegiatanlt'] = array (
+      'title' => 'Master Kegiatan',
+	  'description' => 'Pengelolaan Master Data Kegiatan',
+	  'title callback' => 'kegiatanlt_title_callback',	  
+      'page callback' => 'kegiatanlt_main',
+      'access arguments' => array ('kegiatanlt access'),
+      'weight' => 10,
+      'file' => 'kegiatanlt/kegiatanlt_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/kegiatanlt/browse'] = array (
+      'title' => 'Master Kegiatan',
+	  'description' => 'Pengelolaan Master Data Kegiatan',
+      'page callback' => 'kegiatanlt_browse',
+      'access arguments' => array ('utilitas access'),
+      'weight' => 1,
+      'file' => 'kegiatanlt/kegiatanlt_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanlt/browsepad'] = array (
+      'title' => 'Master Kegiatan',
+	  'description' => 'Pengelolaan Master Data Kegiatan',
+      'page callback' => 'kegiatanlt_browsepad',
+      'access arguments' => array ('utilitas access'),
+      'weight' => 1,
+      'file' => 'kegiatanlt/kegiatanlt_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanlt/browsebtl'] = array (
+      'title' => 'Master Kegiatan',
+	  'description' => 'Pengelolaan Master Data Kegiatan',
+      'page callback' => 'kegiatanlt_browsebtl',
+      'access arguments' => array ('utilitas access'),
+      'weight' => 1,
+      'file' => 'kegiatanlt/kegiatanlt_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanlt/browsepb'] = array (
+      'title' => 'Master Kegiatan',
+	  'description' => 'Pengelolaan Master Data Kegiatan',
+      'page callback' => 'kegiatanlt_browsepb',
+      'access arguments' => array ('utilitas access'),
+      'weight' => 1,
+      'file' => 'kegiatanlt/kegiatanlt_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanlt/browserev'] = array (
+      'title' => 'Master Kegiatan',
+	  'description' => 'Pengelolaan Master Data Kegiatan',
+      'page callback' => 'kegiatanlt_browserev',
+      'access arguments' => array ('utilitas access'),
+      'weight' => 1,
+      'file' => 'kegiatanlt/kegiatanlt_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanlt/edit'] = array (
+      'title' => 'Edit Data kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanlt_edit_form'),
+      'access arguments' => array ('kegiatanlt edit'),
+      'file' => 'kegiatanlt/kegiatanlt_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanlt/delete'] = array (
+      'title' => 'Delete Data Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanlt_delete_form'),
+      'access arguments' => array ('kegiatanlt penghapusan'),
+      'file' => 'kegiatanlt/kegiatanlt_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanlt/find'] = array (
+      'title' => 'Pencarian Data Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanlt_find_form'),
+      'access arguments' => array ('kegiatanlt pencarian'),
+      'file' => 'kegiatanlt/kegiatanlt_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanlt/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'kegiatanlt_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'kegiatanlt/kegiatanlt_utilitas.php',
+    );
+    $items['apbd/kegiatanlt/utilitas'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'kegiatanlt_utilitas',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'kegiatanlt/kegiatanlt_utilitas.php',
+    );
+
+    $items['apbd/rekeninglt/browse'] = array (
+      'title' => 'Master Kegiatan',
+	  'description' => 'Pengelolaan Master Data Kegiatan',
+      'page callback' => 'rekeninglt_browse',
+      'access arguments' => array ('utilitas access'),
+      'weight' => 1,
+      'file' => 'rekeninglt/rekeninglt_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    
+	$items['apbd/kegiatancam'] = array (
+      'title' => 'Kegiatan Musrenbangcam',
+	  'description' => 'Pengelolaan Kegiatan Musrenbangcam',
+	  'title callback' => 'kegiatancam_title_callback',	  
+      'page callback' => 'kegiatancam_main',
+      'access arguments' => array ('kegiatancam access'),
+      'weight' => 11,
+      'file' => 'kegiatancam/kegiatancam_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/kegiatancam/edit'] = array (
+      'title' => 'Edit Kegiatan Musrenbangcam',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatancam_edit_form'),
+      'access arguments' => array ('kegiatancam edit'),
+      'file' => 'kegiatancam/kegiatancam_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatancam/anggaran'] = array (
+      'title' => 'Anggaran Kegiatan Musrenbangcam',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatancam_anggaran_form'),
+      'access arguments' => array ('kegiatancam anggaran'),
+      'file' => 'kegiatancam/kegiatancam_anggaran_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+    $items['apbd/kegiatancam/delete'] = array (
+      'title' => 'Delete Data Kegiatan Musrenbangcam',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatancam_delete_form'),
+      'access arguments' => array ('kegiatancam penghapusan'),
+      'file' => 'kegiatancam/kegiatancam_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatancam/find'] = array (
+      'title' => 'Pencarian Data Kegiatan Musrenbangcam',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatancam_find_form'),
+      'access arguments' => array ('kegiatancam pencarian'),
+      'file' => 'kegiatancam/kegiatancam_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+    $items['apbd/kegiatancam/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'kegiatancam_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'kegiatancam/kegiatancam_utilitas.php',
+    );
+
+    $items['apbd/kegiatancam/subkegiatan'] = array (
+      'title' => 'Sub Kegiatan Musrenbangcam',
+	  'description' => 'Daftar Sub Kegiatan Musrenbangcam',
+      'page callback' => 'subkegiatancam_main',
+      'access arguments' => array ('kegiatancam access'),
+      'weight' => 7,
+      'file' => 'kegiatancam/subkegiatan/subkegiatancam_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatancam/subkegiatan/edit'] = array (
+      'title' => 'Edit Sub Kegiatan Musrenbangcam',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subkegiatancam_edit_form'),
+      'access arguments' => array ('kegiatancam edit'),
+      'file' => 'kegiatancam/subkegiatan/subkegiatancam_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatancam/subkegiatan/delete'] = array (
+      'title' => 'Delete Sub Kegiatan Musrenbangcam',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subkegiatancam_delete_form'),
+      'access arguments' => array ('kegiatancam penghapusan'),
+      'file' => 'kegiatancam/subkegiatan/subkegiatancam_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+//##
+	$items['apbd/kegiatanskpd'] = array (
+      'title' => 'Kegiatan',
+	  'description' => 'Pengelolaan Kegiatan',
+	  'title callback' => 'kegiatanskpd_title_callback',	  
+      'page callback' => 'kegiatanskpd_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'kegiatanskpd/kegiatanskpd_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	$items['apbd/kegiatanskpdperubahan'] = array (
+      'title' => 'Kegiatan',
+	  'description' => 'Pengelolaan Kegiatan',
+	  'title callback' => 'kegiatanskpd_title_callback',	  
+      'page callback' => 'kegiatanskpd_main',
+      'access arguments' => array ('kegiatanskpdperubahan access'),
+      'weight' => 11,
+      'file' => 'kegiatanskpdperubahan/kegiatanskpd_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	$items['apbd/kegiatanskpdperubahan/edit'] = array (
+      'title' => 'Edit Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_edit_form'),
+      'access arguments' => array ('kegiatanskpdperubahan edit'),
+      'file' => 'kegiatanskpdperubahan/kegiatanskpd_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	$items['apbd/kegiatanskpdperubahan/editt'] = array (
+      'title' => 'Edit Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_edit_form'),
+      'access arguments' => array ('kegiatanskpdperubahan editt'),
+      'file' => 'menuall/kegiatanskpd_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+	//REVISI PERUBAHAN
+	$items['apbd/kegiatanrevisiperubahan'] = array (
+      'title' => 'Kegiatan Perubahan',
+	  'description' => 'Pengelolaan Kegiatan Perubahan',
+	  'title callback' => 'kegiatanskpd_title_callback',	  
+      'page callback' => 'kegiatanrevisiperubahan_main',
+      'access arguments' => array ('kegiatanskpdperubahan access'),
+      'weight' => 11,
+      'file' => 'kegiatanrevisiperubahan/kegiatanrevisiperubahan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	
+    $items['apbd/kegiatanskpd/edit'] = array (
+      'title' => 'Edit Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_edit_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/kegiatanskpd_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/editadmin'] = array (
+      'title' => 'Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_editadmin_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/kegiatanskpd_editadmin_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	 $items['apbd/kegiatanskpdperubahan/editadmin'] = array (
+      'title' => 'Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_editadmin_form'),
+      'access arguments' => array ('kegiatanskpdperubahan edit'),
+      'file' => 'kegiatanskpdperubahan/kegiatanskpd_editadmin_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/triwulan'] = array (
+      'title' => 'Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_triwulan_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/kegiatanskpd_triwulan_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/anggaran'] = array (
+      'title' => 'Anggaran Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_anggaran_form'),
+      'access arguments' => array ('kegiatanskpd anggaran'),
+      'file' => 'kegiatanskpd/kegiatanskpd_anggaran_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+    $items['apbd/kegiatanskpd/transfer'] = array (
+      'title' => 'Transfer Kegiatan Musrenbangcam ke SKPD',
+	  'description' => 'Proses Transfer Data Kegiatan Musrenbangcam ke SKPD',
+	  'title callback' => 'kegiatanskpd_transfer_title_callback',	  
+      'page callback' => 'kegiatanskpd_transfer',
+      'access arguments' => array ('kegiatanskpd transfer'),
+      'file' => 'kegiatanskpd/kegiatanskpd_transfer_form.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+
+    $items['apbd/kegiatanskpd/delete'] = array (
+      'title' => 'Delete Data Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_delete_form'),
+      'access arguments' => array ('kegiatanskpd penghapusan'),
+      'file' => 'kegiatanskpd/kegiatanskpd_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	$items['apbd/kegiatanskpdperubahan/delete'] = array (
+      'title' => 'Delete Data Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_delete_form'),
+      'access arguments' => array ('kegiatanskpdperubahan penghapusan'),
+      'file' => 'kegiatanskpdperubahan/kegiatanskpd_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/find'] = array (
+      'title' => 'Pencarian Data Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_find_form'),
+      'access arguments' => array ('kegiatanskpd pencarian'),
+      'file' => 'kegiatanskpd/kegiatanskpd_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	 $items['apbd/kegiatanskpdperubahan/find'] = array (
+      'title' => 'Pencarian Data Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanskpd_find_form'),
+      'access arguments' => array ('kegiatanskpdperubahan pencarian'),
+      'file' => 'kegiatanskpdperubahan/kegiatanskpd_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+
+	$items['apbd/kegiatanskpdover'] = array (
+      'title' => 'Kegiatan Melebihi Plafon',
+	  'description' => 'Daftar Kegiatan yang melebihi plafon',
+	  'title callback' => 'kegiatanskpdover_title_callback',	  
+      'page callback' => 'kegiatanskpdover_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'kegiatanskpd/kegiatanskpdover_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+
+	$items['apbd/kegiatanskpd1000'] = array (
+      'title' => 'Kegiatan Melebihi Plafon',
+	  'description' => 'Daftar Kegiatan yang melebihi plafon',
+	  'title callback' => 'kegiatanskpd_title_callback',	  
+      'page callback' => 'kegiatanskpd1000_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'kegiatanskpd/kegiatanskpd1000_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	
+	$items['apbd/kegiatanskpdcari'] = array (
+      'title' => 'Mencari Kegiatan',
+	  'description' => 'Mencari Kegiatan',
+	  'title callback' => 'kegiatanskpd_title_callback',	  
+      'page callback' => 'kegiatanskpdcari_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'kegiatanskpd/kegiatanskpdcari_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	$items['apbd/kegiatanskpdperubahancari'] = array (
+      'title' => 'Mencari Kegiatan',
+	  'description' => 'Mencari Kegiatan',
+	  'title callback' => 'kegiatanskpd_title_callback',	  
+      'page callback' => 'kegiatanskpdcari_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'kegiatanskpdperubahan/kegiatanskpdcari_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+
+	$items['apbd/kegiatanskpdsd'] = array (
+      'title' => 'Rekap Sumber Dana',
+	  'description' => 'Rekap Sumber Dana',
+	  'title callback' => 'kegiatanskpdsd_title_callback',	  
+      'page callback' => 'kegiatanskpdsd_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'kegiatanskpd/kegiatanskpdsd_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	
+    $items['apbd/kegiatanskpd/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'kegiatanskpd_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'kegiatanskpd/kegiatanskpd_utilitas.php',
+    );
+
+    $items['apbd/kegiatanskpd/subkegiatan'] = array (
+      'title' => 'Rekening',
+	  'description' => 'Daftar Rekening',
+      'page callback' => 'subkegiatanskpd_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'kegiatanskpd/subkegiatan/subkegiatanskpd_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/subkegiatan/edit'] = array (
+      'title' => 'Edit Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subkegiatanskpd_edit_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/subkegiatan/subkegiatanskpd_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/subkegiatan/delete'] = array (
+      'title' => 'Delete Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subkegiatanskpd_delete_form'),
+      'access arguments' => array ('kegiatanskpd penghapusan'),
+      'file' => 'kegiatanskpd/subkegiatan/subkegiatanskpd_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/print'] = array (
+      'title' => 'Cetak Kegiatan',
+	  'description' => 'Cetak Kegiatan',
+      'page callback' => 'kegiatanskpd_print_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'kegiatanskpd/kegiatanskpd_print_main.php',
+      'type' => MENU_CALLBACK,
+    );
+	 $items['apbd/kegiatanskpdperubahan/print'] = array (
+      'title' => 'Cetak Kegiatan',
+	  'description' => 'Cetak Kegiatan',
+      'page callback' => 'kegiatanskpd_print_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'kegiatanskpdperubahan/kegiatanskpd_print_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/printdpa'] = array (
+      'title' => 'Cetak DPA-SKPD',
+	  'description' => 'Cetak DPA-SKPD',
+      'page callback' => 'kegiatanskpd_printdpa_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'kegiatanskpd/kegiatanskpd_printdpa_main.php',
+      'type' => MENU_CALLBACK,
+    );
+	$items['apbd/kegiatanskpdperubahan/printdpa'] = array (
+      'title' => 'Cetak DPA-SKPD',
+	  'description' => 'Cetak DPA-SKPD',
+      'page callback' => 'kegiatanskpd_printdpa_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'kegiatanskpdperubahan/kegiatanskpd_printdpa_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/printusulan'] = array (
+      'title' => 'Cetak Usulan Revisi',
+	  'description' => 'Cetak Usulan Revisi',
+      'page callback' => 'kegiatanskpd_printusulan_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'kegiatanskpd/kegiatanskpd_printusulan_main.php',
+      'type' => MENU_CALLBACK,
+    );
+	$items['apbd/kegiatanskpd/printdppa'] = array (
+      'title' => 'Cetak Usulan Revisi',
+	  'description' => 'Cetak Usulan Revisi',
+      'page callback' => 'kegiatanskpd_printusulan2_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'kegiatanskpd/kegiatanskpd_printusulan2_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/printperubahan'] = array (
+      'title' => 'Cetak Perubahan Anggaran',
+	  'description' => 'Cetak Perubahan Anggaran',
+      'page callback' => 'kegiatanskpd_printdpap_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'kegiatanskpd/kegiatanskpd_printdpap_main.php',
+      'type' => MENU_CALLBACK,
+    );
+
+    $items['apbd/kegiatanppkd/print'] = array (
+      'title' => 'Cetak RKA-PPKD Belanja',
+	  'description' => 'Cetak RKA-PPKD Belanja',
+      'page callback' => 'kegiatanppkd_print_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'kegiatanskpd/kegiatanppkd_print_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrkpd/print'] = array (
+      'title' => 'DPA-SKPD',
+	  'description' => 'Cetak DPA-SKPD',
+      'page callback' => 'kegiatanrkpd_print_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'kegiatanrkpd/kegiatanrkpd_print_main.php',
+      'type' => MENU_CALLBACK,
+    );
+
+	//REKENING
+    $items['apbd/kegiatanskpd/rekening'] = array (
+      'title' => 'Daftar Rekening',
+	  'description' => 'Daftar Rekening',
+      'page callback' => 'rekening_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'kegiatanskpd/rekening/rekening_main.php',
+      'type' => MENU_CALLBACK,
+    );
+	$items['apbd/kegiatanskpdperubahan/rekening'] = array (
+      'title' => 'Daftar Rekening',
+	  'description' => 'Daftar Rekening',
+      'page callback' => 'rekening_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'kegiatanskpdperubahan/rekening/rekening_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/rekening/edit'] = array (
+      'title' => 'Edit Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('rekening_edit_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/rekening/rekening_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/rekening/delete'] = array (
+      'title' => 'Delete Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('rekening_delete_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/rekening/rekening_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	  $items['apbd/kegiatanskpdperubahan/rekening/delete'] = array (
+      'title' => 'Delete Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('rekening_delete_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpdperubahan/rekening/rekening_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+
+	//DETIL REKENING
+    $items['apbd/kegiatanskpd/rekening/detil'] = array (
+      'title' => 'Daftar Rincian Detil Rekening',
+	  'description' => 'Daftar Rincian Detil Rekening',
+      'page callback' => 'detil_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'kegiatanskpd/rekening/detil/detil_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/rekening/detil/edit'] = array (
+      'title' => 'Edit Rincian Detil Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('detil_edit_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/rekening/detil/detil_edit_form.php',
+      'type' => MENU_CALLBACK, 
+    );
+    $items['apbd/kegiatanskpd/rekening/detil/editsub'] = array (
+      'title' => 'Edit Rincian Detil Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('detil_editsub_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/rekening/detil/detil_editsub_form.php',
+      'type' => MENU_CALLBACK, 
+    );
+    $items['apbd/kegiatanskpd/rekening/detil/delete'] = array (
+      'title' => 'Delete Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('detil_delete_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/rekening/detil/detil_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+	//SUB Detil
+	//DETIL REKENING
+    $items['apbd/kegiatanskpd/rekening/detil/subdetil'] = array (
+      'title' => 'Daftar Rincian Sub Detil Rekening',
+	  'description' => 'Daftar Rincian Sub Detil Rekening',
+      'page callback' => 'subdetil_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'kegiatanskpd/rekening/detil/subdetil/subdetil_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanskpd/rekening/detil/subdetil/edit'] = array (
+      'title' => 'Edit Rincian Sub Detil Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subdetil_edit_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/rekening/detil/subdetil/subdetil_edit_form.php',
+      'type' => MENU_CALLBACK, 
+    );
+    $items['apbd/kegiatanskpd/rekening/detil/subdetil/delete'] = array (
+      'title' => 'Delete Sub Detil Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subdetil_delete_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanskpd/rekening/detil/subdetil/subdetil_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+	//PENDAPATAN
+	$items['apbd/pendapatan'] = array (
+      'title' => 'Pendapatan',
+	  'description' => 'Pengelolaan Pendapatan',
+	  'title callback' => 'pendapatan_title_callback',	  
+      'page callback' => 'pendapatan_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'pendapatan/pendapatan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	$items['apbd/pendapatanr'] = array (
+      'title' => 'Pendapatan',
+	  'description' => 'Pengelolaan Pendapatan',
+	  'title callback' => 'pendapatan_title_callback',	  
+      'page callback' => 'pendapatan_main',
+      'access arguments' => array ('laporan viewer'),
+      'weight' => 11,
+      'file' => 'menuall/pendapatan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/pendapatan/edit'] = array (
+      'title' => 'Edit Pendapatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('pendapatan_edit_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'pendapatan/pendapatan_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/pendapatan/delete'] = array (
+      'title' => 'Delete Pendapatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('pendapatan_delete_form'),
+      'access arguments' => array ('kegiatanskpd penghapusan'),
+      'file' => 'pendapatan/pendapatan_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/pendapatan/print'] = array (
+      'title' => 'Cetak RKA-SKPD',
+	  'description' => 'Cetak RKA-SKPD',
+      'page callback' => 'pendapatan_print_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'pendapatan/pendapatan_print_main.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/pendapatanppkd/print'] = array (
+      'title' => 'Cetak RKA-PPKD Pendapatan',
+	  'description' => 'Cetak RKA-PPKD Pendapatan',
+      'page callback' => 'pendapatanppkd_print_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'file' => 'pendapatan/pendapatanppkd_print_main.php',
+      'type' => MENU_CALLBACK,
+    );	
+
+	//DETIL REKENING PENDAPATAN`
+    $items['apbd/pendapatan/detil'] = array (
+      'title' => 'Daftar Rincian Detil Pendapatan',
+	  'description' => 'Daftar Rincian Detil Pendapatan',
+      'page callback' => 'detilpendapatan_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'pendapatan/detil/detilpendapatan_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/pendapatan/detil/edit'] = array (
+      'title' => 'Edit Rincian Detil Pendapatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('detilpendapatan_edit_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'pendapatan/detil/detilpendapatan_edit_form.php',
+      'type' => MENU_CALLBACK, 
+    );
+    $items['apbd/pendapatan/detil/delete'] = array (
+      'title' => 'Delete Rekening Pendapatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('detilpendapatan_delete_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'pendapatan/detil/detilpendapatan_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+
+	//SUB Detil PENDAPATAN
+	//DETIL REKENING
+    $items['apbd/pendapatan/detil/subdetil'] = array (
+      'title' => 'Daftar Rincian Sub Detil Rekening',
+	  'description' => 'Daftar Rincian Sub Detil Rekening',
+      'page callback' => 'psubdetil_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 7,
+      'file' => 'pendapatan/detil/subdetil/psubdetil_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/pendapatan/detil/subdetil/edit'] = array (
+      'title' => 'Edit Rincian Sub Detil Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('psubdetil_edit_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'pendapatan/detil/subdetil/psubdetil_edit_form.php',
+      'type' => MENU_CALLBACK, 
+    );
+    $items['apbd/pendapatan/detil/subdetil/delete'] = array (
+      'title' => 'Delete Sub Detil Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('psubdetil_delete_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'pendapatan/detil/subdetil/psubdetil_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+
+	//PENDAPATAN PERUBAHAN
+	$items['apbd/pendapatanperubahan'] = array (
+      'title' => 'Pendapatan Perubahan',
+	  'description' => 'Pengelolaan Pendapatan Perubahan',
+	  'title callback' => 'pendapatan_title_callback',	  
+      'page callback' => 'pendapatanperubahan_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'pendapatanperubahan/pendapatanperubahan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/pendapatanperubahan/delete'] = array (
+      'title' => 'Delete Pendapatan Perubahan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('pendapatanperubahan_delete_form'),
+      'access arguments' => array ('kegiatanskpd penghapusan'),
+      'file' => 'pendapatanperubahan/pendapatanperubahan_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+	
+	//PEMBIAYAAN
+	$items['apbd/pembiayaan'] = array (
+      'title' => 'Pembiayaan',
+	  'description' => 'Pengelolaan Pembiayaan',
+	  'title callback' => 'pembiayaan_title_callback',	  
+      'page callback' => 'pembiayaan_main',
+      'access arguments' => array ('kegiatanrkpd access'),
+      'weight' => 11,
+      'file' => 'pembiayaan/pembiayaan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	$items['apbd/pembiayaanr'] = array (
+      'title' => 'Pembiayaan',
+	  'description' => 'Pengelolaan Pembiayaan',
+	  'title callback' => 'pembiayaan_title_callback',	  
+      'page callback' => 'pembiayaan_main',
+      'access arguments' => array ('kegiatanrkpd access'),
+      'weight' => 11,
+      'file' => 'menuall/pembiayaan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/pembiayaan/edit'] = array (
+      'title' => 'Edit Pembiayaan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('pembiayaan_edit_form'),
+      'access arguments' => array ('kegiatanrkpd edit'),
+      'file' => 'pembiayaan/pembiayaan_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );	 
+    $items['apbd/pembiayaan/delete'] = array (
+      'title' => 'Delete Pembiayaan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('pembiayaan_delete_form'),
+      'access arguments' => array ('kegiatanrkpd penghapusan'),
+      'file' => 'pembiayaan/pembiayaan_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );	 
+    $items['apbd/pembiayaan/print'] = array (
+      'title' => 'Cetak RKA-SKPD',
+	  'description' => 'Cetak RKA-SKPD',
+      'page callback' => 'pembiayaan_print_main',
+      'access arguments' => array ('kegiatanrkpd access'),
+      'file' => 'pembiayaan/pembiayaan_print_main.php',
+      'type' => MENU_CALLBACK,
+    );	
+ 
+	$items['apbd/pembiayaanperubahan'] = array (
+      'title' => 'Pembiayaan Perubahan',
+	  'description' => 'Pengelolaan Perubahan Pembiayaan',
+	  'title callback' => 'pembiayaanperubahan_title_callback',	  
+      'page callback' => 'pembiayaanperubahan_main',
+      'access arguments' => array ('kegiatanrkpd access'),
+      'weight' => 11,
+      'file' => 'pembiayaanperubahan/pembiayaanperubahan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/pembiayaanperubahan/delete'] = array (
+      'title' => 'Delete Pembiayaan Perubahan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('pembiayaanperubahan_delete_form'),
+      'access arguments' => array ('kegiatanrkpd penghapusan'),
+      'file' => 'pembiayaanperubahan/pembiayaanperubahan_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );		
+
+	//DETIL REKENING PEMBIAYAAN`
+    $items['apbd/pembiayaan/detil'] = array (
+      'title' => 'Daftar Rincian Detil Pembiayaan',
+	  'description' => 'Daftar Rincian Detil Pembiayaan',
+      'page callback' => 'detilpembiayaan_main',
+      'access arguments' => array ('kegiatanrkpd access'),
+      'weight' => 7,
+      'file' => 'pembiayaan/detil/detilpembiayaan_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/pembiayaan/detil/edit'] = array (
+      'title' => 'Edit Rincian Detil Pembiayaan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('detilpembiayaan_edit_form'),
+      'access arguments' => array ('kegiatanrkpd edit'),
+      'file' => 'pembiayaan/detil/detilpembiayaan_edit_form.php',
+      'type' => MENU_CALLBACK, 
+    );
+    $items['apbd/pembiayaan/detil/delete'] = array (
+      'title' => 'Delete Rekening Pembiayaan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('detilpembiayaan_delete_form'),
+      'access arguments' => array ('kegiatanrkpd edit'),
+      'file' => 'pembiayaan/detil/detilpembiayaan_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+
+	//REVISI
+	$items['apbd/kegiatanrevisi'] = array (
+      'title' => 'Usulan Revisi',
+	  'description' => 'Pengelolaan Usulan Revisi',
+	  'title callback' => 'kegiatanrevisi_title_callback',	  
+      'page callback' => 'kegiatanrevisi_main',
+      'access arguments' => array ('kegiatanppa access'),
+      'weight' => 11,
+      'file' => 'kegiatanrevisi/kegiatanrevisi_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/kegiatanrevisi/edit'] = array (
+      'title' => 'Edit Usulan Revisi',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisi_edit_form'),
+      'access arguments' => array ('kegiatanppa edit'),
+      'file' => 'kegiatanrevisi/kegiatanrevisi_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/kegiatanrevisi/edit1'] = array (
+      'title' => 'Edit Usulan Revisi',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisi_edit1_form'),
+      'access arguments' => array ('kegiatanppa edit'),
+      'file' => 'kegiatanrevisi/kegiatanrevisi_edit1_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/kegiatanrevisi/edit2'] = array (
+      'title' => 'Edit Usulan Revisi',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisi_edit2_form'),
+      'access arguments' => array ('kegiatanppa edit'),
+	  'access callback' => TRUE,
+      'file' => 'kegiatanrevisi/kegiatanrevisi_edit2_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/kegiatanrevisi/edit4'] = array (
+      'title' => 'Edit Usulan Revisi',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisi_edit4_form'),
+      'access arguments' => array ('kegiatanppa edit'),
+	  'access callback' => TRUE,
+      'file' => 'kegiatanrevisi/kegiatanrevisi_edit4_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/kegiatanrevisi/editkeg'] = array (
+      'title' => 'Edit Usulan Revisi',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisi_editkeg_form'),
+      'access arguments' => array ('kegiatanppa edit'),
+	  'access callback' => TRUE,
+      'file' => 'kegiatanrevisi/kegiatanrevisi_editkeg_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/kegiatanrevisi/editnew'] = array (
+      'title' => 'Usulan Revisi Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisi_editnew_form'),
+      'access arguments' => array ('kegiatanppa edit'),
+      'file' => 'kegiatanrevisi/kegiatanrevisi_editnew_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/kegiatanrevisi/delete'] = array (
+      'title' => 'Delete Usulan Revisi',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisi_delete_form'),
+      'access arguments' => array ('kegiatanppa penghapusan'),
+      'file' => 'kegiatanrevisi/kegiatanrevisi_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );		
+    $items['apbd/kegiatanrevisi/find'] = array (
+      'title' => 'Pencarian Usulan Revisi',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisi_find_form'),
+      'access arguments' => array ('kegiatanskpd pencarian'),
+      'file' => 'kegiatanrevisi/kegiatanrevisi_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrevisi/triwulan'] = array (
+      'title' => 'Kegiatan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisi_triwulan_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanrevisi/kegiatanrevisi_triwulan_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+	//PERUBAHAN REVISI
+	$items['apbd/kegiatanrevisiperubahan'] = array (
+      'title' => 'Usulan Perubahan',
+	  'description' => 'Pengelolaan Usulan Perubahan',
+	  'title callback' => 'kegiatanrevisi_title_callback',	  
+      'page callback' => 'kegiatanrevisiperubahan_main',
+      'access arguments' => array ('kegiatanppa access'),
+      'weight' => 11,
+      'file' => 'kegiatanrevisiperubahan/kegiatanrevisiperubahan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/kegiatanrevisiperubahan/rekening'] = array (
+      'title' => 'Daftar Rekening Perubahan',
+	  'description' => 'Daftar Rekening Perubahan',
+      'page callback' => 'kegiatanrevisiperubahanrekening_main',
+      'access arguments' => array ('kegiatanskpd edit'),
+      //'weight' => 7,
+      'file' => 'kegiatanrevisiperubahan/kegiatanrevisiperubahanrekening_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrevisiperubahan/triwulan'] = array (
+      'title' => 'Alokasi Triwulan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisiperubahan_triwulan_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanrevisiperubahan/kegiatanrevisiperubahan_triwulan_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	$items['apbd/kegiatanrevisiperubahan/editadmin'] = array (
+      'title' => 'Kegiatan Perubahan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisiperubahan_editadmin_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanrevisiperubahan/kegiatanrevisiperubahan_editadmin_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/kegiatanrevisiperubahan/delete'] = array (
+      'title' => 'Delete Usulan Perubahan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisiperubahan_delete_form'),
+      'access arguments' => array ('kegiatanppa penghapusan'),
+      'file' => 'kegiatanrevisiperubahan/kegiatanrevisiperubahan_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );		
+    $items['apbd/kegiatanrevisiperubahan/edit'] = array (
+      'title' => 'Edit Usulan Perubahan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisiperubahan_edit_form'),
+      'access arguments' => array ('kegiatanppa edit'),
+      'file' => 'kegiatanrevisiperubahan/kegiatanrevisiperubahan_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );	
+    $items['apbd/kegiatanrevisiperubahan/find'] = array (
+      'title' => 'Pencarian Usulan Perubahan',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrevisiperubahan_find_form'),
+      'access arguments' => array ('kegiatanskpd pencarian'),
+      'file' => 'kegiatanrevisiperubahan/kegiatanrevisiperubahan_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+	//REKENING
+    $items['apbd/kegiatanrevisi/rekening'] = array (
+      'title' => 'Daftar Rekening',
+	  'description' => 'Daftar Rekening',
+      'page callback' => 'rekeningrevisi_main',
+      'access arguments' => array ('kegiatanskpd edit'),
+      //'weight' => 7,
+      'file' => 'kegiatanrevisi/rekening/rekeningrevisi_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrevisi/rekeningx'] = array (
+      'title' => 'Daftar Rekening',
+	  'description' => 'Daftar Rekening',
+      'page callback' => 'rekeningrevisix_main',
+      'access arguments' => array ('kegiatanskpd edit'),
+      //'weight' => 7,
+      'file' => 'kegiatanrevisi/rekening/rekeningrevisix_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrevisi/rekening/edit'] = array (
+      'title' => 'Edit Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('rekeningrevisi_edit_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanrevisi/rekening/rekeningrevisi_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrevisi/rekening/delete'] = array (
+      'title' => 'Delete Rekening',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('rekeningrevisi_delete_form'),
+      'access arguments' => array ('kegiatanskpd edit'),
+      'file' => 'kegiatanrevisi/rekening/rekeningrevisi_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+	$items['apbd/progressrka'] = array (
+      'title' => 'Progress Penyusunan RKA-SKPD',
+	  'description' => 'Progress Penyusunan RKA-SKPD',
+	  //'title callback' => 'kegiatanskpd_title_callback',	  
+      'page callback' => 'progressrka_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'progressrka/progressrka_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );	
+
+	$items['apbd/progressrka/print'] = array (
+      'title' => 'Progress Penyusunan RKA-SKPD',
+	  'description' => 'Progress Penyusunan RKA-SKPD',
+	  //'title callback' => 'kegiatanskpd_title_callback',	  
+      'page callback' => 'progressrkaprint_main',
+      'access arguments' => array ('kegiatanskpd access'),
+      'weight' => 11,
+      'file' => 'progressrka/progressrkaprint_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );	
+
+///##
+	$items['apbd/kegiatanrkpd'] = array (
+      'title' => 'Penomoran DPA',
+	  'description' => 'Pengelolaan Kegiatan RKPD',
+	  'title callback' => 'kegiatanrkpd_title_callback',	  
+      'page callback' => 'kegiatanrkpd_main',
+      'access arguments' => array ('kegiatanrkpd access'),
+      'weight' => 12,
+      'file' => 'kegiatanrkpd/kegiatanrkpd_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/kegiatanrkpd/edit'] = array (
+      'title' => 'Edit Kegiatan RKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrkpd_edit_form'),
+      'access arguments' => array ('kegiatanrkpd edit'),
+      'file' => 'kegiatanrkpd/kegiatanrkpd_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrkpd/anggaran'] = array (
+      'title' => 'Anggaran Kegiatan RKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrkpd_anggaran_form'),
+      'access arguments' => array ('kegiatanrkpd anggaran'),
+      'file' => 'kegiatanrkpd/kegiatanrkpd_anggaran_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrkpd/transfer'] = array (
+      'title' => 'Transfer Kegiatan SKPD ke RKPD',
+	  'description' => 'Proses Transfer Data Kegiatan SKPD ke RKPD',
+	  'title callback' => 'kegiatanrkpd_transfer_title_callback',	  
+      'page callback' => 'kegiatanrkpd_transfer',
+      'access arguments' => array ('kegiatanrkpd transfer'),
+      'file' => 'kegiatanrkpd/kegiatanrkpd_transfer_form.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	
+    $items['apbd/kegiatanrkpd/delete'] = array (
+      'title' => 'Delete Data Kegiatan RKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrkpd_delete_form'),
+      'access arguments' => array ('kegiatanrkpd penghapusan'),
+      'file' => 'kegiatanrkpd/kegiatanrkpd_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrkpd/find'] = array (
+      'title' => 'Pencarian Data Kegiatan RKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanrkpd_find_form'),
+      'access arguments' => array ('kegiatanrkpd pencarian'),
+      'file' => 'kegiatanrkpd/kegiatanrkpd_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+    $items['apbd/kegiatanrkpd/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'kegiatanrkpd_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'kegiatanrkpd/kegiatanrkpd_utilitas.php',
+    );
+
+    $items['apbd/kegiatanrkpd/subkegiatan'] = array (
+      'title' => 'Sub Kegiatan RKPD',
+	  'description' => 'Daftar Sub Kegiatan RKPD',
+      'page callback' => 'subkegiatanrkpd_main',
+      'access arguments' => array ('kegiatanrkpd access'),
+      'weight' => 7,
+      'file' => 'kegiatanrkpd/subkegiatan/subkegiatanrkpd_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrkpd/subkegiatan/edit'] = array (
+      'title' => 'Edit Sub Kegiatan RKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subkegiatanrkpd_edit_form'),
+      'access arguments' => array ('kegiatanrkpd edit'),
+      'file' => 'kegiatanrkpd/subkegiatan/subkegiatanrkpd_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanrkpd/subkegiatan/delete'] = array (
+      'title' => 'Delete Sub Kegiatan RKPD',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subkegiatanrkpd_delete_form'),
+      'access arguments' => array ('kegiatanrkpd penghapusan'),
+      'file' => 'kegiatanrkpd/subkegiatan/subkegiatanrkpd_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+
+///##
+	$items['apbd/kegiatanppa'] = array (
+      'title' => 'Kegiatan KUA/PPAS',
+	  'description' => 'Pengelolaan Kegiatan KUA/PPAS',
+	  'title callback' => 'kegiatanppa_title_callback',	  
+      'page callback' => 'kegiatanppa_main',
+      'access arguments' => array ('kegiatanppa access'),
+      'weight' => 13,
+      'file' => 'kegiatanppa/kegiatanppa_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/kegiatanppa/edit'] = array (
+      'title' => 'Edit Kegiatan KUA/PPAS',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanppa_edit_form'),
+      'access arguments' => array ('kegiatanppa edit'),
+      'file' => 'kegiatanppa/kegiatanppa_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanppa/anggaran'] = array (
+      'title' => 'Anggaran Kegiatan KUA/PPAS',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanppa_anggaran_form'),
+      'access arguments' => array ('kegiatanppa anggaran'),
+      'file' => 'kegiatanppa/kegiatanppa_anggaran_form.php',
+      'type' => MENU_CALLBACK,
+    );
+
+    $items['apbd/kegiatanppa/transfer'] = array (
+      'title' => 'Transfer Kegiatan RKPD ke KUA/PPAS',
+	  'description' => 'Proses Transfer Data Kegiatan RKPD ke KUA/PPAS',
+	  'title callback' => 'kegiatanppa_transfer_title_callback',	  
+      'page callback' => 'kegiatanppa_transfer',
+      'access arguments' => array ('kegiatanppa transfer'),
+      'file' => 'kegiatanppa/kegiatanppa_transfer_form.php',
+      'type' => MENU_NORMAL_ITEM,
+	  'weight'=> 1,
+    );
+	
+    $items['apbd/kegiatanppa/bktransfer'] = array (
+      'title' => 'Transfer Kegiatan KUA/PPAS ke RKPD',
+	  'description' => 'Proses Transfer Data Kegiatan KUA/PPAS ke RKPD',
+	  'title callback' => 'kegiatanppa_bktransfer_title_callback',	  
+      'page callback' => 'kegiatanppa_bktransfer',
+      'access arguments' => array ('kegiatanppa bktransfer'),
+      'file' => 'kegiatanppa/kegiatanppa_bktransfer_form.php',
+      'type' => MENU_NORMAL_ITEM,
+	  'weight'=> 2,
+    );
+
+    $items['apbd/kegiatanppa/delete'] = array (
+      'title' => 'Delete Data Kegiatan KUA/PPAS',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanppa_delete_form'),
+      'access arguments' => array ('kegiatanppa penghapusan'),
+      'file' => 'kegiatanppa/kegiatanppa_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanppa/find'] = array (
+      'title' => 'Pencarian Data Kegiatan KUA/PPAS',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('kegiatanppa_find_form'),
+      'access arguments' => array ('kegiatanppa pencarian'),
+      'file' => 'kegiatanppa/kegiatanppa_find_form.php',
+      'type' => MENU_CALLBACK,
+    );
+	
+    $items['apbd/kegiatanppa/utils_auto'] = array(
+      'title' => 'auto completion',
+      'page callback' => 'kegiatanppa_autocomplete',
+      'access arguments' => array('utilitas access'),
+      'type' => MENU_CALLBACK,
+      'file' => 'kegiatanppa/kegiatanppa_utilitas.php',
+    );
+
+    $items['apbd/kegiatanppa/subkegiatan'] = array (
+      'title' => 'Sub Kegiatan KUA/PPAS',
+	  'description' => 'Daftar Sub Kegiatan KUA/PPAS',
+      'page callback' => 'subkegiatanppa_main',
+      'access arguments' => array ('kegiatanppa access'),
+      'weight' => 7,
+      'file' => 'kegiatanppa/subkegiatan/subkegiatanppa_main.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanppa/subkegiatan/edit'] = array (
+      'title' => 'Edit Sub Kegiatan KUA/PPAS',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subkegiatanppa_edit_form'),
+      'access arguments' => array ('kegiatanppa edit'),
+      'file' => 'kegiatanppa/subkegiatan/subkegiatanppa_edit_form.php',
+      'type' => MENU_CALLBACK,
+    );
+    $items['apbd/kegiatanppa/subkegiatan/delete'] = array (
+      'title' => 'Delete Sub Kegiatan KUA/PPAS',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('subkegiatanppa_delete_form'),
+      'access arguments' => array ('kegiatanppa penghapusan'),
+      'file' => 'kegiatanppa/subkegiatan/subkegiatanppa_delete_form.php',
+      'type' => MENU_CALLBACK,
+    );
+//##
+	$items['apbd/laporanpenetapan'] = array (
+      'title' => 'Laporan',
+	  'description' => 'Laporan simAnggaran',
+	  'title callback' => 'laporan_title_callback',	  
+      'page callback' => 'laporan_main',
+      'access arguments' => array ('laporan access'),
+      'weight' => 99,
+      'file' => 'laporanpenetapan/laporan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	$items['apbd/laporanrka'] = array (
+      'title' => 'Laporan',
+	  'description' => 'Laporan RKA-SKPD',
+	  //'title callback' => 'laporan_title_callback',	  
+      'page callback' => 'laporanrka_main',
+      'access arguments' => array ('laporan access'),
+      'weight' => 99,
+      'file' => 'laporanpenetapan/laporanrka_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );	
+	//RKA
+    $items['apbd/laporanpenetapan/rka/ringkasananggaran'] = array (
+		'title' => 'Laporan Ringkasan Anggaran',
+		'description' => 'Laporan Ringkasan Anggaran',
+		//'title callback' => 'laporan_rkaringkasananggaran_title_callback',	  
+		//'title callback' => 'laporan_renjaskpd_title_callback',	  
+		'page callback' => 'ringkasananggaran_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/rka/ringkasananggaran_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporanpenetapan/rka/rekapaggpad'] = array (
+		'title' => 'Laporan Rekap Anggaran Pendapatan',
+		'description' => 'Laporan Anggaran Pendapatan',
+		'page callback' => 'rekapaggpad_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/rka/rekapaggpad_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporanpenetapan/rka/rekapaggbelanja'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggbelanja_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/rka/rekapaggbelanja_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporanpenetapan/rka/rekapaggbl'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggbl_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/rka/rekapaggbl_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporanpenetapan/rka/rekapaggblprogram'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggblprogram_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/rka/rekapaggblprogram_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporanpenetapan/rka/rekapaggblprogramtw'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggblprogramtw_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/rka/rekapaggblprogramtw_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+	$items['apbd/laporanpenetapan/rka/rekapaggblperubahan'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggblprogramtw_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/rka/rekapaggblperubahan_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporanpenetapan/rka/rekapplafonagg'] = array (
+		'title' => 'Laporan Rekap Plafon/Belanja',
+		'description' => 'Laporan Rekap Plafon/Belanja',
+		'page callback' => 'rekapplafonagg_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/rka/rekapplafonagg_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+
+	//RKA PPKAD
+    $items['apbd/laporanpenetapan/rka/ringkasananggaranppkd'] = array (
+		'title' => 'Laporan Ringkasan Anggaran',
+		'description' => 'Laporan Ringkasan Anggaran',
+		//'title callback' => 'laporan_rkaringkasananggaran_title_callback',	  
+		//'title callback' => 'laporan_renjaskpd_title_callback',	  
+		'page callback' => 'ringkasananggaranppkd_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/rka/ringkasananggaranppkd_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+	
+	//APBD
+    $items['apbd/laporanpenetapan/apbd/lampiran1'] = array (
+		'title' => 'Lampiran I APBD',
+		'description' => 'Lampiran I APBD',
+		'page callback' => 'lampiran1_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/apbd/lampiran1_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporanpenetapan/apbd/lampiran2'] = array (
+		'title' => 'Lampiran II APBD',
+		'description' => 'Lampiran II APBD',
+		'page callback' => 'lampiran2_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/apbd/lampiran2_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporanpenetapan/apbd/lampiran3'] = array (
+		'title' => 'Lampiran III APBD',
+		'description' => 'Lampiran III APBD',
+		'page callback' => 'lampiran3_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/apbd/lampiran3_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporanpenetapan/apbd/lampiran4'] = array (
+		'title' => 'Lampiran IV APBD',
+		'description' => 'Lampiran IV APBD',
+		'page callback' => 'lampiran4_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/apbd/lampiran4_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporanpenetapan/apbd/lampiran5'] = array (
+		'title' => 'Lampiran V APBD',
+		'description' => 'Lampiran V APBD',
+		'page callback' => 'lampiran5_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/apbd/lampiran5_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+
+    $items['apbd/laporanpenetapan/apbd/perdabup'] = array (
+		'title' => 'Perda/Pebup APBD',
+		'description' => 'Perda/Pebup APBD',
+		'page callback' => 'perdabup_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/apbd/perdabup_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporanpenetapan/apbd/sinkronisasi'] = array (
+		'title' => 'Sinkronisasi',
+		'description' => 'sinkronisasi',
+		'page callback' => 'sinkronisasi_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/apbd/sinkronisasi_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporanpenetapan/apbd/sinkronisasiprov'] = array (
+		'title' => 'Sinkronisasi Provinsi',
+		'description' => 'Sinkronisasi Provinsi',
+		'page callback' => 'sinkronisasiprov_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/apbd/sinkronisasiprov_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+
+    $items['apbd/laporanpenetapan/apbd/lapkegkecamatan'] = array (
+		'title' => 'Kegiatan Kecamatan',
+		'description' => 'Kegiatan Kecamatan',
+		'page callback' => 'lapkegkecamatan_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/apbd/lapkegkecamatan_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+	
+    $items['apbd/laporanpenetapan/musrenbangcam'] = array (
+		'title' => 'Data Usulan Kegiatan Musrenbangcam',
+		'description' => 'Laporan Data Usulan Kegiatan di Musrenbangcam',
+		'title callback' => 'laporan_musrenbangcam_title_callback',	  
+		'page callback' => 'musrenbangcam_main',
+		'access arguments' => array ('laporan musrenbangcam access'),
+		'weight' => 10,
+		'file' => 'laporanpenetapan/musrenbangcam/musrenbangcam_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporanpenetapan/musrenbangcamv2'] = array (
+		'title' => 'Hasil Pembahasan Musrenbangcam',
+		'description' => 'Laporan Hasil Pembahasan Musrenbangcam',
+		'title callback' => 'laporan_musrenbangcamv2_title_callback',	  
+		'page callback' => 'musrenbangcamv2_main',
+		'access arguments' => array ('laporan musrenbangcam access'),
+		'weight' => 101,
+		'file' => 'laporanpenetapan/musrenbangcam/musrenbangcamv2_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporanpenetapan/musrenbangcamv3'] = array (
+		'title' => '[Musrenbangcam-3] Rekapitulasi Rencana Kegiatan',
+		'description' => 'Laporan Rekapitulasi Rencana Kegiatan Kecamatan',
+		'title callback' => 'laporan_musrenbangcamv3_title_callback',	  
+		'page callback' => 'musrenbangcamv3_main',
+		'access arguments' => array ('laporan musrenbangcam access'),
+		'weight' => 102,
+		'file' => 'laporanpenetapan/musrenbangcam/musrenbangcamv3_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporanpenetapan/renjaskpd'] = array (
+		'title' => 'Laporan Renja SKPD',
+		'description' => 'Laporan Rencana Kerja SKPD',
+		'title callback' => 'laporan_renjaskpd_title_callback',	  
+		'page callback' => 'renjaskpd_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporanpenetapan/renjaskpd/renjaskpd_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+//##
+	$items['apbd/laporan'] = array (
+      'title' => 'Laporan',
+	  'description' => 'Laporan simAnggaran',
+	  'title callback' => 'laporan_title_callback',	  
+      'page callback' => 'laporan_main',
+      'access arguments' => array ('laporan access'),
+      'weight' => 99,
+      'file' => 'laporan/laporan_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	$items['apbd/laporanrka'] = array (
+      'title' => 'Laporan',
+	  'description' => 'Laporan RKA-SKPD',
+	  //'title callback' => 'laporan_title_callback',	  
+      'page callback' => 'laporanrka_main',
+      'access arguments' => array ('laporan access'),
+      'weight' => 99,
+      'file' => 'laporan/laporanrka_main.php',
+      'type' => MENU_NORMAL_ITEM,
+    );
+	
+	//RKA
+    $items['apbd/laporan/rka/ringkasananggaran'] = array (
+		'title' => 'Laporan Ringkasan Anggaran',
+		'description' => 'Laporan Ringkasan Anggaran',
+		//'title callback' => 'laporan_rkaringkasananggaran_title_callback',	  
+		//'title callback' => 'laporan_renjaskpd_title_callback',	  
+		'page callback' => 'ringkasananggaran_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/rka/ringkasananggaran_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/rka/rekapaggpad'] = array (
+		'title' => 'Laporan Rekap Anggaran Pendapatan',
+		'description' => 'Laporan Anggaran Pendapatan',
+		'page callback' => 'rekapaggpad_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/rka/rekapaggpad_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/rka/rekapaggbelanja'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggbelanja_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/rka/rekapaggbelanja_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+	$items['apbd/laporan/rka/rekapaggbelanjaperubahan'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggbelanja_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'kegiatanskpdperubahan/rekapanggbelanjaperubahan_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/rka/rekapaggbl'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggbl_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/rka/rekapaggbl_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporan/rka/rekapaggblprogram'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggblprogram_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/rka/rekapaggblprogram_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporan/rka/rekapaggblprogramtw'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggblprogramtw_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/rka/rekapaggblprogramtw_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+	$items['apbd/laporan/rka/rekapaggblperubahan'] = array (
+		'title' => 'Laporan Rekap Anggaran Belanja',
+		'description' => 'Laporan Anggaran Belanja',
+		'page callback' => 'rekapaggblprogramtw_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/rka/rekapaggblperubahan_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/rka/rekapplafonagg'] = array (
+		'title' => 'Laporan Rekap Plafon/Belanja',
+		'description' => 'Laporan Rekap Plafon/Belanja',
+		'page callback' => 'rekapplafonagg_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/rka/rekapplafonagg_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+
+	//RKA PPKAD
+    $items['apbd/laporan/rka/ringkasananggaranppkd'] = array (
+		'title' => 'Laporan Ringkasan Anggaran',
+		'description' => 'Laporan Ringkasan Anggaran',
+		//'title callback' => 'laporan_rkaringkasananggaran_title_callback',	  
+		//'title callback' => 'laporan_renjaskpd_title_callback',	  
+		'page callback' => 'ringkasananggaranppkd_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/rka/ringkasananggaranppkd_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+	
+	//APBD
+    $items['apbd/laporan/apbd/lampiran1'] = array (
+		'title' => 'Lampiran I APBD',
+		'description' => 'Lampiran I APBD',
+		'page callback' => 'lampiran1_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/lampiran1_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+	$items['apbd/laporan/apbd/lampiran1_test'] = array (
+		'title' => 'Lampiran I APBD',
+		'description' => 'Lampiran I APBD',
+		'page callback' => 'lampiran1_test_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/lampiran1_test_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporan/apbd/lampiran2'] = array (
+		'title' => 'Lampiran II APBD',
+		'description' => 'Lampiran II APBD',
+		'page callback' => 'lampiran2_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/lampiran2_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporan/apbd/lampiran3'] = array (
+		'title' => 'Lampiran III APBD',
+		'description' => 'Lampiran III APBD',
+		'page callback' => 'lampiran3_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/lampiran3_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporan/apbd/lampiran4'] = array (
+		'title' => 'Lampiran IV APBD',
+		'description' => 'Lampiran IV APBD',
+		'page callback' => 'lampiran4_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/lampiran4_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporan/apbd/lampiran5'] = array (
+		'title' => 'Lampiran V APBD',
+		'description' => 'Lampiran V APBD',
+		'page callback' => 'lampiran5_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/lampiran5_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+
+    $items['apbd/laporan/apbd/perdabup'] = array (
+		'title' => 'Perda/Pebup APBD',
+		'description' => 'Perda/Pebup APBD',
+		'page callback' => 'perdabup_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/perdabup_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporan/apbd/sinkronisasi'] = array (
+		'title' => 'Sinkronisasi',
+		'description' => 'sinkronisasi',
+		'page callback' => 'sinkronisasi_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/sinkronisasi_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    $items['apbd/laporan/apbd/sinkronisasiprov'] = array (
+		'title' => 'Sinkronisasi Provinsi',
+		'description' => 'Sinkronisasi Provinsi',
+		'page callback' => 'sinkronisasiprov_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/sinkronisasiprov_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+
+    $items['apbd/laporan/apbd/lapkegkecamatan'] = array (
+		'title' => 'Kegiatan Kecamatan',
+		'description' => 'Kegiatan Kecamatan',
+		'page callback' => 'lapkegkecamatan_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/apbd/lapkegkecamatan_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+	
+    $items['apbd/laporan/musrenbangcam'] = array (
+		'title' => 'Data Usulan Kegiatan Musrenbangcam',
+		'description' => 'Laporan Data Usulan Kegiatan di Musrenbangcam',
+		'title callback' => 'laporan_musrenbangcam_title_callback',	  
+		'page callback' => 'musrenbangcam_main',
+		'access arguments' => array ('laporan musrenbangcam access'),
+		'weight' => 10,
+		'file' => 'laporan/musrenbangcam/musrenbangcam_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/musrenbangcamv2'] = array (
+		'title' => 'Hasil Pembahasan Musrenbangcam',
+		'description' => 'Laporan Hasil Pembahasan Musrenbangcam',
+		'title callback' => 'laporan_musrenbangcamv2_title_callback',	  
+		'page callback' => 'musrenbangcamv2_main',
+		'access arguments' => array ('laporan musrenbangcam access'),
+		'weight' => 101,
+		'file' => 'laporan/musrenbangcam/musrenbangcamv2_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/musrenbangcamv3'] = array (
+		'title' => '[Musrenbangcam-3] Rekapitulasi Rencana Kegiatan',
+		'description' => 'Laporan Rekapitulasi Rencana Kegiatan Kecamatan',
+		'title callback' => 'laporan_musrenbangcamv3_title_callback',	  
+		'page callback' => 'musrenbangcamv3_main',
+		'access arguments' => array ('laporan musrenbangcam access'),
+		'weight' => 102,
+		'file' => 'laporan/musrenbangcam/musrenbangcamv3_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/renjaskpd'] = array (
+		'title' => 'Laporan Renja SKPD',
+		'description' => 'Laporan Rencana Kerja SKPD',
+		'title callback' => 'laporan_renjaskpd_title_callback',	  
+		'page callback' => 'renjaskpd_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 201,
+		'file' => 'laporan/renjaskpd/renjaskpd_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+//    $items['apbd/laporan/renjaskpdkab'] = array (
+//	'title' => 'Laporan Renja SKPD Kabupaten',
+//	'description' => 'Laporan Rencana Kerja SKPD Seluruh Kabupaten',
+//	'title callback' => 'laporan_renjaskpdkab_title_callback',	  
+//	'page callback' => 'laprenjaskpdkab_main',
+//	'access arguments' => array ('laporan skpd access'),
+//	'weight' => 4,
+//	'file' => 'laporan/renjaskpd/renjaskpdkab_main.php',
+//	'type' => MENU_NORMAL_ITEM,
+//    );
+    $items['apbd/laporan/renjaskpdapbd'] = array (
+		'title' => 'Laporan Renja SKPD APBD',
+		'description' => 'Laporan Renja SKPD dengan sumberdana APBD',
+		'title callback' => 'laporan_renjaskpdapbd_title_callback',	  
+		'page callback' => 'renjaskpdapbd_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 202,
+		'file' => 'laporan/renjaskpd/renjaskpdapbd_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/renjaskpdnonapbd'] = array (
+		'title' => 'Laporan Renja SKPD NON-APBD',
+		'description' => 'Laporan Renja SKPD dengan sumberdana non APBD (APBD Prov & APBN)',
+		'title callback' => 'laporan_renjaskpdnonapbd_title_callback',	  
+		'page callback' => 'renjaskpdnonapbd_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 203,
+		'file' => 'laporan/renjaskpd/renjaskpdnonapbd_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+
+    $items['apbd/laporan/renjaskpdv2'] = array (
+		'title' => '[Renja SKPD-4] Laporan Renja SKPD Format Pembahasan',
+		'description' => 'Laporan Pembahasan Rencana Kerja SKPD dan Musrenbangcam',
+		'title callback' => 'laporan_renjaskpdv2_title_callback',	  
+		'page callback' => 'renjaskpdv2_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 204,
+		'file' => 'laporan/renjaskpd/renjaskpdv2_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+
+    $items['apbd/laporan/renjaskpdmusrenbangda'] = array (
+		'title' => '[Renja SKPD-5] Musrenbangda - Kabupaten',
+		'description' => 'Laporan Musrenbangda - Kabupaten',
+		'title callback' => 'laporan_renjaskpdmusrenbangda_title_callback',	  
+		'page callback' => 'renjaskpdmusrenbangda_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 205,
+		'file' => 'laporan/renjaskpd/renjaskpdmusrenbangda_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/renjaskpdbidang'] = array (
+		'title' => '[RENJASKPD-6] Rekapitulasi Rencana Kegiatan Per Bidang',
+		'description' => 'Laporan Rekapitulasi Rencana Kegiatan SKPD Per Bidang',
+		'title callback' => 'laporan_renjaskpdbidang_title_callback',	  
+		'page callback' => 'renjaskpdbidang_main',
+		'access arguments' => array ('laporan skpd access'),
+		'weight' => 206,
+		'file' => 'laporan/renjaskpd/renjaskpdbidang_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+
+    $items['apbd/laporan/rkpd'] = array (
+		'title' => 'Laporan RKPD',
+		'description' => 'Laporan RKPD',
+		'title callback' => 'laporan_rkpd_title_callback',	  
+		'page callback' => 'rkpd_main',
+		'access arguments' => array ('laporan rkpd access'),
+		'weight' => 301,
+		'file' => 'laporan/rkpd/rkpd_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/rkpdv2'] = array (
+		'title' => '[RKPD-2] Rencana Kerja Pemerintah Daerah',
+		'description' => 'Laporan Rencana Kerja Pemerintah Daerah',
+		'title callback' => 'laporan_rkpdv2_title_callback',	  
+		'page callback' => 'rkpdv2_main',
+		'access arguments' => array ('laporan rkpd access'),
+		'weight' => 302,
+		'file' => 'laporan/rkpd/rkpdv2_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/rkpdbidang'] = array (
+		'title' => '[RKPD-6] Rekapitulasi Rencana Kegiatan Per Bidang',
+		'description' => 'Laporan Rekapitulasi Rencana Kegiatan RKPD Per Bidang',
+		'title callback' => 'laporan_rkpdbidang_title_callback',	  
+		'page callback' => 'rkpdbidang_main',
+		'access arguments' => array ('laporan rkpd access'),
+		'weight' => 303,
+		'file' => 'laporan/rkpd/rkpdbidang_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/rkpdsumberdana'] = array (
+		'title' => '[RKPD-6] Rekapitulasi Rencana Kegiatan Per Bidang',
+		'description' => 'Laporan Rekapitulasi Rencana Kegiatan RKPD Per Bidang',
+		'title callback' => 'laporan_rkpdsumberdana_title_callback',	  
+		'page callback' => 'rkpdsumberdana_main',
+		'access arguments' => array ('laporan rkpd access'),
+		'weight' => 304,
+		'file' => 'laporan/rkpd/rkpdsumberdana_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+	
+    $items['apbd/laporan/ppa'] = array (
+		'title' => 'Laporan KUA/PPAS',
+		'description' => t('Laporan KUA/PPAS'),
+		'title callback' => 'laporan_ppa_title_callback',	  
+		'page callback' => 'ppa_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 401,
+		'file' => 'laporan/ppa/ppa_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/ppaplafonskpd'] = array (
+		'title' => 'Laporan Plafon Anggaran SKPD',
+		'description' => 'Laporan Plafon Anggaran SKPD',
+		'title callback' => 'laporan_ppa_plafonskpd_title_callback',	  
+		'page callback' => 'ppa_plafonskpd_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 402,
+		'file' => 'laporan/ppa/ppa_plafonskpd_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/ppaplafonkab'] = array (
+		'title' => 'Laporan Plafon Sementara',
+		'description' => 'Laporan Plafon Sementara Berdasar Urusan Pemerintahan',
+		'title callback' => 'laporan_ppa_plafonkab_title_callback',	  
+		'page callback' => 'ppa_plafonkab_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 403,
+		'file' => 'laporan/ppa/ppa_plafonkab_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+
+    $items['apbd/laporan/kua'] = array (
+		'title' => '[KUA/PPAS-4] Kebijaksanaan Umum Anggaran',
+		'description' => 'Laporan Kebijaksanaan Umum Anggaran (KUA) Pemerintah Daerah',
+		'title callback' => 'laporan_ppa_kua_title_callback',	  
+		'page callback' => 'ppa_kua_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 404,
+		'file' => 'laporan/ppa/ppa_kua_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+
+    $items['apbd/laporan/ppas'] = array (
+		'title' => '[KUA/PPAS-5] Rancangan Prioritas dan Plafon Anggaran Sementara (PPAS)',
+		'description' => 'Laporan Rancangan Prioritas dan Plafon Anggaran Sementara (PPAS) Pemerintah Daerah',
+		'title callback' => 'laporan_ppa_ppas_title_callback',	  
+		'page callback' => 'ppa_ppas_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 405,
+		'file' => 'laporan/ppa/ppa_ppas_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/ppa_sumberdana'] = array (
+		'title' => '[KUA/PPAS-6] Sumber Dana Kegiatan',
+		'description' => 'Laporan Dana Kegiatan KUA/PPAS per Urusan - SKPD',
+		'title callback' => 'laporan_ppa_sumberdana_title_callback',
+		'page callback' => 'ppa_sumberdana_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 406,
+		'file' => 'laporan/ppa/ppa_sumberdana_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/ppa_sumberdanasu'] = array (
+		'title' => '[KUA/PPAS-7] Sumber Dana Kegiatan',
+		'description' => 'Laporan Dana Kegiatan KUA/PPAS per SKPD - Urusan',
+		'title callback' => 'laporan_ppa_sumberdanasu_title_callback',
+		'page callback' => 'ppa_sumberdanasu_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 407,
+		'file' => 'laporan/ppa/ppa_sumberdanasu_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/ppa_upspenjabaran'] = array (
+		'title' => '[KUA/PPAS-8] Penjabaran per Urusan Program SKPD',
+		'description' => 'Laporan Penjabaran per Urusan Program SKPD',
+		'title callback' => 'laporan_ppa_upspenjabaran_title_callback',
+		'page callback' => 'ppa_upspenjabaran_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 408,
+		'file' => 'laporan/ppa/ppa_upspenjabaran_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/ppa_uspenjabaran'] = array (
+		'title' => '[KUA/PPAS-9] Penjabaran per Urusan SKPD',
+		'description' => 'Laporan Penjabaran per Urusan  SKPD',
+		'title callback' => 'laporan_ppa_uspenjabaran_title_callback',
+		'page callback' => 'ppa_uspenjabaran_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 409,
+		'file' => 'laporan/ppa/ppa_uspenjabaran_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/ppa_supenjabaran'] = array (
+		'title' => '[KUA/PPAS-10] Penjabaran per SKPD Urusan',
+		'description' => 'Laporan Penjabaran per SKPD Urusan',
+		'title callback' => 'laporan_ppa_supenjabaran_title_callback',
+		'page callback' => 'ppa_supenjabaran_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 410,
+		'file' => 'laporan/ppa/ppa_supenjabaran_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/ppa_penjabaranrek'] = array (
+		'title' => '[KUA/PPAS-11] Penjabaran per SKPD',
+		'description' => 'Laporan Penjabaran per SKPD',
+		'title callback' => 'laporan_ppa_penjabaranrek_title_callback',
+		'page callback' => 'ppa_penjabaranrek_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 411,
+		'file' => 'laporan/ppa/ppa_penjabaranrek_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );
+    $items['apbd/laporan/ppa_penjabaran'] = array (
+		'title' => '[KUA/PPAS-12] Penjabaran per SKPD Urusan',
+		'description' => 'Laporan Penjabaran per SKPD Urusan atau Urusan',
+		'title callback' => 'laporan_ppa_penjabaran_title_callback',
+		'page callback' => 'ppa_penjabaran_main',
+		'access arguments' => array ('laporan ppa access'),
+		'weight' => 412,
+		'file' => 'laporan/ppa/ppa_penjabaran_main.php',
+		'type' => MENU_NORMAL_ITEM,
+    );	
+    return $items;
+}
+
+function apbd_title_callback() {
+	return t('simAnggaran Online');
+}
+function apbd_main($arg=NULL) {
+	if ($arg)
+		drupal_access_denied();
+
+    //$output .= theme_box('', 'Kabupaten Jepara');
+    $header = array (
+       array('data' => 'Menu'),
+       array('data' => 'Keterangan'),
+    );
+    $t = apbd_menu();
+    while ($v=each($t)) {
+		if ($v[1]['type'] == MENU_NORMAL_ITEM)
+		{
+			/*
+			if (user_access($v[1]['access arguments'][0])) {
+				$linkmenu = l($v[1]['title callback'](), $v['key']);
+				$rows[] = array (
+				   array('data' => $linkmenu),
+				   array('data' => $v[1]['description']),
+				);
+			}
+			*/
+		}	
+    }
+    
+    $output .= theme_box('', theme_table($header, $rows));
+    return $output;
+}
+function setupapp_title_callback() {
+    return t('Konfigurasi Aplikasi');
+}
+function unitkerja_title_callback() {
+    return t('Data SKPD');
+}
+function subunitkerja_title_callback() {
+    return t('Data Sub SKPD');
+}
+function dinas_title_callback() {
+    return t('Data Dinas (UkUrusan)');
+}
+function bidang_title_callback() {
+    return t('Bidang');
+}
+function bidangurusan_title_callback() {
+    return t('Bidang Urusan');
+}
+function desa_title_callback() {
+    return t('Data Desa');
+}
+function apbdop_title_callback() {
+    return t('Pengelolaan User');
+}
+function program_title_callback() {
+    return t('Program');
+}
+function programsasaran_title_callback() {
+    return t('Target & Sasaran RPJMD');
+}
+function kegiatanlt_title_callback() {
+    return t('Master Kegiatan');
+}
+function urusan_title_callback() {
+    return t('Urusan');
+}
+function download_title_callback() {
+    return t('Downloads Center');
+}
+function dpa_title_callback() {
+    return t('DPA-SKPD');
+}
+function dpaperubahan_title_callback() {
+    return t('DPPA-SKPD');
+}
+function kegiatancam_title_callback() {
+    return t('Kegiatan Musrenbangcam');
+}
+function kegiatanskpd_title_callback() {
+    return t('Kegiatan SKPD');
+}
+function kegiatanskpdover_title_callback() {
+    return t('Daftar Kegiatan Melebihi Plafon');
+}
+function kegiatanskpdsd_title_callback() {
+    return t('Rekap Sumber Dana');
+}
+function kegiatanskpd_transfer_title_callback() {
+	return t('Transfer Kegiatan Musrenbangcam ke SKPD');
+}
+function kegiatanrkpd_transfer_title_callback() {
+	return t('Transfer Kegiatan SKPD ke RKPD');
+}
+function kegiatanppa_transfer_title_callback() {
+	return t('Transfer Kegiatan RKPD ke KUA/PPAS');
+}
+function kegiatanppa_bktransfer_title_callback() {
+	return t('Transfer Kegiatan KUA/PPAS ke RKPD');
+}
+
+function kegiatanrkpd_title_callback() {
+    return t('Kegiatan RKPD');
+}
+function kegiatanppa_title_callback() {
+    return t('Kegiatan KUA/PPAS');
+}
+
+function pendapatan_title_callback() {
+    return t('Pendapatan');
+}
+
+function pembiayaan_title_callback() {
+    return t('Pembiayaan');
+}
+
+function pembiayaanperubahan_title_callback() {
+    return t('Pembiayaan Perubahan');
+}
+
+function kegiatanrevisi_title_callback() {
+    return t('Usulan Revisi Kegiatan');
+}
+
+function laporan_title_callback() {
+	return t("Laporan");
+}
+function laporan_musrenbangcam_title_callback() {
+	return t("[Musrenbangcam-1] Data Usulan Kegiatan Musrenbangcam");
+}
+function laporan_musrenbangcamv2_title_callback() {
+	return t("[KUA/PPA] Alokasi SKPD per Rekening");
+}
+function laporan_musrenbangcamv3_title_callback() {
+	return t("[KUA/PPA] Analisa penjabaran belanja per Urusan/Program/SKPD");
+}
+function laporan_renjaskpd_title_callback() {
+    return t('[Renja SKPD-1] Laporan Renja SKPD');
+}
+
+function laporan_rkaringkasananggaran_title_callback() {
+    return t('Laporan RKA - Ringkasan Anggaran');
+}
+
+//function laporan_renjaskpdkab_title_callback() {
+//    return t('[Renja SKPD-2] Laporan Renja SKPD Seluruh Kabupaten');
+//}
+function laporan_renjaskpdapbd_title_callback() {
+    return t('[Renja SKPD-2] Laporan Renja SKPD dengan Sumberdana APBD');
+}
+function laporan_renjaskpdnonapbd_title_callback() {
+    return t('[Renja SKPD-3] Laporan Renja SKPD dengan Sumberdana Non-APBD (APBD Prov, APBN)');
+}
+function laporan_renjaskpdv2_title_callback() {
+    return t('[Renja SKPD-4] Laporan Renja SKPD Format Pembahasan');
+}
+function laporan_renjaskpdmusrenbangda_title_callback() {
+    return t('[Renja SKPD-5] Laporan Renja SKPD - Musrenbangda');
+}
+function laporan_renjaskpdbidang_title_callback() {
+	return t('[Renja SKPD-6] Rekapitulasi Renja SKPD Per-Bidang');
+}
+
+function laporan_rkpd_title_callback() {
+	return t('[RKPD-1] Laporan RKPD');
+}
+
+function laporan_rkpdv2_title_callback() {
+	return t('[RKPD-2] Rencana Kerja Pemerintah Daerah');
+}
+function laporan_rkpdbidang_title_callback() {
+	return t('[RKPD-3] Rekapitulasi Rencana Kerja Pemerintah Daerah Per-Bidang');
+}
+function laporan_rkpdsumberdana_title_callback() {
+	return t('[KUA/PPA] Rekapitulasi Sumber Dana Kegiatan');
+}
+function laporan_ppa_title_callback() {
+	return t('[KUA/PPAS-1] Laporan KUA/PPAS');
+}
+function laporan_ppa_plafonskpd_title_callback() {
+	return t('[KUA/PPAS-2] Laporan KUA/PPAS: Plafon Anggaran SKPD');
+}
+function laporan_ppa_plafonkab_title_callback() {
+	return t('[KUA/PPAS-3] Laporan KUA/PPAS: Plafon Sementara Berdasar Urusan Pemerintahan');
+}
+function laporan_ppa_kua_title_callback() {
+	return t('[KUA/PPAS-4] Kebijaksanaan Umum Anggaran');
+}
+function laporan_ppa_ppas_title_callback() {
+	return t('[KUA/PPAS-5] Rancangan Prioritas dan Plafon Anggaran Sementara (PPAS)');
+}
+function laporan_ppa_sumberdana_title_callback() {
+	return t('[KUA/PPAS-6] Laporan Sumber Dana KUA/PPAS per Urusan - SKPD');
+}
+function laporan_ppa_sumberdanasu_title_callback() {
+	return t('[KUA/PPAS-7] Laporan Sumber Dana KUA/PPAS per SKPD - Urusan');
+}
+function laporan_ppa_upspenjabaran_title_callback() {
+	return t('[KUA/PPAS-8] Laporan Penjabaran per Urusan Program SKPD');
+}
+function laporan_ppa_uspenjabaran_title_callback() {
+	return t('[KUA/PPAS-9] Laporan Penjabaran per Urusan SKPD');
+}
+function laporan_ppa_supenjabaran_title_callback() {
+	return t('[KUA/PPAS-10] Laporan Penjabaran per SKPD Urusan');
+}
+function laporan_ppa_penjabaranrek_title_callback() {
+	return t('[KUA/PPAS-11] Laporan Penjabaran per SKPD');
+}
+function laporan_ppa_penjabaran_title_callback() {
+	return t('[KUA/PPAS-12] Laporan Penjabaran per SKPD atau Urusan');
+}
+function apbd_fn($num) {
+
+    //return number_format((float)$num, 0, ',', '.');
+	
+	$x = number_format((float)$num, 0, ',', '.');
+	if (substr($x,0,1)=='-' ) $x = '('. substr($x,1) . ')';
+	return $x;
+}
+
+function apbd_tahun() {
+	return '2019';
+}
+
+function apbd_fn2($num) {
+    $x = number_format((float)$num, 2, ',', '.');
+	if (substr($x,0,1)=='-' ) $x = '('. substr($x,1) . ')';
+	return $x;
+}
+function apbd_fn1($num) {
+    $x = number_format((float)$num, 1, ',', '.');
+	if (substr($x,0,1)=='-' ) $x = '('. substr($x,1) . ')';
+	return $x;
+}
+
+function apbd_fd($dt) {
+	return date('Y/m/d',strtotime($dt));
+}
+
+function apbd_terbilang($x)
+{
+	$t = apbd_terbilangx($x);
+	if ($t == '' || $t == ' ')
+		return '# N.i.h.i.l #';
+	else
+		return '# ' . $t . ' Rupiah #';
+}
+
+function apbd_terbilangx($x)
+{
+  $abil = array("", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas");
+  if ($x < 12)
+    return " " . $abil[$x];
+  elseif ($x < 20)
+    return apbd_terbilangx($x - 10) . "belas";
+  elseif ($x < 100)
+    return apbd_terbilangx($x / 10) . " Puluh" . apbd_terbilangx($x % 10);
+  elseif ($x < 200)
+    return " Seratus" . apbd_terbilangx($x - 100);
+  elseif ($x < 1000)
+    return apbd_terbilangx($x / 100) . " Ratus" . apbd_terbilangx($x % 100);
+  elseif ($x < 2000)
+    return " Seribu" . apbd_terbilangx($x - 1000);
+  elseif ($x < 1000000)
+    return apbd_terbilangx($x / 1000) . " Ribu" . apbd_terbilangx($x % 1000);
+  elseif ($x < 1000000000)
+    return apbd_terbilangx($x / 1000000) . " Juta" . apbd_terbilangx($x % 1000000);
+  elseif ($x < 1000000000000)
+    return apbd_terbilangx($x / 1000000000) . " Milyar" . apbd_terbilangx($x % 1000000000);
+}
+
+function apbd_format_rek_obyek($rek) {
+	return substr_replace($rek, '.', 3, 0);
+}
+
+function apbd_format_rek_rincianobyek($rek) {
+	$x = substr_replace($rek, '.', 5, 0);
+	return substr_replace($x, '.', 3, 0);
+}
+
+function apbd_getcounterkegiatan($parts) {
+	$query = sprintf("select kodeparts, kodecounter from appcounter where kodeparts='%s'", $parts);
+	$pres = db_query($query);
+	$s = '101';
+	if ($data=db_fetch_object($pres)) {
+		$v = $data->kodecounter;
+		$v++;
+		$s = '000' . $v;
+		$s = substr($s, strlen($s)-3);
+		$query = sprintf("update appcounter set kodecounter=kodecounter+1 where kodeparts='%s'", $parts);
+		db_query($query);
+	} else {
+		$s = '101';
+		$query = sprintf("insert into appcounter(kodeparts, kodecounter) values ('%s', 101)", $parts);
+		db_query($query);
+	}
+	return $s;
+}
+
+function apbd_getcounterrevisi($parts) {
+	$query = sprintf("select kodekeg  from kegiatanrevisi where kodekeg like '%s%%' order by kodekeg desc limit 1", db_escape_string($parts));
+	//echo $query;
+	$pres = db_query($query);
+	if ($data=db_fetch_object($pres)) {
+		$v = substr($data->kodekeg,-3);
+		$iv = intval($v);
+		//if ($iv<300) $iv += 300;
+		$iv++;
+		$v = '000' . $iv; 
+		$v = substr($v, strlen($v)-3);
+		return $v;
+	} else {
+		return '001';
+	}	 
+}
+function apbd_getcounterkec($parts) {
+	$query = sprintf("select nomorkeg  from kegiatankec where kodekeg like '%s%%' order by nomorkeg desc", db_escape_string($parts));
+	$pres = db_query($query);
+	if ($data=db_fetch_object($pres)) {
+		$v = $data->nomorkeg;
+		$iv = intval($v);
+		$iv++;
+		$v = '000' . $iv;
+		$v = substr($v, strlen($v)-3);
+		return $v;
+	} else {
+		return '001';
+	}	
+} 
+function apbd_getcounterskpd($parts) {
+	$query = sprintf("select kodekeg  from kegiatanskpd where kodekeg like '%s%%' order by kodekeg desc limit 1", db_escape_string($parts));
+	//echo $query;
+	$pres = db_query($query);
+	if ($data=db_fetch_object($pres)) {
+		$v = $data->nomorkeg;
+		$iv = intval($v);
+		//if ($iv<300) $iv += 300;
+		$iv++;
+		$v = '000' . $iv; 
+		$v = substr($v, strlen($v)-3);
+		return $v;
+	} else {
+		return '001';
+	}	 
+} 
+function apbd_getcounterskpdrevisi($parts) {
+	$query = sprintf("select kodekeg  from kegiatanrevisi where kodekeg like '%s%%' order by kodekeg desc limit 1", db_escape_string($parts));
+	//drupal_set_message($query);
+	$pres = db_query($query);
+	if ($data=db_fetch_object($pres)) {
+		$v = substr($data->kodekeg,-3);
+		$iv = intval($v);
+		//drupal_set_message($iv);
+		$iv++;
+		$v = '000' . $iv;
+		$v = substr($v, strlen($v)-3);
+		
+		//drupal_set_message($v);
+		
+		return $v;
+	} else {
+		return '001';
+	}	
+}
+function apbd_getcounterrkpd($parts) {
+	$query = sprintf("select nomorkeg  from kegiatanrkpd where kodekeg like '%s%%' order by nomorkeg desc", db_escape_string($parts));
+	$pres = db_query($query);
+	if ($data=db_fetch_object($pres)) {
+		$v = $data->nomorkeg;
+		$iv = intval($v);
+		$iv++;
+		$v = '000' . $iv;
+		$v = substr($v, strlen($v)-3);
+		return $v;
+	} else {
+		return '001';
+	}	
+}
+
+function apbd_getcounterppa($parts) {
+	$query = sprintf("select nomorkeg  from kegiatanppa where kodekeg like '%s%%' order by nomorkeg desc", db_escape_string($parts));
+	$pres = db_query($query);
+	if ($data=db_fetch_object($pres)) {
+		$v = $data->nomorkeg;
+		$iv = intval($v);
+		$iv++;
+		$v = '000' . $iv;
+		$v = substr($v, strlen($v)-3);
+		return $v;
+	} else {
+		return '001';
+	}	
+}
+
+/*
+function apbd_hitungpersen($awal, $akhir) {
+	if ($awal>0) {
+		$x = (($akhir - $awal)/$awal) * 100;
+	} else
+		$x = 100;
+	return $x;
+}
+*/
+
+function apbd_getuseruk() {
+	$user =  user_load($GLOBALS['user']->uid);
+	
+	$pquery = sprintf("select kodeuk from apbdop where username='%s'", $user->name);
+	$pres = db_query($pquery);
+	if ($data=db_fetch_object($pres)) {
+		return $data->kodeuk;
+	}
+	return '';
+}
+
+function apbd_getusersuk() {
+	$user =  user_load($GLOBALS['user']->uid);
+	
+	$pquery = sprintf("select kodesuk from apbdop where username='%s'", $user->name);
+	$pres = db_query($pquery);
+	if ($data=db_fetch_object($pres)) {
+		return $data->kodesuk;
+	}
+	return '';
+}
+
+function isUserKecamatan() {
+	$user =  user_load($GLOBALS['user']->uid);
+	if (in_array('user kecamatan', $user->roles))
+		return true;
+	return false;
+}
+function isUserSKPD() {
+	$user =  user_load($GLOBALS['user']->uid);
+	if (in_array('user skpd non-kecamatan', $user->roles))
+		return true;
+	return false;
+}
+function isSuperuser() {
+	$user =  user_load($GLOBALS['user']->uid);
+	if (in_array('apbd admin', $user->roles))
+		return true;
+	return (false || isAdministrator());	
+}
+
+function isUserview() {
+	$user =  user_load($GLOBALS['user']->uid);
+	if (in_array('user viewer', $user->roles))
+		return true;
+	return false;
+}
+
+function isAdministrator() {
+	$user =  user_load($GLOBALS['user']->uid);
+	if (user_access('Administer Nodes', $user))
+		return true;
+	return false;		
+}
+
+
+function isVerifikator() {
+	$user =  user_load($GLOBALS['user']->uid);
+	if (in_array('user verifikator', $user->roles))
+		return true;
+	return false;
+}
+
+function isVerifikatorByID($uid) {
+	$user =  user_load($uid);
+	if (in_array('user verifikator', $user->roles))
+		return true;
+	return false;
+}
+function batastgl(){
+	
+	$sql = 'select tahun, revisi, uraian, tglbatasrka
+		from {setupapp}';
+        $res = db_query(db_rewrite_sql($sql));
+        if ($res) {
+            $data = db_fetch_object($res);
+			if ($data) {
+               $tgltgl		=	$data->tglbatasrka;
+                
+			} 
+        }
+	$arrtgl=explode('-',$tgltgl);
+	$batas = mktime(6, 0, 0, $arrtgl[1], $arrtgl[2], $arrtgl[0]) ;
+	$sekarang = time () ;
+	$selisih =($batas-$sekarang) ;
+	if($selisih>0){
+		return true;
+	}
+	else{
+		return false;
+	}
+	
+	//return true;
+}
+function apbd_ExportPDF($pageOrientation, $pageSize, $htmlContent, $pdfFiel) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, $this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  $this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		}      
+	} 
+	
+    $pdf = new MYPDF($pageOrientation, PDF_UNIT, $pageSize, true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('SIPPD');
+    $pdf->SetTitle('PDF Gen');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+    $pdf->setFooterMargin(10);
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	if ($pageOrientation=='L') {
+		$pdf->setHeaderMargin(20);
+		//$pdf->SetMargins(5,20);
+		$pdf->SetMargins(10,20);
+	} else {
+		$pdf->setHeaderMargin(10);
+		$pdf->SetMargins(20,10);
+	}
+	
+	//$pdf->SetMargins(15,15);
+    $pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+    $pdf->writeHTML($htmlContent, true, 0, true, 0);
+	
+	//$ypos = $pdf->GetY();
+	//$pdf->Write(0, $ypos, '', 0, 'L', true, 0, false, false, 0);
+	//$ypos = $ypos-10;
+	//$pdf->Write(0, $ypos, '', 0, 'L', true, 0, false, false, 0);
+	
+	//$pdf->SetY($ypos, true, false);
+	
+	//$pdf->writeHTML($htmlContent, true, 0, true, 0);
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+function apbd_ExportPDF_Sampul($pageOrientation, $pageSize, $htmlContent, $pdfFiel) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+
+	
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, $this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  //$this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		}      
+	} 
+	
+	
+    $pdf = new MYPDF($pageOrientation, PDF_UNIT, $pageSize, true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('SIPPD');
+    $pdf->SetTitle('PDF Gen');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+    $pdf->setFooterMargin(10);
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	if ($pageOrientation=='L') {
+		$pdf->setHeaderMargin(20);
+		//$pdf->SetMargins(5,20);
+		$pdf->SetMargins(38,20);
+	} else {
+		$pdf->setHeaderMargin(10);
+		$pdf->SetMargins(20,10);
+	}
+	 
+	//$pdf->SetMargins(15,15);
+    $pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+   
+	$pdf->Image('files/logo_kecil.png', 160, 20+$topmargin-10, 20, 25, 'PNG', '', '', 
+			true, 150, '', false, false, 0, false, false, false);
+	
+    $pdf->writeHTML($htmlContent, true, 0, true, 0);
+	
+	//$ypos = $pdf->GetY();
+	//$pdf->Write(0, $ypos, '', 0, 'L', true, 0, false, false, 0);
+	//$ypos = $ypos-10;
+	//$pdf->Write(0, $ypos, '', 0, 'L', true, 0, false, false, 0);
+	
+	//$pdf->SetY($ypos, true, false);
+	
+	//$pdf->writeHTML($htmlContent, true, 0, true, 0);
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+function apbd_ExportPDF2($pageOrientation, $pageSize, $htmlContent1, $htmlContent2, $pdfFiel) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, $this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  $this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		}      
+	} 
+	
+    $pdf = new MYPDF($pageOrientation, PDF_UNIT, $pageSize, true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('SIPPD');
+    $pdf->SetTitle('PDF Gen');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+    $pdf->setFooterMargin(10);
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	if ($pageOrientation=='L') {
+		$pdf->setHeaderMargin(20);
+		//$pdf->SetMargins(5,20);
+		$pdf->SetMargins(10,20);
+	} else {
+		$pdf->setHeaderMargin(10);
+		$pdf->SetMargins(20,10);
+	}
+	
+	//$pdf->SetMargins(15,15);
+    $pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+function apbd_ExportPDF3($topmargin, $footermargin, $htmlContent1, $htmlContent2, $htmlContent3, $printlogo, $pdfFiel) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+    
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  //$this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		  
+		  $this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+		  $this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		  
+			//$this->Cell(20, 10, 'Creator', 0, false, 'C', 0, '', 0, false, 'T', 'M'); 
+			//$this->Cell(20, 10, 'Page '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'R', 0, '', //0, false, 'T', 'M');
+					}      
+	}  
+	
+    //$pdf = new TCPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+	$pdf = new MYPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+	//$pdf->setFooterFont(array('times','', 12));
+    
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	$pdf->setFooterMargin($footermargin);
+	$pdf->SetAutoPageBreak(true, $footermargin);
+	
+	//$pdf->SetMargins(5,20);
+	$pdf->SetMargins(10,$topmargin);
+	
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+
+	//Image($file, $x='', $y='', $w=0, $h=0, $type='', $link='', $align='', 
+	//$resize=false, $dpi=300, $palign='', $ismask=false, $imgmask=false, 
+	//$border=0, $fitbox=false, $hidden=false, $fitonpage=false)
+
+	if ($printlogo)
+		$pdf->Image('files/logo_kecil.png', 16, 20+$topmargin-10, 20, 18, 'PNG', '', '', 
+				true, 150, '', false, false, 0, false, false, false);
+	
+	
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+ 
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent3, true, 0, true, 0);
+
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+/*
+function apbd_ExportPDF3t($topmargin, $footermargin, $htmlContent1, $htmlContent2, $htmlContent3, $printlogo, $pdfFiel,$ttd) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+    //$n='cek';
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer($n) {//$ttd=$n;
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  //$this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		  $ttd=array($_SESSION["link_ttd1"],$_SESSION["link_ttd2"],$_SESSION["link_ttd3"],$_SESSION["link_ttd4"]);
+		  $str_img=array();
+		  for($l=0;$l<4;$l++){
+			  if($ttd[$l]==null){
+				$str_img[$l]='';  
+			  }
+			  else{
+				$str_img[$l]='<img src="'.$ttd[$l].'" height="40" width="100" top="35px" align="middle" /> </br><font align="center"></font>';  
+			  }
+			  
+			  
+		  }
+		  $halaman = $this->PageNo() + $base;
+		//$this->MultiCell(120, 0, 'PEMERINTAH KABUPATEN JEPARA TA. 2019', 1, 'J', 1, 0, '', '', false, 0, false, true, 0);
+		//$this->MultiCell(55, 15, '[CENTER] '.$txt, 1, 'C', 1, 1, '', '', true);
+		$this->MultiCell(62, 5, ''.$txt, 0, 'C', 0, 1, '', '', true);
+		$this->MultiCell(125, 15, $n.'PEMERINTAH KABUPATEN JEPARA TA. 2019 '.$txt, 'T', 'L', 0, 0, '', '', true);
+		$this->MultiCell(35, 10, $n.'TIM PENELITI :'.$txt, 1, 'L', 0, 0, '', '', true);
+		//$this->writeHTMLCell(40, 5, 130, 195, 'TIM PENELITI :', 0, 'L', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 170, 195,  $str_img[0], 1, 'C', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 200, 195, $str_img[1], 1, 'C', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 230, 195, $str_img[2], 1, 'C', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 260, 195, $str_img[3], 1, 'C', 0, 0, '', '', true);
+		//$this->MultiCell(62, 15, '<img src="/files/btnred.png">', 0, 'L', 0, 0, '', '', true, null, true);
+		$this->MultiCell(33, 15, $halaman, 'T', 'R', 0, 0, '', '', true);
+		   
+		  //$this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+		  //$this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		  
+			//$this->Cell(20, 10, 'Creator', 0, false, 'C', 0, '', 0, false, 'T', 'M'); 
+			//$this->Cell(20, 10, 'Page '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'R', 0, '', //0, false, 'T', 'M');
+					}      
+	}  
+	
+    //$pdf = new TCPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+	$pdf = new MYPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+	//$pdf->setFooterFont(array('times','', 12));
+    
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	$pdf->setFooterMargin(20);
+	$pdf->SetAutoPageBreak(true, 17);
+	
+	//$pdf->setFooterMargin($footermargin);
+	//$pdf->SetAutoPageBreak(true, $footermargin);
+	
+	//$pdf->SetMargins(5,20);
+	$pdf->SetMargins(10,$topmargin);
+	
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+
+	//Image($file, $x='', $y='', $w=0, $h=0, $type='', $link='', $align='', 
+	//$resize=false, $dpi=300, $palign='', $ismask=false, $imgmask=false, 
+	//$border=0, $fitbox=false, $hidden=false, $fitonpage=false)
+
+	if ($printlogo)
+		$pdf->Image('files/logo_kecil.png', 16, 20+$topmargin-10, 20, 18, 'PNG', '', '', 
+				true, 150, '', false, false, 0, false, false, false);
+	
+	
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+ 
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent3, true, 0, true, 0);
+
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+*/
+function apbd_ExportPDF3t($topmargin, $footermargin, $htmlContent1, $htmlContent2, $htmlContent3, $printlogo, $pdfFiel,$ttd) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+    //$n='cek';
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer($n) {//$ttd=$n;
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  //$this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		  $ttd=array($_SESSION["link_ttd1"],$_SESSION["link_ttd2"],$_SESSION["link_ttd3"],$_SESSION["link_ttd4"]);
+		  $str_img=array();
+		  for($l=0;$l<=3;$l++){
+			  if($ttd[$l]==null){ 
+				$str_img[$l]='';  
+			  }
+			  else{
+				$str_img[$l]='<img src="'.$ttd[$l].'" height="40" width="100" top="35px" align="middle" /> </br><font align="center"></font>';  
+			  }
+			  
+			  
+		  }
+		 $halaman = $this->PageNo() + $base;
+
+		if ($str_img[3] != ''){
+		$this->MultiCell(62, 5, ''.$txt, 0, 'C', 0, 1, '', '', true);
+		$this->MultiCell(125, 15, $n.'PEMERINTAH KABUPATEN JEPARA TA. 2019 '.$txt, 'T', 'L', 0, 0, '', '', true);
+		$this->MultiCell(35, 10, $n.'TIM PENELITI :'.$txt, 1, 'L', 0, 0, '', '', true);
+		//$this->writeHTMLCell(40, 5, 130, 195, 'TIM PENELITI :', 0, 'L', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 170, 195,  $str_img[0], 1, 'C', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 200, 195, $str_img[1], 1, 'C', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 230, 195, $str_img[2], 1, 'C', 0, 0, '', '', true);
+		
+		$this->writeHTMLCell(30, 10, 260, 195, $str_img[3], 1, 'C', 0, 0, '', '', true);
+		
+		//$this->MultiCell(62, 15, '<img src="/files/btnred.png">', 0, 'L', 0, 0, '', '', true, null, true);
+		$this->MultiCell(33, 15, $halaman, 'T', 'R', 0, 0, '', '', true);
+
+		}else{
+		$this->MultiCell(62, 5, ''.$txt, 0, 'C', 0, 1, '', '', true);
+		$this->MultiCell(125, 15, $n.'PEMERINTAH KABUPATEN JEPARA TA. 2019 '.$txt, 'T', 'L', 0, 0, '', '', true);
+		
+		$this->MultiCell(35, 10, $n.'TIM PENELITI :'.$txt, 1, 'L', 0, 0, '', '', true);
+		//$this->writeHTMLCell(40, 5, 130, 195, 'TIM PENELITI :', 0, 'L', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 170, 195,  $str_img[0], 1, 'C', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 200, 195, $str_img[1], 1, 'C', 0, 0, '', '', true);
+		$this->writeHTMLCell(30, 10, 230, 195, $str_img[2], 1, 'C', 0, 0, '', '', true);
+		
+		$this->MultiCell(63, 15, $halaman, 'T', 'R', 0, 0, '', '', true);
+			
+			
+		
+		}
+		  //$this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+		  //$this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		  
+			//$this->Cell(20, 10, 'Creator', 0, false, 'C', 0, '', 0, false, 'T', 'M'); 
+			//$this->Cell(20, 10, 'Page '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'R', 0, '', //0, false, 'T', 'M');
+					}    
+	}  
+	
+    //$pdf = new TCPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+	$pdf = new MYPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+	ini_set('memory_limit', '6000M');
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran');
+    $pdf->SetSubject('PDF Gen'); 
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+	//$pdf->setFooterFont(array('times','', 12));
+    
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	$pdf->setFooterMargin(20);
+	$pdf->SetAutoPageBreak(true, 17);
+	
+	//$pdf->setFooterMargin($footermargin);
+	//$pdf->SetAutoPageBreak(true, $footermargin);
+	
+	//$pdf->SetMargins(5,20);
+	$pdf->SetMargins(10,$topmargin);
+	
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+
+	//Image($file, $x='', $y='', $w=0, $h=0, $type='', $link='', $align='', 
+	//$resize=false, $dpi=300, $palign='', $ismask=false, $imgmask=false, 
+	//$border=0, $fitbox=false, $hidden=false, $fitonpage=false)
+
+	if ($printlogo)
+		$pdf->Image('files/logo_kecil.png', 16, 20+$topmargin-10, 20, 18, 'PNG', '', '', 
+				true, 150, '', false, false, 0, false, false, false);
+	
+	
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+ 
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent3, true, 0, true, 0);
+	ob_end_clean();
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+
+function apbd_ExportPDF3_CF_Narrow($topmargin, $footermargin, $htmlContent1, $htmlContent2, $htmlContent3, $printlogo, $pdfFiel, $startpage) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+   
+	$startpage -= 1;
+	if ($startpage<0) $startpage = 0;
+	$_SESSION["start"] = $startpage;
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font 
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+			//$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');   
+			//$halaman = $this->PageNo() + $_SESSION["start"];
+			
+			$this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+			$base = $_SESSION["start"];
+			if ($base < 9998) {
+				$halaman = $this->PageNo() + $base;
+				$this->Cell(0,0,$halaman ,'T',0,'R');
+			} else
+				$this->Cell(0,0,'' , 'T',0,'');
+			
+		}      
+	} 
+	
+    //$pdf = new TCPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+	$pdf = new MYPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran-Online');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+	//$pdf->setFooterFont(array('times','', 12));
+    
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	//$pdf->setFooterMargin($footermargin);
+	//$pdf->SetAutoPageBreak(true, $footermargin);
+	
+	$pdf->setFooterMargin(10);
+	$pdf->SetAutoPageBreak(true, 10);
+	
+	//$pdf->SetMargins(5,20);
+	$pdf->SetMargins(10,$topmargin);
+	
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+
+	//Image($file, $x='', $y='', $w=0, $h=0, $type='', $link='', $align='', 
+	//$resize=false, $dpi=300, $palign='', $ismask=false, $imgmask=false, 
+	//$border=0, $fitbox=false, $hidden=false, $fitonpage=false)
+
+	if ($printlogo)
+		$pdf->Image('files/logo_kecil.png', 16, 20+$topmargin-10, 20, 18, 'PNG', '', '', 
+				true, 150, '', false, false, 0, false, false, false);
+	
+	
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+ 
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent3, true, 0, true, 0);
+
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+
+function apbd_ExportPDF3_CF($topmargin, $footermargin, $htmlContent1, $htmlContent2, $htmlContent3, $printlogo, $pdfFiel, $startpage) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+   
+	$startpage -= 1;
+	if ($startpage<0) $startpage = 0;
+	$_SESSION["start"] = $startpage;
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font 
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+			//$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');   
+			//$halaman = $this->PageNo() + $_SESSION["start"];
+			
+			$this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+			$base = $_SESSION["start"];
+			if ($base < 9998) {
+				$halaman = $this->PageNo() + $base;
+				$this->Cell(0,0,$halaman ,'T',0,'R');
+			} else
+				$this->Cell(0,0,'' , 'T',0,'');
+			
+		}      
+	} 
+	
+    //$pdf = new TCPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+	$pdf = new MYPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran-Online');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+	//$pdf->setFooterFont(array('times','', 12));
+    
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	//$pdf->setFooterMargin($footermargin);
+	//$pdf->SetAutoPageBreak(true, $footermargin);
+	
+	$pdf->setFooterMargin(10);
+	$pdf->SetAutoPageBreak(true, 10);
+	
+	//$pdf->SetMargins(5,20);
+	$pdf->SetMargins(30,$topmargin);
+	
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+
+	//Image($file, $x='', $y='', $w=0, $h=0, $type='', $link='', $align='', 
+	//$resize=false, $dpi=300, $palign='', $ismask=false, $imgmask=false, 
+	//$border=0, $fitbox=false, $hidden=false, $fitonpage=false)
+
+	if ($printlogo)
+		$pdf->Image('files/logo_kecil.png', 16, 20+$topmargin-10, 20, 18, 'PNG', '', '', 
+				true, 150, '', false, false, 0, false, false, false);
+	
+	
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+ 
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent3, true, 0, true, 0);
+
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+function apbd_ExportPDF3_CFM($topmargin, $footermargin, $htmlContent1, $htmlContent2, $htmlContent3, $printlogo, $pdfFiel, $startpage) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+   
+	$startpage -= 1;
+	if ($startpage<0) $startpage = 0;
+	$_SESSION["start"] = $startpage;
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font 
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+			//$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');   
+			//$halaman = $this->PageNo() + $_SESSION["start"];
+			
+			$this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+			$base = $_SESSION["start"];
+			if ($base < 9998) {
+				$halaman = $this->PageNo() + $base;
+				$this->Cell(2,0,$halaman ,'T',0,'R');
+			} else
+				$this->Cell(0,0,'' , 'T',0,'');
+			
+		}      
+	} 
+	
+    //$pdf = new TCPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+	$pdf = new MYPDF('L', PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran-Online');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+	//$pdf->setFooterFont(array('times','', 12));
+    
+	$pdf->setRightMargin(1);
+	$pdf->setLeftMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	//$pdf->setFooterMargin($footermargin);
+	//$pdf->SetAutoPageBreak(true, $footermargin);
+	
+	$pdf->setFooterMargin(10);
+	$pdf->SetAutoPageBreak(true, 10);
+	
+	//$pdf->SetMargins(5,20);
+	$pdf->SetMargins(22,$topmargin);
+	
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+
+	//Image($file, $x='', $y='', $w=0, $h=0, $type='', $link='', $align='', 
+	//$resize=false, $dpi=300, $palign='', $ismask=false, $imgmask=false, 
+	//$border=0, $fitbox=false, $hidden=false, $fitonpage=false)
+
+	if ($printlogo)
+		$pdf->Image('files/logo_kecil.png', 16, 20+$topmargin-10, 20, 18, 'PNG', '', '', 
+				true, 150, '', false, false, 0, false, false, false);
+	
+	
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+ 
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent3, true, 0, true, 0);
+
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+function apbd_ExportPDF2P($topmargin, $footermargin, $htmlContent1, $htmlContent2, $pdfFiel) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  $this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+		  $this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		}      
+	} 
+	
+    $pdf = new MYPDF('P', PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran-Online');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+    
+	$pdf->setRightMargin(1);
+    
+	//$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	$pdf->setFooterMargin($footermargin);
+	$pdf->SetAutoPageBreak(true, $footermargin);
+	
+	//$pdf->SetMargins(10,5);
+	$pdf->SetMargins(10,$topmargin);
+	
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+ 
+function apbd_ExportPDF3P($topmargin, $footermargin, $htmlContent1, $htmlContent2, $htmlContent3, $pdfFiel) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  $this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+		  $this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		}      
+	} 
+	
+    $pdf = new MYPDF('P', PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran-Online');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+    
+	$pdf->setRightMargin(1);
+    
+	//$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	$pdf->setFooterMargin($footermargin);
+	$pdf->SetAutoPageBreak(true, $footermargin);
+	
+	//$pdf->SetMargins(10,5);
+	$pdf->SetMargins(10,$topmargin);
+	
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent3, true, 0, true, 0);
+
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+function apbd_ExportPDF3P_CF($topmargin, $footermargin, $htmlContent1, $htmlContent2, $htmlContent3, $pdfFiel, $startpage) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+
+	$startpage -= 1;
+	if ($startpage<0) $startpage = 0;
+	$_SESSION["start"] = $startpage;
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+			//$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');   
+			
+			$this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+			$base = $_SESSION["start"];
+			if ($base < 9998) {
+				$halaman = $this->PageNo() + $base;
+				$this->Cell(0,0,$halaman ,'T',0,'R');
+			} else
+				$this->Cell(0,0,'' , 'T',0,'');		}      
+	} 
+	
+    $pdf = new MYPDF('P', PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran-Online');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+    
+	$pdf->setRightMargin(1);
+    
+	//$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	//$pdf->setFooterMargin($footermargin);
+	//$pdf->SetAutoPageBreak(true, $footermargin);
+
+	$pdf->setFooterMargin(10);
+	$pdf->SetAutoPageBreak(true, 10);
+	
+	//$pdf->SetMargins(10,5);
+	$pdf->SetMargins(10,$topmargin);
+	
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent3, true, 0, true, 0);
+
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+function apbd_ExportPDF3P_Surat($topmargin, $footermargin, $htmlContent1, $htmlContent2, $htmlContent3, $pdfFiel, $startpage, $printlogo, $pageorientation) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+
+	$startpage -= 1;
+	if ($startpage<0) $startpage = 0;
+	$_SESSION["start"] = $startpage;
+	class MYPDF extends TCPDF {  
+	   // Page footer
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+			$this->SetFont('helvetica', 'I', 8);
+			// Page number
+			//$this->Cell(0, 10, 'Hal. '.$this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');   
+			
+			$this->Cell(0,0,'PEMERINTAH KABUPATEN JEPARA TA. 2019','T',0,'L');
+			$base = $_SESSION["start"];
+			//$ts = date("Y-m-d H:i:s");
+			//if ($base < 9998) {
+			//	$halaman = $this->PageNo() + $base;
+			//	$this->Cell(0,0,$halaman ,'T',0,'R');
+			//} else
+			//	$this->Cell(0,0,'' , 'T',0,'');	
+			//$this->Cell(0,0,$ts ,'T',0,'R');	
+		}      
+	} 
+	
+    $pdf = new MYPDF($pageorientation, PDF_UNIT, 'F4', true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('simAnggaran Online');
+    $pdf->SetTitle('simAnggaran-Online');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(false);
+    $pdf->setFooterFont(array('helvetica','', 10));
+    
+	$pdf->setRightMargin(1);
+    
+	//$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	
+	$pdf->setHeaderMargin($topmargin);
+	
+	//$pdf->setFooterMargin($footermargin);
+	//$pdf->SetAutoPageBreak(true, $footermargin);
+
+	$pdf->setFooterMargin(10);
+	$pdf->SetAutoPageBreak(true, 10);
+	
+	//$pdf->SetMargins(10,5);
+	$pdf->SetMargins(10,$topmargin);
+
+    //$pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+
+	if ($printlogo)
+		$pdf->Image('files/logo_kecil.png', 10, 20+$topmargin-20, 20, 22, 'PNG', '', '', 
+				true, 150, '', false, false, 0, false, false, false);
+	
+	
+    $pdf->writeHTML($htmlContent1, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent2, true, 0, true, 0);
+
+	$ypos = $pdf->GetY()-13;
+	$pdf->SetY($ypos, true, false);
+	
+	$pdf->writeHTML($htmlContent3, true, 0, true, 0);
+
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+ 
+function apbd_ExportExcel($htmlContent, $xlsFile) {
+error_reporting(E_ALL);
+ini_set('display_errors', TRUE);
+ini_set('display_startup_errors', TRUE);
+date_default_timezone_set('Europe/London');
+
+if (PHP_SAPI == 'cli')
+	die('This example should only be run from a Web Browser');
+
+/** Include PHPExcel */
+require_once 'files/PHPExcel/Classes/PHPExcel.php';
+
+
+// Create new PHPExcel object
+$objPHPExcel = new PHPExcel();
+
+// Set document properties
+$objPHPExcel->getProperties()->setCreator("Maarten Balliauw")
+							 ->setLastModifiedBy("Maarten Balliauw")
+							 ->setTitle("Office 2007 XLSX Test Document")
+							 ->setSubject("Office 2007 XLSX Test Document")
+							 ->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.")
+							 ->setKeywords("office 2007 openxml php")
+							 ->setCategory("Test result file");
+
+
+// Add some data
+$objPHPExcel->setActiveSheetIndex(0)
+            ->setCellValue('A1', 'Hello')
+            ->setCellValue('B2', 'world!')
+            ->setCellValue('C1', 'Hello')
+            ->setCellValue('D2', 'world!');
+
+// Miscellaneous glyphs, UTF-8
+$objPHPExcel->setActiveSheetIndex(0)
+            ->setCellValue('A4', 'Miscellaneous glyphs')
+            ->setCellValue('A5', 'éàèùâêîôûëïüÿäöüç');
+
+// Rename worksheet
+$objPHPExcel->getActiveSheet()->setTitle('Simple');
+
+
+// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+$objPHPExcel->setActiveSheetIndex(0);
+
+
+// Redirect output to a client’s web browser (Excel2007)
+header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+header('Content-Disposition: attachment;filename="01simple.xlsx"');
+header('Cache-Control: max-age=0');
+
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+$objWriter->save('php://output');
+}
+
+function apbd_cron() { 
+	fixrevisi();
+}
+  
+function fixrevisi() {
+	$sql = 'SELECT idsub,iddetil,uraian FROM anggperkegdetilsubrevisi where total>0 and anggaran=0';
+	$res = db_query($sql);
+	if ($res) {
+		while ($data = db_fetch_object($res)) {
+			//drupal_set_message($data->uraian);
+			
+			$ada = false;
+			$sql = sprintf("SELECT idsub FROM anggperkegdetilsub where iddetil='%s' and idsub='%s'", db_escape_string($data->iddetil), db_escape_string($data->idsub));
+			$res_cek = db_query($sql);
+			if ($res_cek) {
+				if ($data_cek = db_fetch_object($res_cek)) {
+					$ada = true;
+				}
+			}	 
+			 
+			if ($ada==false)  {
+				drupal_set_message($data->uraian);
+				
+				$sql = sprintf("update {anggperkegdetilsubrevisi} 
+						set anggaran=total where iddetil='%s' and idsub='%s'", db_escape_string($data->iddetil), db_escape_string($data->idsub));
+				$res_x = db_query($sql);
+				
+			}
+			
+		}	
+	}
+}
+
+function apbd_cronperubahan() {
+	
+	//Rekap Sumber Dana
+	$sql = 'delete from {rekapsumberdana}';
+	$res = db_query($sql);
+	if ($res) {
+		
+		//sd1
+		$sql = 'insert into {rekapsumberdana} select sumberdana1 rekapsumber, sum(sumberdana1rp) jumlah from {kegiatanskpd} where inaktif=0 group by sumberdana1';
+		$res = db_query($sql);
+		
+		//sd2
+		$sql = 'insert into {rekapsumberdana} select sumberdana2 rekapsumber, sum(sumberdana2rp) jumlah from {kegiatanskpd} where inaktif=0 group by sumberdana2';
+		$res = db_query($sql);
+		
+		//clean up
+		$sql = 'delete from {rekapsumberdana} where jumlah=0';
+		$res = db_query($sql);
+
+		//beautify
+		//LAIN-LAIN PENDAPATAN
+		$sql = "update {rekapsumberdana} set sumberdana='LLP' where sumberdana='LAIN-LAIN PENDAPATAN'";
+		$res = db_query($sql);
+		//BANTUAN KHUSUS
+		$sql = "update {rekapsumberdana} set sumberdana='BK' where sumberdana='BANTUAN KHUSUS'";
+		$res = db_query($sql);
+		
+	}
+
+	//Rekap Sumber Dana SKPD
+	$sql = 'delete from {rekapsumberdanaskpd}';
+	$res = db_query($sql);
+	if ($res) {
+		
+		//sd1
+		$sql = 'insert into {rekapsumberdanaskpd} select kodeuk, sumberdana1 rekapsumber, sum(sumberdana1rp) jumlah from {kegiatanskpd} where inaktif=0 group by kodeuk, sumberdana1';
+		$res = db_query($sql);
+		
+		//sd2
+		$sql = 'insert into {rekapsumberdanaskpd} select kodeuk, sumberdana2 rekapsumber, sum(sumberdana2rp) jumlah from {kegiatanskpd} where inaktif=0 group by kodeuk, sumberdana2';
+		$res = db_query($sql);
+		
+		//clean up
+		$sql = 'delete from {rekapsumberdanaskpd} where jumlah=0';
+		$res = db_query($sql);
+
+		//beautify
+		//LAIN-LAIN PENDAPATAN
+		$sql = "update {rekapsumberdanaskpd} set sumberdana='LLP' where sumberdana='LAIN-LAIN PENDAPATAN'";
+		$res = db_query($sql);
+		//BANTUAN KHUSUS
+		$sql = "update {rekapsumberdanaskpd} set sumberdana='BK' where sumberdana='BANTUAN KHUSUS'";
+		$res = db_query($sql);
+		
+	}	
+	
+}
+
+	
+function apbd_cronpenetapan() {
+	
+    $sql = 'select kodeuk, count(kodekeg) plafonjml, sum(plafon) plafonnom from kegiatanskpd where plafon>0 and inaktif=0 group by kodeuk';
+    $result = db_query($sql);
+    
+    if ($result) {
+        while ($data = db_fetch_object($result)) {
+			
+			$plafonjml = $data->plafonjml;
+			$totalpersen = $plafonjml * 3;
+			$plafonnom = $data->plafonnom;
+			
+			$sqluk = sprintf(' and kodeuk=\'%s\'', $data->kodeuk);
+
+			//Belum
+			$sql = 'select count(kodekeg) jumlah from kegiatanskpd where plafon>0 and inaktif=0 and total=0 ' . $sqluk;
+			$res = db_query($sql);
+			if ($res) {
+				if ($datarekap = db_fetch_object($res)) {
+					$belum = $datarekap->jumlah;
+				}
+			}			
+
+			//Sebagian
+			$sql = 'select count(kodekeg) jumlah from kegiatanskpd where total>0 and inaktif=0 and total<>plafon ' . $sqluk;
+			$res = db_query($sql);
+			if ($res) {
+				if ($datarekap = db_fetch_object($res)) {
+					$sebagian = $datarekap->jumlah;
+				}
+			}			
+			
+			//selesai
+			$sql = 'select count(kodekeg) jumlah from kegiatanskpd  where plafon>0 and inaktif=0 and total=plafon ' . $sqluk;
+			$res = db_query($sql);
+			if ($res) {
+				if ($datarekap = db_fetch_object($res)) {
+					$selesai = $datarekap->jumlah;
+					//$persen = ($datarekap->jumlah/$data->plafonjml)*100;
+					
+					$persen = (($selesai*3 + $sebagian)/$totalpersen)*100;
+				}
+			}	
+
+			//UPDATE
+			$sql = 'update {progressrka} set plafonjml=\'%s\', plafonnom=\'%s\', belum=\'%s\', sebagian=\'%s\', selesai=\'%s\', persen=\'%s\'  where kodeuk=\'%s\' ';
+			$res = db_query(db_rewrite_sql($sql), array($plafonjml, $plafonnom, $belum, $sebagian, $selesai, $persen, $data->kodeuk));
+			
+		
+        }
+    }
+	
+	//CEK Seribu
+	$sql = 'delete from {kegiatan1000}';
+	$res = db_query($sql);
+	if ($res) {
+		$sql = 'insert into {kegiatan1000} select distinct kodekeg from {anggperkeg} where jumlah mod 1000 >0';
+		$res = db_query($sql);
+	}
+
+	//Nolkan yg dibawah 1000000
+	$sql = 'update {kegiatanskpd} set sumberdana1rp=0 where sumberdana1rp<=1000000';
+	$res = db_query($sql);
+	$sql = 'update {kegiatanskpd} set sumberdana2rp=0 where sumberdana2rp<=1000000';
+	$res = db_query($sql);
+	
+	//Nolkan yg anggarannya kosong
+	$sql = 'update {kegiatanskpd} set sumberdana1rp=0,sumberdana2rp=0 where total=0 or inaktif=1';
+	$res = db_query($sql);
+
+	/*
+	//Buat SD1=Total yg SD1>Total
+	$sql = 'update {kegiatanskpd} set sumberdana1rp=total where sumberdana1rp>total';
+	$res = db_query($sql);
+
+	//Isikan SD1=Total yg SD2=0
+	$sql = 'update {kegiatanskpd} set sumberdana1rp=total where sumberdana2rp=0';
+	$res = db_query($sql);
+
+	//Isikan SD1=Total-SD2
+	$sql = 'update {kegiatanskpd} set sumberdana1rp=total-sumberdana2rp';
+	$res = db_query($sql);
+	*/
+	
+	//Fixing Sumberdana
+	$sql = 'update {kegiatanskpd} set sumberdana1rp=total where sumberdana1rp<>total';
+	$res = db_query($sql);
+	$sql = 'update {kegiatanskpd} set sumberdana2rp=0';
+	$res = db_query($sql);
+	
+	//Inaktifkan 0
+	$sql = 'update {kegiatanskpd} set inaktif=1 where plafon=0';
+	$res = db_query($sql);
+	
+	//Rekap Sumber Dana
+	$sql = 'delete from {rekapsumberdana}';
+	$res = db_query($sql);
+	if ($res) {
+		
+		//sd1
+		$sql = 'insert into {rekapsumberdana} select sumberdana1 rekapsumber, sum(sumberdana1rp) jumlah from {kegiatanskpd} where inaktif=0 group by sumberdana1';
+		$res = db_query($sql);
+		
+		//sd2
+		$sql = 'insert into {rekapsumberdana} select sumberdana2 rekapsumber, sum(sumberdana2rp) jumlah from {kegiatanskpd} where inaktif=0 group by sumberdana2';
+		$res = db_query($sql);
+		
+		//clean up
+		$sql = 'delete from {rekapsumberdana} where jumlah=0';
+		$res = db_query($sql);
+
+		//beautify
+		//LAIN-LAIN PENDAPATAN
+		$sql = "update {rekapsumberdana} set sumberdana='LLP' where sumberdana='LAIN-LAIN PENDAPATAN'";
+		$res = db_query($sql);
+		//BANTUAN KHUSUS
+		$sql = "update {rekapsumberdana} set sumberdana='BK' where sumberdana='BANTUAN KHUSUS'";
+		$res = db_query($sql);
+		
+	}
+
+	//Rekap Sumber Dana SKPD
+	$sql = 'delete from {rekapsumberdanaskpd}';
+	$res = db_query($sql);
+	if ($res) {
+		
+		//sd1
+		$sql = 'insert into {rekapsumberdanaskpd} select kodeuk, sumberdana1 rekapsumber, sum(sumberdana1rp) jumlah from {kegiatanskpd} where inaktif=0 group by kodeuk, sumberdana1';
+		$res = db_query($sql);
+		
+		//sd2
+		$sql = 'insert into {rekapsumberdanaskpd} select kodeuk, sumberdana2 rekapsumber, sum(sumberdana2rp) jumlah from {kegiatanskpd} where inaktif=0 group by kodeuk, sumberdana2';
+		$res = db_query($sql);
+		
+		//clean up
+		$sql = 'delete from {rekapsumberdanaskpd} where jumlah=0';
+		$res = db_query($sql);
+
+		//beautify
+		//LAIN-LAIN PENDAPATAN
+		$sql = "update {rekapsumberdanaskpd} set sumberdana='LLP' where sumberdana='LAIN-LAIN PENDAPATAN'";
+		$res = db_query($sql);
+		//BANTUAN KHUSUS
+		$sql = "update {rekapsumberdanaskpd} set sumberdana='BK' where sumberdana='BANTUAN KHUSUS'";
+		$res = db_query($sql);
+		
+	}	
+	
+}
+
+ 
+function apbd_hitungpersen($awal, $akhir){
+	if ($awal == $akhir) 
+		$x = 0;
+	else if ($awal == 0)
+		$x = 100;
+	else
+		$x = (($akhir - $awal)/$awal)*100;
+	
+	return $x;
+}
+
+
+function apbd_theme_table($header, $rows, $attributes = array(), $caption = NULL) {
+
+
+	$output = '<table' . drupal_attributes($attributes) . ">\n";
+	
+	if (isset($caption)) {
+		$output .= '<caption>' . $caption . "</caption>\n";
+	}
+	
+	// Format the table header:
+	if (count($header)) {
+		// HTML requires that the thead tag has tr tags in it followed by tbody
+		// tags. Using ternary operator to check and see if we have any rows.
+		$output .= (count($rows) ? ' <thead>' : '');
+		
+		foreach ($header as $headerrow) {		
+			$ts = tablesort_init($headerrow);
+			$output .= '<tr>';
+			foreach ($headerrow as $cell) {
+				$cell = tablesort_header($cell, $headerrow, $ts);
+				$output .= _theme_table_cell($cell, TRUE);
+			}
+			$output .= '</tr>';
+		}
+		// Using ternary operator to close the tags based on whether or not there are rows
+		$output .= (count($rows) ? "</thead>\n" : "\n");
+	}
+	else {
+	  $ts = array();
+	}
+	
+	// Format the table rows:
+	if (count($rows)) {
+	  $output .= "<tbody>\n";
+	  $flip = array(
+		'even' => 'odd1',
+		'odd' => 'even1',
+	  );
+	  $class = 'even';
+	  foreach ($rows as $number => $row) {
+		$attributes = array();
+	
+		// Check if we're dealing with a simple or complex row
+		if (isset($row['data'])) {
+		  foreach ($row as $key => $value) {
+			if ($key == 'data') {
+			  $cells = $value;
+			}
+			else {
+			  $attributes[$key] = $value;
+			}
+		  }
+		}
+		else {
+		  $cells = $row;
+		}
+		if (count($cells)) {
+		  // Add odd/even class
+		  $class = $flip[$class];
+		  if (isset($attributes['class'])) {
+			$attributes['class'] .= ' ' . $class;
+		  }
+		  else {
+			$attributes['class'] = $class;
+		  }
+	
+		  // Build row
+		  $output .= ' <tr' . drupal_attributes($attributes) . '>';
+		  $i = 0;
+		  foreach ($cells as $cell) {
+			$cell = tablesort_cell($cell, $header, $ts, $i++);
+			$output .= _theme_table_cell($cell);
+		  }
+		  $output .= " </tr>\n";
+		}
+	  }
+	  $output .= "</tbody>\n";
+	}
+	
+	$output .= "</table>\n";
+	return $output;
+}
+
+function apbdIsJenisBerubah($kodekeg, $id) {
+	
+	$jenisrevisi = 1;
+	$sqlkeg = sprintf(' where id=\'%s\'', $id);
+	$sql_r = 'select jenisrevisi from kegiatanrevisiperubahan ' . $sqlkeg;
+	$res = db_query($sql_r);
+	if ($data = db_fetch_object($res)) {
+		$jenisrevisi = $data->jenisrevisi;
+	}
+	
+	$strket = '';
+	if  (($jenisrevisi==1) or ($jenisrevisi==2)) {
+		$gaji = 0; $gajip = 0;
+		$pegawai = 0; $pegawaip = 0;
+		$barangjasa = 0; $barangjasap = 0;
+		$modal = 0; $modalp = 0;
+
+		$sqlkeg = sprintf(' where k.kodekeg=\'%s\'', $kodekeg);
+
+		$sql_r = 'select sum(a.jumlah) perubahan from anggperkegrevisi a inner join kegiatanrevisi k on a.kodekeg=k.kodekeg ' . $sqlkeg;
+
+		//$sql_p = 'select sum(a.jumlahp) penetapan from anggperkegperubahan a inner join kegiatanperubahan k on a.kodekeg=k.kodekeg ' . $sqlkeg;
+		
+		$sql_p = 'select sum(a.jumlah) penetapan from anggperkeg a inner join kegiatanskpd k on a.kodekeg=k.kodekeg ' . $sqlkeg;
+
+		$jenisberubah = false;
+
+		//Gaji
+		$sqlj = " and left(a.kodero, 3)='511'";
+		$res = db_query($sql_p . $sqlj );
+		if ($data = db_fetch_object($res)) {
+			$gaji = $data->penetapan;
+		}
+		$res = db_query($sql_r . $sqlj );
+		if ($data = db_fetch_object($res)) {
+			$gajip = $data->perubahan;
+		}
+		$jenisberubah = ($gaji!=$gajip);
+
+		//drupal_set_message($gaji);
+		//drupal_set_message($gajip);
+		
+		if ($jenisberubah==false) {
+			//Pegawai
+			$sqlj = " and left(a.kodero, 3)='521'";
+			$res = db_query($sql_p . $sqlj );
+			if ($data = db_fetch_object($res)) {
+				$pegawai = $data->penetapan;
+			}
+			$res = db_query($sql_r . $sqlj );
+			if ($data = db_fetch_object($res)) {
+				$pegawaip = $data->perubahan;
+			}
+			$jenisberubah = ($pegawai!=$pegawaip);
+		}
+		//drupal_set_message($pegawai);
+		//drupal_set_message($pegawaip);
+
+		if ($jenisberubah==false) {
+			//Barang Jasa
+			$sqlj = " and left(a.kodero, 3)='522'";
+			$res = db_query($sql_p . $sqlj );
+			if ($data = db_fetch_object($res)) {
+				$barangjasa = $data->penetapan;
+			}
+			$res = db_query($sql_r . $sqlj );
+			if ($data = db_fetch_object($res)) {
+				$barangjasap = $data->perubahan;
+			}
+			$jenisberubah = ($barangjasa!=$barangjasap);
+		}
+
+		if ($jenisberubah==false) {
+			//Modal
+			$sqlj = " and left(a.kodero, 3)='523'";
+			$res = db_query($sql_p . $sqlj );
+			if ($data = db_fetch_object($res)) {
+				$modal = $data->penetapan;
+			}
+			$res = db_query($sql_r . $sqlj );
+			if ($data = db_fetch_object($res)) {
+				$modalp = $data->perubahan;
+			}
+			$jenisberubah = ($modal!=$modalp);
+		}
+
+		if ($jenisberubah)
+			$strket = l('<font color="red">Ada perubahan jenis rekening</font>', 'apbd/kegiatanrevisi/rekening/' . $kodekeg . '/' . $id , array('html'=>TRUE));
+		else
+			$strket ='Ok';
+	}
+	return $strket;
+}
+
+function createT($header, $row){
+	$str='<table class="table table-striped">';
+	if(sizeof($header)>0)
+		$str.='<thead>';
+	for($n=0;$n<sizeof($header);$n++){
+		$str.='<tr>';
+		for($m=0;$m<sizeof($header[$n]);$m++){
+			if(isset($header[$n][$m]['colspan'])){
+				$colspan=$header[$n][$m]['colspan'];
+			}
+			else{
+				$colspan='';
+			}
+			if(isset($header[$n][$m]['rowspan']) && $header[$n][$m]['rowspan']!=null){
+				$rowspan=$header[$n][$m]['rowspan'];
+			}
+			else{
+				$rowspan='';
+			}
+			
+			$str.='<th  align="center" rowspan="'.$header[$n][$m]['rowspan'].'" style="'.$header[$n][$m]['style'].'" width="'.$header[$n][$m]['width'].'">' . $header[$n][$m]['data'] . '</th>';
+		}
+		$str.='</tr>';
+		
+	}
+	if(sizeof($header)>0)
+		$str.='</thead>';
+	/*
+	$str='<table><th><td>a</td>';
+	$str.='<td>b</td></th></table>';
+
+	$str.='<td>b</td></th></table>';*/
+	for($n=0;$n<sizeof($row);$n++)
+	{
+		$str.='<tr >';
+		for($m=0;$m<sizeof($row[$n]);$m++)
+		{
+			$str.='<td width="'.$row[$n][$m]['width'].'" style="'.$row[$n][$m]['style'].'" align="'.$row[$n][$m]['align'].'">'.$row[$n][$m]['data'].'</td>';
+		}
+		$str.='</tr>';
+	}
+	$str.='</table>';
+	return $str;
+}
+
