@@ -1,0 +1,340 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function daftar_menu() {
+    $items['downloadr2'] = array(
+        'title' => 'Daftar Download',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('daftar_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function daftar_form() {
+	//drupal_add_css('files/css/kegiatancam.css');
+	$kodeuk = apbd_getuseruk();
+	if(!isSuperUser()){
+	$where=sprintf('where kodeuk=\'%s\'',$kodeuk);
+	$sql = 'select namauk  from {unitkerja} ' . $where;
+				//drupal_set_message($sql);
+				$result = db_query($sql);
+				if ($result) {
+					
+							while ($datas = db_fetch_object($result)) {
+								$namauk= $datas->namauk;
+							}
+		}
+	}
+			//.............................................
+	
+	if(isSuperUser()){
+		$title = 'Set Daftar Download';
+	} 
+	else {
+		$title = 'Daftar Download '.$namauk;
+		
+	}
+	
+	$title= ucwords(strtolower($title));		
+	drupal_set_title($title);
+	if(!isSuperUser())$where=sprintf('where kodeuk=\'%s\' and ok=\'%s\'',$kodeuk,1);
+    $sql = 'select kodeuk, file, ok from {downloadr2} ' . $where;
+	
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	
+	if ($res) {
+		
+		while ($data = db_fetch_object($res)) {
+			
+			
+			$where=sprintf('where kodeuk=\'%s\'',$data->kodeuk);
+			$sql = 'select namauk  from {unitkerja} ' . $where;
+				//drupal_set_message($sql);
+				$result = db_query($sql);
+				if ($result) {
+					
+							while ($datas = db_fetch_object($result)) {
+								$skpd= $datas->namauk;
+							}
+				}
+			//.............................................
+			$weight += 1;
+			//drupal_set_message($data->gaji);
+			$rows[] = array (
+							'id' => $weight,
+							'e_no' => $weight,
+							'no' => $weight,
+							'e_kode' => $data->kodeuk,
+							'kode' => $skpd,
+							'file' => $data->file,
+							'ok' => $data->ok,
+							'weight' => $weight,
+						);
+		}
+	}
+	
+	
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+        $form['tabledragrows'][$row['id']]['e_no_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['e_no'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['no_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['no'],
+            '#size' => 5,
+        );
+
+		$form['tabledragrows'][$row['id']]['kode_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['kode'],
+            '#size' => 5,
+        );
+		$form['tabledragrows'][$row['id']]['e_kode_' . $row['id']] = array(
+            '#type' => 'value',
+            '#default_value' => $row['e_kode'],
+            '#size' => 5,
+        );
+		$form['tabledragrows'][$row['id']]['e_file_' . $row['id']] = array(
+            '#type' => 'value',
+            '#default_value' => $row['file'],
+            '#size' => 5,
+        );
+		$form['tabledragrows'][$row['id']]['file_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['file'],
+            '#size' => 10,
+			//'#attributes' => array('disabled' => 'disabled'),
+        );
+		
+		$form['tabledragrows'][$row['id']]['download_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => '<a href="files/dppar2/'.$row['file'].'">Download</a>',
+            '#size' => 5,
+        );
+		$form['tabledragrows'][$row['id']]['ok_' . $row['id']] = array(
+            '#type' => 'checkbox',
+            '#default_value' => $row['ok'],
+            '#size' => 12,
+        );
+		
+
+
+        // the weight form element.
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+	$form['maxno']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		'#default_value'=> $weight, 
+	); 
+ 
+ 	if(isSuperUser()){
+		// A submit element
+		$form['submit'] = array(
+        '#type' => 'submit',
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+    );
+	}
+    
+    
+	
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the daftar_form() form.
+ */
+function daftar_form_validate($form, &$form_state) {
+
+} 
+
+/**
+ * Implements hook_submit() for the daftar_form() form.
+ */
+function daftar_form_submit($form, &$form_state) {
+    
+
+	$maxno = $form_state['values']['maxno'];
+
+	for ($x = 1; $x <= $maxno; $x++) 
+	{
+		
+		//Read
+		$e_no = $form_state['values']['e_no_' . $x];
+		$no = $form_state['values']['no_' . $x];
+		//$kode = $form_state['values']['kode_' . $x];
+		//$file = $form_state['values']['file_' . $x];
+		$ok = $form_state['values']['ok_' . $x];
+		$kode = $form_state['values']['e_kode_' .$x];
+		$file = $form_state['values']['e_file_' .$x];
+		
+		if($ok==1)
+		{
+			$e_ok=1;
+		}
+		else{
+			$e_ok=0;
+		}
+		if ($no == '') {
+			
+			//drupal_set_message($bulan);
+			
+			//Simpan detilnya
+			
+				$sql = 'update {downloadr2} set  ok=\'%s\' where kodeuk=\'%s\' and  file=\'%s\'';
+				$res = db_query(db_rewrite_sql($sql), array($e_ok, $kode, $file));
+				
+			
+			
+		} 
+
+	}
+	
+	
+	if ($form_state['clicked_button']['#value'] == $form_state['values']['submitnewdetil']) {
+		$form_state['redirect'] = 'daftar/';
+		
+	} 
+	else if ($form_state['clicked_button']['#value'] == $form_state['values']['cetak']) {
+		$pdfFile = 'Cek cetak.pdf';
+		$html = GenReportFormContent();
+		$header= null;
+		data_ExportPDF('L',$header, 'F4', $html, $pdfFile);
+		
+	}else {
+		$ok = $form_state['values']['ok_' . 1];
+		$kode = $form_state['values']['e_kode_' . 1];
+		$file = $form_state['values']['e_file_' . 1];
+		if ($res)
+			drupal_set_message('Penyimpanan data berhasil dilakukan');
+		else
+			drupal_set_message('Penyimpanan data gagal dilakukan');
+		//drupal_goto('/daftar');    
+	}
+
+	
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function daftar_theme() {
+    return array(
+        'daftar_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_daftar_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				if(isSuperUser()){
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['no_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['kode_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['file_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['download_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['ok_' . $id]);
+					
+				}
+				else{
+					$this_row[] = drupal_render($form['tabledragrows'][$id]['no_' . $id]);
+					//$this_row[] = drupal_render($form['tabledragrows'][$id]['kode_' . $id]);
+					$this_row[] = drupal_render($form['tabledragrows'][$id]['file_' . $id]);
+					$this_row[] = drupal_render($form['tabledragrows'][$id]['download_' . $id]);
+					//$this_row[] = drupal_render($form['tabledragrows'][$id]['ok_' . $id]);
+				}
+				//$this_row[] = drupal_render($form['tabledrag rows'][$id]['iddetil_' . $id]);
+                
+				
+                //Add the weight field to the row
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['no_' . $id]);
+                //$this_row[] = drupal_render($form['tabledragrows'][$id]['kode_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	if(isSuperUser())
+				{
+					$header = array (	
+						array('data' => 'No','width' => '10px', 'valign'=>'top'),
+						array('data' => 'SKPD', 'field'=> 'topik', 'width' => '200px', 'valign'=>'top'),
+						array('data' => 'File', 'field'=> 'uraian', 'width' => '300px', 'valign'=>'top'),
+						array('data' => 'Download', 'width' => '100px', 'align'=>'center','valign'=>'top'),
+						array('data' => 'OK ', 'width' => '100px', 'align'=>'center','valign'=>'top'),
+						//array('data' => 'Weight'),
+					); 
+				}
+				else{
+					$header = array (	
+						array('data' => 'No','width' => '10px', 'valign'=>'top'),
+						//array('data' => 'SKPD', 'field'=> 'topik', 'width' => '200px', 'valign'=>'top'),
+						array('data' => 'File', 'field'=> 'uraian', 'width' => '300px', 'valign'=>'top'),
+						array('data' => 'Download', 'width' => '100px', 'align'=>'center','valign'=>'top'),
+						//array('data' => 'OK ', 'width' => '100px', 'align'=>'center','valign'=>'top'),
+						//array('data' => 'Weight'),
+					); 
+				}
+	
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}
+

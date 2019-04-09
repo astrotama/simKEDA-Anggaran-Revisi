@@ -1,0 +1,6 @@
+; $Id$
+name = "Cari Kegiatan"
+description = "Pencarian Kegiatan"
+;dependencies[] = 
+core = 6.x
+package="CK APBD R1"

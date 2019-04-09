@@ -1,0 +1,1705 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function perubahan_menu() {
+    $items['perubahan'] = array(
+        'title' => 'Anggaran Kas',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('perubahan_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function perubahan_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	
+
+	$title = 'Anggaran Kas';
+	$kode = arg(1);
+
+	$where = sprintf(' where kodekeg=\'%s\'', $kode);
+    $sql = 'select kodekeg, kodeuk, kegiatan, jenis, totalp,tw1p, tw2p, tw3p, tw4p , namapptk, nippptk from {kegiatanperubahan} '. $where;
+	
+	//drupal_set_message($sql);
+	
+	$res = db_query($sql);
+	if ($res) {
+		if ($datakeg = db_fetch_object($res)) {
+			$kode = $datakeg->kodekeg;
+			$kodeuk = $datakeg->kodeuk;
+			$kegiatan = $datakeg->kegiatan;
+			$total = apbd_fn($datakeg->totalp);
+			$totalp = $datakeg->totalp;
+			$tw1 = $datakeg->tw1p;
+			$tw2 = $datakeg->tw2p;
+			$tw3 = $datakeg->tw3p;
+			$tw4 = $datakeg->tw4p;
+			$jenis = $datakeg->jenis;
+			$nama= $datakeg->namapptk;
+			$nip= $datakeg->nippptk;
+		}
+	}
+	
+	//gaji, barangjasa, pegawai, tanah, mesin, gedung,jaringan, lainya
+	$gaji = 0; 
+	$barangjasa = 0; 
+	$pegawai = 0; 
+	$modal = 0; 
+	$tanah = 0; 
+	$mesin = 0; 
+	$gedung = 0; 
+	$jaringan = 0; 
+	$lainya = 0;
+	
+    $sql = 'select left(kodero,3) kodej, sum(jumlahp) anggaran from {anggperkegperubahan} '. $where . ' group by left(kodero,3)';
+	$res = db_query($sql);
+	if ($res) {
+		while ($datakeg = db_fetch_object($res)) {
+			switch ($datakeg->kodej) {
+				case '511':
+					$gaji = $datakeg->anggaran;
+					break;
+				case '521':
+					$pegawai = $datakeg->anggaran;
+					break;
+				case '522':
+					$barangjasa = $datakeg->anggaran;
+					break;
+				case '523':
+					$modal = $datakeg->anggaran;
+					break;
+			}
+		}
+	}
+	
+	//MODAL
+	if ($modal>0) {
+		$where = sprintf(' where kodekeg=\'%s\' and left(kodero,3)=\'%s\'', $kode, '523');
+		$sql = 'select left(kodero,5) kodeo, sum(jumlahp) anggaran from {anggperkegperubahan} '. $where . ' group by left(kodero,5)';
+		$res = db_query($sql);
+
+		if ($res) {
+			while ($datakeg = db_fetch_object($res)) {
+				switch ($datakeg->kodeo) {
+					case '52301':
+						$tanah = $datakeg->anggaran;
+						break;
+					case '52302':
+						$mesin = $datakeg->anggaran;
+						break;
+					case '52303':
+						$gedung = $datakeg->anggaran;
+						break;
+					case '52304':
+						$jaringan = $datakeg->anggaran;
+						break;
+					case '52305':
+						$lainya = $datakeg->anggaran;
+						break;
+				}
+			}
+		}		
+	}
+	
+
+	$form['formdata']['kode']= array(
+		'#type'         => 'value', 
+		'#value'=> $kode, 
+	);
+	$form['formdata']['tw1']= array(
+		'#type'         => 'value', 
+		'#value'=> $tw1, 
+	); 
+	$form['formdata']['tw2']= array(
+		'#type'         => 'value', 
+		'#value'=> $tw2, 
+	);
+	$form['formdata']['tw3']= array(
+		'#type'         => 'value', 
+		'#value'=> $tw3, 
+	);
+	$form['formdata']['tw4']= array(
+		'#type'         => 'value', 
+		'#value'=> $tw4, 
+	);
+	
+	$form['formdata']['totalp']= array(
+		'#type'         => 'value', 
+		'#value'=> $totalp, 
+	); 
+
+	$form['formdata']['kodeuk']= array(
+		'#type'         => 'value', 
+		'#value'=> $kodeuk, 
+	); 
+	$form['formdata']['jenis']= array(
+		'#type'         => 'value', 
+		'#value'=> $jenis, 
+	); 
+	
+	$form['formdata']['kegiatan']= array(
+		'#type'         => 'markup', 
+		'#title'        => 'Kegiatan', 
+		//'#description'  => 'namauk', 
+		'#maxlength'    => 100, 
+		'#size'         => 100, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#value'=> '</br><font size="3">'. $kegiatan . '</font>', 
+	); 
+
+	$form['formdata']['kegiatanx']= array(
+		'#type'         => 'markup', 
+		'#title'        => 'Kegiatan', 
+		//'#description'  => 'namauk', 
+		'#maxlength'    => 100, 
+		'#size'         => 100, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#value'=> '</br><font size="3">Anggaran : ' . apbd_fn($totalp) . ', Triwulan I : ' . apbd_fn($tw1) . ', II : '  . apbd_fn($tw2) .  ', III : '  . apbd_fn($tw3) .  ', IV : '  . apbd_fn($tw4) .  '</font>', 
+	); 
+	
+	//ANGGARAN
+	$form['formdata']['gaji']= array(
+		'#type'         => 'value', 
+		'#value'=> $gaji, 
+	); 
+	$form['formdata']['pegawai']= array(
+		'#type'         => 'value', 
+		'#value'=> $pegawai, 
+	); 
+	$form['formdata']['barangjasa']= array(
+		'#type'         => 'value', 
+		'#value'=> $barangjasa, 
+	); 
+	$form['formdata']['tanah']= array(
+		'#type'         => 'value', 
+		'#value'=> $tanah, 
+	); 
+	$form['formdata']['mesin']= array(
+		'#type'         => 'value', 
+		'#value'=> $mesin, 
+	); 
+	$form['formdata']['gedung']= array(
+		'#type'         => 'value', 
+		'#value'=> $gedung, 
+	); 
+	$form['formdata']['jaringan']= array(
+		'#type'         => 'value', 
+		'#value'=> $jaringan, 
+	); 
+	$form['formdata']['lainya']= array(
+		'#type'         => 'value', 
+		'#value'=> $lainya, 
+	); 
+	
+	$form['formdata']['nama']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Nama PPTK', 
+		//'#description'  => 'namauk', 
+		'#maxlength'    => 100, 
+		'#size'         => 40, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $nama, 
+	); 
+	$form['formdata']['nip']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'NIP', 
+		//'#description'  => 'namasingkat', 
+		'#maxlength'    => 50, 
+		'#size'         => 40, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $nip, 
+	);
+
+	// A submit element
+    $form['submit'] = array(
+        '#type' => 'submit',
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+    );
+	$form['cetak'] = array(
+        '#type' => 'submit',
+		'#value' => 'Cetak',
+		//'#weight' => 7,
+    );
+	$form['cetakskpd'] = array(
+        '#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanskpd' class='btn_blue' style='color: white'>Tutup</a>",				
+		'#value' => 'Cetak SKPD',
+		//'#weight' => 7,
+    );
+
+	//drupal_set_message($koder);
+	$weight = 1;
+	$rows= array();
+	$rows[] = array (
+					'id' => $weight,
+					'no' => 0,
+					'bulan' => 0,
+					'gaji' => $gaji,
+					'pegawai' => $pegawai,
+					'barangjasa'=>$barangjasa,
+					'tanah' => $tanah,
+					'mesin' => $mesin,
+					'gedung' => $gedung,
+					'jaringan' => $jaringan,
+					'lainya' => $lainya,
+					'weight' => $weight,
+				);
+				
+	$where = sprintf(' where kode=\'%s\' ', $kode);
+    $sql = 'select no,bulan, gaji, barangjasa, pegawai, tanah, mesin, gedung,jaringan, lainya from {triwulan} '. $where . ' order by bulan';
+	$res = db_query($sql);
+	
+	if ($res) {
+		
+		while ($data = db_fetch_object($res)) {
+			$weight += 1;
+			//drupal_set_message($data->gaji);
+			$rows[] = array (
+							'id' => $weight,
+							'no' => $data->no,
+							'bulan' => $data->bulan,
+							'gaji' => $data->gaji,
+							'pegawai' => $data->pegawai,
+							'barangjasa'=>$data->barangjasa,
+							'tanah' => $data->tanah,
+							'mesin' => $data->mesin,
+							'gedung' => $data->gedung,
+							'jaringan' => $data->jaringan,
+							'lainya' => $data->lainya,
+							'weight' => $weight,
+						);
+		}
+	}
+	
+	
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+
+        $form['tabledragrows'][$row['id']]['no_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['no'],
+            '#size' => 5,
+        );
+		
+		if ($row['bulan']==0) {
+			$form['tabledragrows'][$row['id']]['bulan_' . $row['id']] = array(
+				'#type' => 'hidden',
+				'#default_value' => $row['bulan'],
+			);
+			//<p align="right">This is some text in a paragraph.</p>
+			$form['tabledragrows'][$row['id']]['gaji_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '<p align="right">' . apbd_fn($row['gaji']) . '</p>',
+			);
+			$form['tabledragrows'][$row['id']]['pegawai_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '<p align="right">' . apbd_fn($row['pegawai']) . '</p>',
+			);
+			$form['tabledragrows'][$row['id']]['barangjasa_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '<p align="right">' . apbd_fn($row['barangjasa']) . '</p>',
+			);
+			$form['tabledragrows'][$row['id']]['tanah_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '<p align="right">' . apbd_fn($row['tanah']) . '</p>',
+			);
+			$form['tabledragrows'][$row['id']]['mesin_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '<p align="right">' . apbd_fn($row['mesin']) . '</p>',
+			);
+			$form['tabledragrows'][$row['id']]['gedung_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '<p align="right">' . apbd_fn($row['gedung']) . '</p>',
+			);
+			$form['tabledragrows'][$row['id']]['jaringan_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '<p align="right">' . apbd_fn($row['jaringan']) . '</p>',
+			);
+			$form['tabledragrows'][$row['id']]['lainya_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '<p align="right">' . apbd_fn($row['lainya']) . '</p>',
+			);
+			
+		
+		} else {
+
+			if ($row['bulan']<=3)
+				$strbulan = '<p style="color:green"><b>' . $row['bulan'] . '</b></p>';
+			else if ($row['bulan']<=6)
+				$strbulan = '<p style="color:blue"><b>' . $row['bulan'] . '</b></p>';
+			else if ($row['bulan']<=9)
+				$strbulan = '<p style="color:orange"><b>' . $row['bulan'] . '</b></p>';
+			else			
+				$strbulan = '<p style="color:red"><b>' . $row['bulan'] . '</b></p>';
+			
+			$form['tabledragrows'][$row['id']]['bulan_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => $strbulan,
+				'#size' => 3,
+			);
+			$form['tabledragrows'][$row['id']]['gaji_' . $row['id']] = array(
+				'#type' => 'textfield',
+				'#default_value' => $row['gaji'],
+				'#attributes'	=> array('style' => 'text-align: right'),
+				'#size' => 10,
+			);
+			$form['tabledragrows'][$row['id']]['pegawai_' . $row['id']] = array(
+				'#type' => 'textfield',
+				'#default_value' => $row['pegawai'],
+				'#attributes'	=> array('style' => 'text-align: right'),
+				'#size' => 8,
+			);
+			$form['tabledragrows'][$row['id']]['barangjasa_' . $row['id']] = array(
+				'#type' => 'textfield',
+				'#default_value' => $row['barangjasa'],
+				'#attributes'	=> array('style' => 'text-align: right'),
+				'#size' => 9,
+			);
+			$form['tabledragrows'][$row['id']]['tanah_' . $row['id']] = array(
+				'#type' => 'textfield',
+				'#default_value' => $row['tanah'],
+				'#attributes'	=> array('style' => 'text-align: right'),
+				'#size' => 9,
+			);
+			$form['tabledragrows'][$row['id']]['mesin_' . $row['id']] = array(
+				'#type' => 'textfield',
+				'#default_value' => $row['mesin'],
+				'#attributes'	=> array('style' => 'text-align: right'),
+				'#size' => 10,
+			);
+			$form['tabledragrows'][$row['id']]['gedung_' . $row['id']] = array(
+				'#type' => 'textfield',
+				'#default_value' => $row['gedung'],
+				'#attributes'	=> array('style' => 'text-align: right'),
+				'#size' => 10,
+			);
+			$form['tabledragrows'][$row['id']]['jaringan_' . $row['id']] = array(
+				'#type' => 'textfield',
+				'#default_value' => $row['jaringan'],
+				'#attributes'	=> array('style' => 'text-align: right'),
+				'#size' => 10,
+			);
+			$form['tabledragrows'][$row['id']]['lainya_' . $row['id']] = array(
+				'#type' => 'textfield',
+				'#default_value' => $row['lainya'],
+				'#attributes'	=> array('style' => 'text-align: right'),
+				'#size' => 9,
+			);
+		}
+
+        // the weight form element.
+        //$form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+        //    '#type' => 'hidden',
+        //    '#delta' => 1,
+        //    '#default_value' => $row['weight'],
+        //    '#attributes' => array('class' => 'weight'),
+        //);
+    }
+ 
+	$form['maxno']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		'#default_value'=> $weight, 
+	); 
+ 
+ 	
+	
+    // A submit element
+    $form['submit1'] = array(
+        '#type' => 'submit',
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+    );
+	$form['cetak1'] = array(
+        '#type' => 'submit',
+		'#value' => 'Cetak',
+		//'#weight' => 7,
+    );
+	$form['cetakskpd1'] = array(
+        '#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanskpd' class='btn_blue' style='color: white'>Tutup</a>",		
+		'#value' => 'Cetak SKPD',
+		//'#weight' => 7,
+    );
+ 
+    
+	return $form;
+}
+
+/**
+ * Implements hook_validate() for the perubahan_form() form.
+ */
+function perubahan_form_validate($form, &$form_state) {
+	$maxno = $form_state['values']['maxno'];
+	$kode = $form_state['values']['kode'];
+	$kodeuk = $form_state['values']['kodeuk'];
+	$totalp = $form_state['values']['totalp'];
+	$tw1 = $form_state['values']['tw1'];
+	$tw2 = $form_state['values']['tw2'];
+	$tw3 = $form_state['values']['tw3'];
+	$tw4 = $form_state['values']['tw4'];
+	$tw1p = $tw2p = $tw3p = $tw4p = 0 ;
+	$cektotal= 0;
+	$valid='2';
+	$item =array('Gaji','Pegawai','Barang jasa', 'Tanah','Mesin', 'Gedung','Jaringan','Aslain');
+	for ($x = 0; $x <= $maxno; $x++) 
+	{
+		if($x==0){
+		$zno = $form_state['values']['no_' . $x];
+		$zbulan = $form_state['values']['bulan_' . $x];
+		$zgaji = $form_state['values']['gaji'];
+		$zbarangjasa = $form_state['values']['barangjasa'];
+		$zpegawai = $form_state['values']['pegawai'];
+		$ztanah = $form_state['values']['tanah'];
+		$zmesin = $form_state['values']['mesin'];
+		$zgedung = $form_state['values']['gedung'];
+		$zjaringan = $form_state['values']['jaringan'];
+		$zlainya = $form_state['values']['lainya'];
+		$zbatas =array($zgaji,$zpegawai,$zbarangjasa,$ztanah,$zmesin,$zgedung,$zjaringan,$zlainya);
+		}
+		else {
+		//Read
+		$no = $form_state['values']['no_' . $x];
+		$bulan = $form_state['values']['bulan_' . $x];
+		$gaji = $form_state['values']['gaji_' . $x];
+		$barangjasa = $form_state['values']['barangjasa_' . $x];
+		$pegawai = $form_state['values']['pegawai_' . $x];
+		$tanah = $form_state['values']['tanah_' . $x];
+		$mesin = $form_state['values']['mesin_' . $x];
+		$gedung = $form_state['values']['gedung_' . $x];
+		$jaringan = $form_state['values']['jaringan_' . $x];
+		$lainya = $form_state['values']['lainya_' . $x];
+		$var =array($gaji,$pegawai,$barangjasa,$tanah,$mesin,$gedung,$jaringan,$lainya);
+		$tbulan += $bulan;
+		$tgaji += $gaji;
+		$tbarangjasa += $barangjasa;
+		$tpegawai += $pegawai;
+		$ttanah += $tanah;
+		$tmesin += $mesin;
+		$tgedung += $gedung;
+		$tjaringan += $jaringan;
+		$tlainya += $lainya;
+		$totsementara =array($tgaji,$tpegawai,$tbarangjasa,$ttanah,$tmesin,$tgedung,$tjaringan,$tlainya);
+		for($loop=0;$loop<8;$loop++)
+		{
+			if($var[$loop]%1000!=0)
+			{
+				$valid='1';
+				
+			}
+			$cektotal+=$var[$loop];
+			if($x<5)
+			{
+				$tw1p+=$var[$loop];
+			}
+			else if(4<$x && $x<8){
+				$tw2p+=$var[$loop];
+			}
+			else if(7<$x && $x<11){
+				$tw3p+=$var[$loop];
+			}
+			else if($x>0){
+				$tw4p+=$var[$loop];
+			}
+			
+		}
+		}
+	}
+	// Check limit each item
+	for($loop=0;$loop<8;$loop++)
+		{
+			if($totsementara[$loop]>$zbatas[$loop])
+			{
+				form_set_error('time', t('Melebihi Batas Anggaran '.$item[$loop].' yaitu sebesar = Rp. '.apbd_fn($zbatas[$loop])));
+			}
+			
+		}
+      if($valid=='1'){form_set_error('time', t('Nominal terkecil harus 1000.'));}
+	  if($cektotal>$totalp){form_set_error('time', t('Melebihi Batas Total'));}
+	  if($tw1p>$tw1){form_set_error('time', t('Melebihi Batas Tri Wulan I ='. $tw1 ));}
+	  if($tw2p>$tw2){form_set_error('time', t('Melebihi Batas Tri Wulan II ='. $tw2 ));}
+	  if($tw3p>$tw3){form_set_error('time', t('Melebihi Batas Tri Wulan III ='. $tw3 ));}
+	  if($tw4p>$tw4){form_set_error('time', t('Melebihi Batas Tri Wulan IV ='. $tw4 ));}
+ 
+} 
+
+/**
+ * Implements hook_submit() for the perubahan_form() form.
+ */
+function perubahan_form_submit($form, &$form_state) {
+    
+
+	$tw1 = $form_state['values']['tw1'];
+	$tw2 = $form_state['values']['tw2'];
+	$tw3 = $form_state['values']['tw3'];
+	$tw4 = $form_state['values']['tw4'];
+	$nama = $form_state['values']['nama'];
+	$nip = $form_state['values']['nip'];
+	$maxno = $form_state['values']['maxno'];
+	$kode = $form_state['values']['kode'];
+	$kodeuk = $form_state['values']['kodeuk'];
+
+	for ($y = 1; $y <= $maxno+1; $y++) 
+	{
+		
+		$x = $y-1;
+		//Read
+		$no = $form_state['values']['no_' . $x];
+		$bulan = $form_state['values']['bulan_' . $x];
+		$gaji = $form_state['values']['gaji_' . $x];
+		$barangjasa = $form_state['values']['barangjasa_' . $x];
+		$pegawai = $form_state['values']['pegawai_' . $x];
+		$tanah = $form_state['values']['tanah_' . $x];
+		$mesin = $form_state['values']['mesin_' . $x];
+		$gedung = $form_state['values']['gedung_' . $x];
+		$jaringan = $form_state['values']['jaringan_' . $x];
+		$lainya = $form_state['values']['lainya_' . $x];
+			
+			
+		if ($no != '') {
+			$sql = 'update {kegiatanperubahan} set namapptk=\'%s\', nippptk=\'%s\' where kodekeg =\'%s\' ';
+			$res = db_query(db_rewrite_sql($sql), array($nama, $nip,$kode));
+			$sql = 'update {triwulan} set gaji=\'%s\', barangjasa=\'%s\',pegawai=\'%s\', tanah=\'%s\', mesin=\'%s\', gedung=\'%s\', jaringan=\'%s\', lainya=\'%s\' where no=\'%s\' ';
+			$res = db_query(db_rewrite_sql($sql), array($gaji, $barangjasa, $pegawai, $tanah, $mesin, $gedung, $jaringan, $lainya, $no));
+			//drupal_set_message($kode);
+				
+		}
+			
+
+	}
+	
+	
+	if ($form_state['clicked_button']['#value'] == $form_state['values']['cetak']) {
+		$pdfFile = 'Anggaran Kas Kegiatan - ' . $kode . '.pdf';
+		$html = GenReportFormContent($kode,$tw1,$tw2,$tw3,$tw4);
+		$header= null;
+		data_ExportPDF('L',$header, 'F4', $html, $pdfFile,$nama,$nip);
+		
+		
+	}
+	else if ($form_state['clicked_button']['#value'] == $form_state['values']['cetakskpd']) {
+		$pdfFile = 'Anggaran Kas SKPD - ' . $kodeuk . '.pdf';
+		$html = GenReportFormContentSkpd($kodeuk,$tw1,$tw2,$tw3,$tw4);
+		$header= null;
+		data_ExportPDF('L',$header, 'F4', $html, $pdfFile,$nama,$nip);
+		
+		
+	}
+	else { 
+		
+		if ($res) {
+			drupal_set_message('Penyimpanan data berhasil dilakukan');
+			//drupal_goto('apbd/kegiatanskpd');
+		} else
+			drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+	}
+
+	
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function perubahan_theme() {
+    return array(
+        'perubahan_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_perubahan_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledrag rows'][$id]['iddetil_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['bulan_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['gaji_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['pegawai_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['barangjasa_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['tanah_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['mesin_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['gedung_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['jaringan_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['lainya_' . $id]);
+				
+                //Add the weight field to the row
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['no_' . $id]);
+                //$this_row[] = drupal_render($form['tabledragrows'][$id]['kode_' . $id]);
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$jenis = $form_state['values']['jenis'];
+	
+	$header = array (
+				 array('data' => 'Bln',  'width' => '20px'),
+				 array('data' => 'Gaji',  'width' => '100px'),
+				 array('data' => 'Pegawai',  'width' => '90px'),
+				 array('data' => 'Barang Jasa',  'width' => '90px'),
+				 array('data' => 'Tanah',  'width' => '90px'),
+				 array('data' => 'Mesin',  'width' => '90px'),
+				 array('data' => 'Gedung',  'width' => '90px'),
+				 array('data' => 'Jaringan',  'width' => '90px'),
+				 array('data' => 'Aslain',  'width' => '90px'),
+				 //array('data' => 'Weight'),
+				); 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}
+
+function GenReportFormContent($key,$tw1,$tw2,$tw3,$tw4) {
+
+	$where = sprintf(' where kodekeg=\'%s\' ', $key);
+    $sql = 'select kodekeg, kegiatan,totalp, namapptk, nippptk from {kegiatanperubahan} '. $where;
+	$res = db_query($sql);
+	if ($res) {
+		if ($datakeg = db_fetch_object($res)) {
+			$kegiatan = $datakeg->kegiatan;
+			$total = $datakeg->totalp;
+			$nama =$datakeg->namapptk;
+			$nip =$datakeg->nippptk;
+		}
+	}
+
+	//ANGGARAN
+	//gaji, barangjasa, pegawai, tanah, mesin, gedung,jaringan, lainya
+	$gaji = 0; 
+	$barangjasa = 0; 
+	$pegawai = 0; 
+	$modal = 0; 
+	$tanah = 0; 
+	$mesin = 0; 
+	$gedung = 0; 
+	$jaringan = 0; 
+	$lainya = 0;
+	
+    $sql = 'select left(kodero,3) kodej, sum(jumlahp) anggaran from {anggperkegperubahan} '. $where . ' group by left(kodero,3)';
+	$res = db_query($sql);
+	if ($res) {
+		while ($datakeg = db_fetch_object($res)) {
+			switch ($datakeg->kodej) {
+				case '511':
+					$gaji = $datakeg->anggaran;
+					break;
+				case '521':
+					$pegawai = $datakeg->anggaran;
+					break;
+				case '522':
+					$barangjasa = $datakeg->anggaran;
+					break;
+				case '523':
+					$modal = $datakeg->anggaran;
+					break;
+			}
+		}
+	}
+	
+	//MODAL
+	if ($modal>0) {
+		$where = sprintf(' where kodekeg=\'%s\' and left(kodero,3)=\'%s\'', $key, '523');
+		$sql = 'select left(kodero,5) kodeo, sum(jumlahp) anggaran from {anggperkegperubahan} '. $where . ' group by left(kodero,5)';
+		$res = db_query($sql);
+
+		if ($res) {
+			while ($datakeg = db_fetch_object($res)) {
+				switch ($datakeg->kodeo) {
+					case '52301':
+						$tanah = $datakeg->anggaran;
+						break;
+					case '52302':
+						$mesin = $datakeg->anggaran;
+						break;
+					case '52303':
+						$gedung = $datakeg->anggaran;
+						break;
+					case '52304':
+						$jaringan = $datakeg->anggaran;
+						break;
+					case '52305':
+						$lainya = $datakeg->anggaran;
+						break;
+				}
+			}
+		}		
+	}	
+	
+	$where=sprintf(' where kode=\'%s\'',$key);
+
+	$rowsdata[]= array (
+						 array('data' => 'ANGGARAN KAS', 'width' => '875px', 'style' => 'border:none; text-align:center;'),						 
+						);
+	
+	$rowsdata[]= array (
+						 array('data' => 'Kegiatan ', 'width' => '70px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => ': '. $kegiatan, 'width' => '800px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 
+						);
+	$rowsdata[]= array (
+						 array('data' => 'Anggaran', 'width' => '70px',  'style' => 'border:none;text-align:left;font-size: 80%;'),
+						 array('data' => ': ' . apbd_fn($total) , 'width' => '100px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	
+	$rowsdata[]= array (
+						 array('data' => 'Triwulan', 'width' => '70px',  'style' => 'border:none;text-align:left;font-size: 80%;'),
+						 array('data' => ': I(' . apbd_fn($tw1).'), II('. apbd_fn($tw2).'), III('. apbd_fn($tw3).'), IV('. apbd_fn($tw4).')' , 'width' => '500px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	
+						 
+	
+	
+	$headerkosong = array();
+	$rowsdata[] = array (
+						 array('data' => '', 'width' => '30px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+					);
+
+	$rowsdata[] = array (
+								
+							 array('data' => 'No', 'width' => '20px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black; border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+							 array('data' => 'Uraian', 'width' => '65px', 'colspan'=>'2','style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Anggaran', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Januari', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Februari', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Maret',  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'April', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Mei', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Juni',  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Juli', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Agustus', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'September', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Oktober',  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'November', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Desember', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 
+								 
+						 );
+///***GAJI..................................................................................
+	$sql = "select gaji from {triwulan} ".$where."order by bulan";
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalg=array();
+		$tamp=array();
+		$line=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalg[$line]=$datacetak->gaji;
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[$line]=$datacetak->gaji;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '1', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Gaji', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($gaji), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+					}
+
+///***PEGAWAI..................................................................................
+$sql = "select pegawai from {triwulan} ".$where."order by bulan";
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalp=array();
+		$tamp=array();
+		$line=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalp[$line]=$datacetak->pegawai;
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[$line]=$datacetak->pegawai;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '2', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Pegawai', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($pegawai), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+					}
+///***BARANG JASA..............................................................................
+$sql = "select barangjasa from {triwulan} ".$where."order by bulan";
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalb=array();
+		$tamp=array();
+		$line=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalb[$line]=$datacetak->barangjasa;
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[$line]=$datacetak->barangjasa;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '3', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Barang Jasa', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($barangjasa), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+					}
+///***MODAL..............................................................................
+$sql = "select tanah, mesin, gedung, jaringan, lainya from {triwulan} ".$where."order by bulan";
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalm=array();
+		$tamp=array();
+		$line=0;$line2=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalm[0][$line]=$datacetak->tanah;
+															$totalm[1][$line]=$datacetak->mesin;
+															$totalm[2][$line]=$datacetak->gedung;
+															$totalm[3][$line]=$datacetak->jaringan;
+															$totalm[4][$line]=$datacetak->lainya;
+															
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[0][$line]=$datacetak->tanah;
+															$tamp[1][$line]=$datacetak->mesin;
+															$tamp[2][$line]=$datacetak->gedung;
+															$tamp[3][$line]=$datacetak->jaringan;
+															$tamp[4][$line]=$datacetak->lainya;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '4', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Tanah', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($tanah), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '5', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Mesin', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($mesin), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '6', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Gedung', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($gedung), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '7', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Jaringan', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($jaringan), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '8', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Astap Lainnya', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($lainya), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+					}
+///END_VALUE....................................................................................................................................................
+$totalbulan=array();
+$totalbulan[0]=$totalg[0]+$totalp[0]+$totalb[0]+$totalm[0][0]+$totalm[1][0]+$totalm[2][0]+$totalm[3][0]+$totalm[4][0];
+$totalbulan[1]=$totalg[1]+$totalp[1]+$totalb[1]+$totalm[0][1]+$totalm[1][1]+$totalm[2][1]+$totalm[3][1]+$totalm[4][1];
+$totalbulan[2]=$totalg[2]+$totalp[2]+$totalb[2]+$totalm[0][2]+$totalm[1][2]+$totalm[2][2]+$totalm[3][2]+$totalm[4][2];
+$totalbulan[3]=$totalg[3]+$totalp[3]+$totalb[3]+$totalm[0][3]+$totalm[1][3]+$totalm[2][3]+$totalm[3][3]+$totalm[4][3];
+$totalbulan[4]=$totalg[4]+$totalp[4]+$totalb[4]+$totalm[0][4]+$totalm[1][4]+$totalm[2][4]+$totalm[3][4]+$totalm[4][4];
+$totalbulan[5]=$totalg[5]+$totalp[5]+$totalb[5]+$totalm[0][5]+$totalm[1][5]+$totalm[2][5]+$totalm[3][5]+$totalm[4][5];
+$totalbulan[6]=$totalg[6]+$totalp[6]+$totalb[6]+$totalm[0][6]+$totalm[1][6]+$totalm[2][6]+$totalm[3][6]+$totalm[4][6];
+$totalbulan[7]=$totalg[7]+$totalp[7]+$totalb[7]+$totalm[0][7]+$totalm[1][7]+$totalm[2][7]+$totalm[3][7]+$totalm[4][7];
+$totalbulan[8]=$totalg[8]+$totalp[8]+$totalb[8]+$totalm[0][8]+$totalm[1][8]+$totalm[2][8]+$totalm[3][8]+$totalm[4][8];
+$totalbulan[9]=$totalg[9]+$totalp[9]+$totalb[9]+$totalm[0][9]+$totalm[1][9]+$totalm[2][9]+$totalm[3][9]+$totalm[4][9];
+$totalbulan[10]=$totalg[10]+$totalp[10]+$totalb[10]+$totalm[0][10]+$totalm[1][10]+$totalm[2][10]+$totalm[3][10]+$totalm[4][10];
+$totalbulan[11]=$totalg[11]+$totalp[11]+$totalb[11]+$totalm[0][11]+$totalm[1][11]+$totalm[2][11]+$totalm[3][11]+$totalm[4][11];
+	$rowsdata[] = array (
+									
+								 array('data' => 'Total', 'width' => '85px', 'colspan'=>'3','style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+								 array('data' => apbd_fn($total), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[0]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[1]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[2]),  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[3]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[4]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[5]),  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[6]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[7]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[8]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[9]),  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[10]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[11]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 
+									 
+							 );
+	
+	$rowsdata[] = array (
+									
+								 array('data' => 'Total Tri Wulan', 'width' => '145px', 'colspan'=>'4','style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[0]+$totalbulan[1]+$totalbulan[2]), 'width' => '180px', 'colspan'=>'3','style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[3]+$totalbulan[4]+$totalbulan[5]), 'width' => '180px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[6]+$totalbulan[7]+$totalbulan[8]),  'width' => '180px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[9]+$totalbulan[10]+$totalbulan[11]), 'width' => '180px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 
+									 
+							 );
+	
+	$rowsdata[] = array (
+									
+								 array('data' => 'Total Setahun', 'width' => '145px', 'colspan'=>'4','style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[0]+$totalbulan[1]+$totalbulan[2]+$totalbulan[3]+$totalbulan[4]+$totalbulan[5]+$totalbulan[6]+$totalbulan[7]+$totalbulan[8]+$totalbulan[9]+$totalbulan[10]+$totalbulan[11]), 'width' => '729px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 
+								 
+									 
+							 );
+	
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => 'Jepara, ..................', 'width' => '375px', 'style' => 'border:none; text-align:center;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => 'Pejabat Pelaksan Teknis Kegiatan', 'width' => '375px', 'style' => 'border:none; text-align:center;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+						
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => $nama, 'width' => '375px', 'style' => 'border:none; text-align:center;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => 'NIP.'.$nip, 'width' => '375px', 'style' => 'border:none; text-align:center;font-size: 80%;'),
+						);
+	
+	$opttb0 = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0`');
+	$opttbl = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '1');
+	$headerkosong = array();
+	
+	
+	$output .= theme_box('', theme_table($headerkosong, $rowsdata, $opttb0));
+	
+	$output .= $toutput;
+	if ($limit >0)
+		$output .= theme ('pager', NULL, $limit, 0);
+	
+	return $output;
+}
+
+function GenReportFormContentSkpd($kodeuk,$tw1,$tw2,$tw3,$tw4) {
+
+	//ANGGARAN
+	//gaji, barangjasa, pegawai, tanah, mesin, gedung,jaringan, lainya
+	$gaji = 0; 
+	$barangjasa = 0; 
+	$pegawai = 0; 
+	$modal = 0; 
+	$tanah = 0; 
+	$mesin = 0; 
+	$gedung = 0; 
+	$jaringan = 0; 
+	$lainya = 0;
+	
+
+	$where = sprintf(' where kodeuk=\'%s\' ', $kodeuk);
+    $sql = 'select sum(gaji) gaji_t, sum(barangjasa) barangjasa_t, sum(pegawai) pegawai_t, sum(tanah) tanah_t, sum(mesin) mesin_t, sum(gedung) gedung_t, sum(jaringan) jaringan_t, sum(lainya) lainya_t from {kasanggaran} '. $where;
+	$res = db_query($sql);
+	if ($res) {
+		if ($datauk = db_fetch_object($res)) {
+			$gaji = $datauk->gaji_t;
+			$barangjasa = $datauk->barangjasa_t;
+			$pegawai = $datauk->pegawai_t;
+			$tanah = $datauk->tanah_t;
+
+			$mesin = $datauk->mesin_t;
+			$gedung = $datauk->gedung_t;
+			$jaringan = $datauk->jaringan_t;
+			$lainya = $datauk->lainya_t;
+			
+		}
+	}
+
+    $sql = 'select namauk, pimpinannama, pimpinanjabatan, pimpinannip from {unitkerja} '. $where;
+	$res = db_query($sql);
+	if ($res) {
+		if ($datauk = db_fetch_object($res)) {
+			$namauk = $datauk->namauk;
+			$pimpinannama = $datauk->pimpinannama;
+			$pimpinanjabatan = $datauk->pimpinanjabatan;
+			$pimpinannip = $datauk->pimpinannip;
+			
+		}
+	}
+	
+	$totalagg = 0;
+    $sql = 'select sum(totalp) totalagg from {kegiatanperubahan} '. $where;
+	$res = db_query($sql);
+	if ($res) {
+		if ($datauk = db_fetch_object($res)) {
+			$totalagg = $datauk->totalagg;			
+		}
+	}
+	
+	$rowsdata[]= array (
+						 array('data' => 'ANGGARAN KAS SKPD', 'width' => '875px', 'style' => 'border:none; text-align:center;'),						 
+						);
+	
+	$rowsdata[]= array (
+						 array('data' => 'Unit Kerja ', 'width' => '70px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => ': '. $namauk, 'width' => '800px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 
+						);
+	$rowsdata[]= array (
+						 array('data' => 'Anggaran', 'width' => '70px',  'style' => 'border:none;text-align:left;font-size: 80%;'),
+						 array('data' => ': ' . apbd_fn($totalagg) , 'width' => '100px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => 'Triwulan', 'width' => '70px',  'style' => 'border:none;text-align:left;font-size: 80%;'),
+						 array('data' => ': I(' . apbd_fn($tw1).'), II('. apbd_fn($tw2).'), III('. apbd_fn($tw3).'), IV('. apbd_fn($tw4).')' , 'width' => '500px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	
+						 
+	
+	
+	$headerkosong = array();
+	$rowsdata[] = array (
+						 array('data' => '', 'width' => '20px', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+					);
+					
+	$rowsdata[] = array (
+								
+							 array('data' => 'No', 'width' => '20px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black; border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+							 array('data' => 'Uraian', 'width' => '65px', 'colspan'=>'2','style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Anggaran', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Januari', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Februari', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Maret',  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'April', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Mei', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Juni',  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Juli', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Agustus', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'September', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Oktober',  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'November', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 array('data' => 'Desember', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:center;font-size: 80%;'),
+							 
+								 
+						 );
+///***GAJI..................................................................................
+	$sql = "select sum(gaji) as gaji from {triwulan} " . $where . " group by bulan order by bulan";
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalg=array();
+		$tamp=array();
+		$line=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalg[$line]=$datacetak->gaji;
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[$line]=$datacetak->gaji;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '1', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Gaji', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($gaji), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+					}
+
+///***PEGAWAI..................................................................................
+$sql = "select sum(pegawai) as pegawai from {triwulan} " . $where . " group by bulan order by bulan";
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalp=array();
+		$tamp=array();
+		$line=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalp[$line]=$datacetak->pegawai;
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[$line]=$datacetak->pegawai;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '2', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Pegawai', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($pegawai), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+					}
+///***BARANG JASA..............................................................................
+$sql = "select sum(barangjasa) as barangjasa from {triwulan} " . $where . " group by bulan order by bulan";
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalb=array();
+		$tamp=array();
+		$line=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalb[$line]=$datacetak->barangjasa;
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[$line]=$datacetak->barangjasa;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '3', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Barang Jasa', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($barangjasa), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+					}
+///***MODAL..............................................................................
+$sql = "select sum(tanah) as tanah, sum(mesin) as mesin, sum(gedung) as gedung, sum(jaringan) as jaringan, sum(lainya) as lainya from {triwulan} " . $where . " group by bulan order by bulan";
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalm=array();
+		$tamp=array();
+		$line=0;$line2=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalm[0][$line]=$datacetak->tanah;
+															$totalm[1][$line]=$datacetak->mesin;
+															$totalm[2][$line]=$datacetak->gedung;
+															$totalm[3][$line]=$datacetak->jaringan;
+															$totalm[4][$line]=$datacetak->lainya;
+															
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[0][$line]=$datacetak->tanah;
+															$tamp[1][$line]=$datacetak->mesin;
+															$tamp[2][$line]=$datacetak->gedung;
+															$tamp[3][$line]=$datacetak->jaringan;
+															$tamp[4][$line]=$datacetak->lainya;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '4', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Tanah', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($tanah), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[0][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '5', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Mesin', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($mesin), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[1][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '6', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Gedung', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($gedung), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[2][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '7', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Jaringan', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($jaringan), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[3][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '8', 'width' => '20px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 80%;'),
+												 array('data' => 'Lainya', 'width' => '65px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 80%;'),
+												 array('data' => apbd_fn($lainya), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][0]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][1]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][2]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][3]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][4]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][5]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][6]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][7]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][8]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][9]),  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][10]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+												 array('data' => apbd_fn($tamp[4][11]), 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+													 
+														 
+												 );
+					}
+///END_VALUE....................................................................................................................................................
+$totalbulan=array();
+$totalbulan[0]=$totalg[0]+$totalp[0]+$totalb[0]+$totalm[0][0]+$totalm[1][0]+$totalm[2][0]+$totalm[3][0]+$totalm[4][0];
+$totalbulan[1]=$totalg[1]+$totalp[1]+$totalb[1]+$totalm[0][1]+$totalm[1][1]+$totalm[2][1]+$totalm[3][1]+$totalm[4][1];
+$totalbulan[2]=$totalg[2]+$totalp[2]+$totalb[2]+$totalm[0][2]+$totalm[1][2]+$totalm[2][2]+$totalm[3][2]+$totalm[4][2];
+$totalbulan[3]=$totalg[3]+$totalp[3]+$totalb[3]+$totalm[0][3]+$totalm[1][3]+$totalm[2][3]+$totalm[3][3]+$totalm[4][3];
+$totalbulan[4]=$totalg[4]+$totalp[4]+$totalb[4]+$totalm[0][4]+$totalm[1][4]+$totalm[2][4]+$totalm[3][4]+$totalm[4][4];
+$totalbulan[5]=$totalg[5]+$totalp[5]+$totalb[5]+$totalm[0][5]+$totalm[1][5]+$totalm[2][5]+$totalm[3][5]+$totalm[4][5];
+$totalbulan[6]=$totalg[6]+$totalp[6]+$totalb[6]+$totalm[0][6]+$totalm[1][6]+$totalm[2][6]+$totalm[3][6]+$totalm[4][6];
+$totalbulan[7]=$totalg[7]+$totalp[7]+$totalb[7]+$totalm[0][7]+$totalm[1][7]+$totalm[2][7]+$totalm[3][7]+$totalm[4][7];
+$totalbulan[8]=$totalg[8]+$totalp[8]+$totalb[8]+$totalm[0][8]+$totalm[1][8]+$totalm[2][8]+$totalm[3][8]+$totalm[4][8];
+$totalbulan[9]=$totalg[9]+$totalp[9]+$totalb[9]+$totalm[0][9]+$totalm[1][9]+$totalm[2][9]+$totalm[3][9]+$totalm[4][9];
+$totalbulan[10]=$totalg[10]+$totalp[10]+$totalb[10]+$totalm[0][10]+$totalm[1][10]+$totalm[2][10]+$totalm[3][10]+$totalm[4][10];
+$totalbulan[11]=$totalg[11]+$totalp[11]+$totalb[11]+$totalm[0][11]+$totalm[1][11]+$totalm[2][11]+$totalm[3][11]+$totalm[4][11];
+	$rowsdata[] = array (
+									
+								 array('data' => 'Total', 'width' => '85px', 'colspan'=>'3','style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+								 array('data' => apbd_fn($totalagg), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[0]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[1]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[2]),  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[3]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[4]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[5]),  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[6]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[7]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[8]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[9]),  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[10]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[11]), 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 
+									 
+							 );
+	
+	$rowsdata[] = array (
+									
+								 array('data' => 'Total Tri Wulan', 'width' => '145px', 'colspan'=>'4','style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[0]+$totalbulan[1]+$totalbulan[2]), 'width' => '180px', 'colspan'=>'3','style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[3]+$totalbulan[4]+$totalbulan[5]), 'width' => '180px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[6]+$totalbulan[7]+$totalbulan[8]),  'width' => '180px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[9]+$totalbulan[10]+$totalbulan[11]), 'width' => '180px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 
+									 
+							 );
+	$rowsdata[] = array (
+									
+								 array('data' => 'Total Setahun', 'width' => '145px', 'colspan'=>'4','style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:center;font-size: 80%;'),
+								 array('data' => apbd_fn($totalbulan[0]+$totalbulan[1]+$totalbulan[2]+$totalbulan[3]+$totalbulan[4]+$totalbulan[5]+$totalbulan[6]+$totalbulan[7]+$totalbulan[8]+$totalbulan[9]+$totalbulan[10]+$totalbulan[11]), 'width' => '729px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 80%;'),
+								 
+								 
+									 
+							 );
+	
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => 'Jepara, .....................', 'width' => '375px', 'style' => 'border:none; text-align:center;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => $pimpinanjabatan, 'width' => '375px', 'style' => 'border:none; text-align:center;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => '', 'width' => '375px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						);
+						
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => $pimpinannama, 'width' => '375px', 'style' => 'border:none; text-align:center;font-size: 80%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '500px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 80%;'),
+						 array('data' => 'NIP.' . $pimpinannip, 'width' => '375px', 'style' => 'border:none; text-align:center;font-size: 80%;'),
+						);
+	
+	$opttb0 = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0`');
+	$opttbl = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '1');
+	$headerkosong = array();
+	
+	
+	$output .= theme_box('', theme_table($headerkosong, $rowsdata, $opttb0));
+	
+	$output .= $toutput;
+	if ($limit >0)
+		$output .= theme ('pager', NULL, $limit, 0);
+	
+	return $output;
+}
+
+
+function data_ExportPDF($pageOrientation, $htmlhader , $pageSize, $htmlContent, $pdfFiel) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+
+	class MYPDF extends TCPDF {  
+	
+	   // Page footer
+	    //var $htmlHeader;
+
+		/*public function setHtmlHeader($htmlHeader) {
+			$this->htmlHeader = $htmlHeader;
+		}*/
+
+		public function Header() {
+			$headerData = $this->getHeaderData();
+			$this->SetFont('helvetica', 'B', 10);
+			$this->writeHTML($headerData['string']);
+		}
+
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+		$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, $this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  $this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		}      
+	} 
+	
+    $pdf = new MYPDF($pageOrientation, PDF_UNIT, $pageSize, true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('SIPPD');
+    $pdf->SetTitle('PDF Gen');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(true);
+	//$pdf->setHeaderData($ln='', $lw=0, $ht='', $hs='<table cellspacing="0" cellpadding="1" border="1">tr><td rowspan="3">test</td><td>test</td></tr></table>', $tc=array(0,0,0), $lc=array(0,0,0));
+    
+	$pdf->setHeaderMargin(10);
+	$pdf->setHeaderData($ln='', $lw=0, $ht='', $hs=$htmlhader, $tc=array(0,0,0), $lc=array(0,0,0));
+	$pdf->setHeaderFont(array('helvetica','', 10));
+	$pdf->setFooterFont(array('helvetica','', 10));
+    $pdf->setFooterMargin(10);
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	if ($pageOrientation=='L') {
+		$pdf->setHeaderMargin(0);
+		//$pdf->SetMargins(5,20);
+		$pdf->SetMargins(10,30);
+	} else {
+		$pdf->setHeaderMargin(10);
+		$pdf->SetMargins(20,10);
+	}
+	
+	//$pdf->SetMargins(15,15);
+    $pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+    $pdf->writeHTML($htmlContent, true, 0, true, 0);
+	
+	//$ypos = $pdf->GetY();
+	//$pdf->Write(0, $ypos, '', 0, 'L', true, 0, false, false, 0);
+	//$ypos = $ypos-10;
+	//$pdf->Write(0, $ypos, '', 0, 'L', true, 0, false, false, 0);
+	
+	//$pdf->SetY($ypos, true, false);
+	
+	//$pdf->writeHTML($htmlContent, true, 0, true, 0);
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+
+

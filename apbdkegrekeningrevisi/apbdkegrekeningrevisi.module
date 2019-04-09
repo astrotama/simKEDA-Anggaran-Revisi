@@ -1,0 +1,1225 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function apbdkegrekeningrevisi_menu() {
+    $items['apbdkegrekeningrevisi'] = array(
+        'title' => 'Rekening Kegiatan',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('apbdkegrekeningrevisi_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function apbdkegrekeningrevisi_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	//drupal_add_js('files/js/kegiatancam.js');
+	
+	$kodekeg=arg(1);
+    $kodero = arg(2);
+	$id = arg(3);
+	//drupal_set_message($id);
+
+
+	$title = 'Rekening Kegiatan ';
+	$jenis = '2';
+	if (isset($kodekeg)) {
+        $sql = 'select kegiatan, jenis from {kegiatanrevisi} where {kodekeg}=\'%s\'';
+        $res = db_query(db_rewrite_sql($sql), array ($kodekeg));
+        if ($res) {
+            $data = db_fetch_object($res);
+			if ($data) {
+				$title .= $data->kegiatan;
+				$jenis = $data->jenis;
+			}
+		}
+		
+	} 
+
+
+	$jenisrevisi_r = 0;
+	$subjenisrevisi_r = 0;
+
+	$sql = 'select jenisrevisi, subjenisrevisi, geserobyek, geserrincian
+	from {kegiatanrevisiperubahan} where id=\'%s\'' ;			
+	////drupal_set_message($sql . $kodekeg);
+	$res = db_query(db_rewrite_sql($sql), array ($id));
+	
+	if ($res) {
+		if ($data = db_fetch_object($res)) {
+			$geserobyek = $data->geserobyek;
+			$geserrincian = $data->geserrincian;
+			$jenisrevisi_r = $data->jenisrevisi;
+			$subjenisrevisi_r = $data->subjenisrevisi;
+		}
+	}
+	
+	$jumlah=0;
+	$jumlahsebelum = 0;
+	$jumlahsesudah = 0;	
+
+	
+	$allowedit = (batastgl() || (isSuperuser()));
+	
+	if ($allowedit==false) {
+		//dispensasirevisi
+        $sql = 'select dispensasirevisi from {unitkerja} where kodeuk=\'%s\'';
+		$res = db_query(db_rewrite_sql($sql), array (apbd_getuseruk()));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {  		
+				$allowedit = $data->dispensasirevisi;
+			}
+		}
+	}
+	
+	if ($allowedit==false) {
+		//dispensasirenja
+		//$sqluk = sprintf(' and k.kodeuk=\'%s\' ', apbd_getuseruk());	
+        $sql = sprintf('select dispensasi from {kegiatanrevisi} where kodekeg=\'%s\'', $kodekeg);
+		$res = db_query($sql);
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {  		
+				$allowedit = $data->dispensasi;
+			}
+		}
+	}	
+	
+	//$allowedit = ($allowedit and !isVerifikator());
+	
+	//TIDAK BOLEH MENGEDIT BILA BUKAN TAHUN AKTIF
+	//$allowedit = ($allowedit and ($tahun == variable_get('apbdtahun', 0)));
+	
+	if ($allowedit) {
+		if ($jenis=='2') 
+			drupal_add_js('files/js/kegiatancam.js');
+		else
+			drupal_add_js('files/js/kegiatanbtl.js');
+	}
+	
+	//drupal_set_message($allowedit);
+	//$title =l($title, 'apbd/kegiatanskpd/rekening/' . $kodekeg, array('html'=>true));
+	drupal_set_title($title);
+	drupal_set_html_head('<style>label{font-weight: bold; display: block; width: 200px; float: left;}</style>');
+    $disabled = FALSE;
+    if (isset($kodero))
+    {
+        if (!user_access('kegiatanskpd edit'))
+            drupal_access_denied();
+		
+			
+        $sql = 'select r.kodekeg,r.kodero,r.uraian,r.jumlah,p.jumlah penetapan, p.anggaran, r.anggaran as anggaranrev from {anggperkegrevisi} r left join {anggperkeg} p on r.kodekeg=p.kodekeg and r.kodero=p.kodero where r.kodekeg=\'%s\' and r.kodero=\'%s\'';
+        $res = db_query(db_rewrite_sql($sql), array ($kodekeg, $kodero));
+        if ($res) {
+            $data = db_fetch_object($res);
+			if ($data) {
+                
+				//$kodekeg = $data->kodekeg;
+				$kodero = $data->kodero;
+				$uraian = $data->uraian;
+				$jumlah = $data->jumlah;
+				$penetapan = $data->penetapan;
+				$anggaran = $data->anggaran;
+				
+				if ($data->anggaranrev>0) $anggaran = $data->anggaranrev;
+				
+                $disabled =TRUE;
+			} else {
+				$kodero = '';
+			}
+        } else {
+			$kodero = '';
+		}
+    } else {
+		if (!user_access('kegiatanskpd tambah'))
+			drupal_access_denied();
+		$form['formdata']['#title'] = 'Rekening Kegiatan';
+		$kodero = '';
+	}
+    
+		
+	//max
+	$realisasi = 0;
+	$sql_r = sprintf("select realisasi from {lrakegrek} where kodekeg='%s' and kodero='%s'", db_escape_string($kodekeg), db_escape_string($kodero));
+	$res_r = db_query($sql_r);
+	if ($res_r) {
+
+		if ($data_r = db_fetch_object($res_r)) {
+			$realisasi = $data_r->realisasi;
+		}
+	} 	
+	//tunda
+	$tunda  = 0;
+    $sql_r = sprintf("select sum(total) as tunda from {anggperkegdetil} where total<0 and kodekeg='%s' and kodero='%s'", db_escape_string($kodekeg), db_escape_string($kodero));
+	$res_r = db_query($sql_r);
+	if ($res_r) {
+		if ($data_r = db_fetch_object($res_r)) {
+			$tunda = $data_r->tunda;
+		}
+	} 	
+	
+	$form['formdata']['nk']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		//'#description'  => 'id', 
+		//'#maxlength'    => 60, 
+		//'#size'         => 20, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $kodero, 
+	); 
+
+	$form['formdata']['e_kodero']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		//'#description'  => 'id', 
+		//'#maxlength'    => 60, 
+		//'#size'         => 20, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $kodero, 
+	); 	
+    $form['formdata']['kodekeg']= array( 
+        '#type'         => 'hidden', 
+        '#default_value'=> $kodekeg, 
+    ); 
+    $form['formdata']['id']= array( 
+        '#type'         => 'hidden', 
+        '#default_value'=> $id, 
+    ); 
+
+	//if ($allowedit)
+	//	$cpath = 'apbd/kegiatanrkpd/utils_auto/uraian';
+	//else
+	//$cpath = '';
+	
+	$form['formdata']['kegiatan']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Rekening', 
+		//'#description'  => 'Rekening belanja', 
+		'#maxlength'    => 255, 
+		'#size'         => 70, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		//'#autocomplete_path' => $cpath,
+		'#default_value'=> $uraian, 
+	); 
+	$form['formdata']['keterangan'] = array (
+		'#type' => 'markup',
+		'#value' => "<span><font size='1'>Isi rekening dengan memilih menggunakan tombol Pilih</font></span>",
+	);	
+	$form['formdata']['jumlah']= array(
+		'#type'         => 'textfield', 
+		//'#type'         => 'item', 
+		'#title'        => 'Jumlah',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#disabled'     => true, 
+		'#description'  => 'Jumlah anggaran, jumlahnya akan terisi secara otomatis saat detilnya diisi', 
+		//'#maxlength'    => 60, 
+		'#size'         => 30, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $jumlah, 
+		//'#value'=> $jumlah, 
+	); 
+	$form['formdata']['penetapan']= array(
+		'#type'         => 'textfield',  
+		'#title'        => 'Penetapan',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		'#description'  => 'Jumlah anggaran penetapan', 
+		//'#maxlength'    => 60, 
+		'#size'         => 30, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $penetapan, 
+	); 
+	$form['formdata']['maxgeser_s']= array( 
+		'#type'         => 'textfield', 
+		'#title'        => 'Maksimal untuk Digeser',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		'#description'  => 'Jumlah maksimal untuk digeser = Penetapan (' . apbd_fn($penetapan) . ') - Realisasi (' . apbd_fn($realisasi) . ') - Penundaan (' . apbd_fn(abs($tunda)) . ')', 
+		//'#maxlength'    => 60, 
+		'#size'         => 30, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $penetapan - $realisasi + $tunda, 
+		//'#default_value'=> abs($tunda) - $realisasi, 
+	); 	
+	$form['formdata']['maxgeser']= array(
+		'#type'         => 'hidden', 
+		//'#default_value'=> $penetapan - $realisasi + $tunda, 
+		'#default_value'=>abs($tunda) - $realisasi , 
+	); 	
+	if (isSuperuser()) {
+		$form['formdata']['anggaran']= array(
+			'#type'         => 'textfield', 
+			//'#type'         => 'item', 
+			'#title'        => 'Tersedia',
+			'#attributes'	=> array('style' => 'text-align: right'),
+			//'#disabled'     => true, 
+			'#description'  => 'Jumlah anggaran tersedia untuk apbd', 
+			//'#maxlength'    => 60, 
+			'#size'         => 30, 
+			//'#required'     => !$disabled, 
+			//'#disabled'     => $disabled, 
+			'#default_value'=> $anggaran, 
+			//'#value'=> $jumlah, 
+		); 
+	} else {
+		$form['formdata']['anggaran']= array(
+			'#type'         => 'hidden', 
+			'#default_value'=> $anggaran, 
+			//'#value'=> $jumlah, 
+		); 
+	}
+	
+	$form['formdata']['e_penetapan']= array(
+		'#type'         => 'value', 
+		'#value'=> $penetapan, 
+	); 
+
+	$jawabantype = 'hidden';
+	$username = '';
+	$jawaban = '';
+	$jawabanada = 0;
+	if (isVerifikator()) {
+
+		global $user;
+		$username = $user->name;
+	
+		$jawabantype = 'textfield';
+
+		$pquery = sprintf("select jawaban from {anggperkegrevisiverifikasi} where kodekeg='%s' and username='%s' and kodero='%s'", db_escape_string($kodekeg), db_escape_string($username), db_escape_string($kodero));
+		$pres = db_query($pquery);	
+		if ($data = db_fetch_object($pres)) {
+			$jawaban = $data->jawaban;
+			$jawabanada = 1;
+		}		
+	}
+	$form['formdata']['jawaban']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Catatan Verifikator',
+		'#description'  => '<font color="red">Catatan/masukan dari verifikator</font>', 
+		//'#maxlength'    => 60, 
+		'#size'         => 90, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $jawaban, 
+	); 		
+	$form['formdata']['username']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $username, 
+	); 		
+	$form['formdata']['jawabanada']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $jawabanada, 
+	); 		
+	
+	$form['formdata']['jenisrevisi_r']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $jenisrevisi_r, 
+	); 
+	$form['formdata']['subjenisrevisi_r']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $subjenisrevisi_r, 
+	); 
+
+	$form['formdata']['geserrincian']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $geserrincian, 
+	); 
+	$form['formdata']['geserobyek']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $geserobyek, 
+	); 
+	
+	if (isSuperuser())
+		$where = sprintf(" where kodekeg='%s' and kodero='%s'", db_escape_string($kodekeg), db_escape_string($kodero));
+	else
+		$where = sprintf(" where total>0 and kodekeg='%s' and kodero='%s'", db_escape_string($kodekeg), db_escape_string($kodero));
+    $sql = 'select iddetil,kodekeg,kodero,uraian,unitjumlah,unitsatuan,volumjumlah,
+			volumsatuan,harga,total,pengelompokan, anggaran, bintang   
+			from {anggperkegdetilrevisi}' . $where  . ' order by nourut asc,iddetil';
+    $sql = sprintf($sql, addslashes($nama));
+	
+	////drupal_set_message($sql);
+	$resdetil = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	if ($resdetil) {
+		////drupal_set_message('res ok');
+		while ($data = db_fetch_object($resdetil)) {
+			$weight += 1;
+			////drupal_set_message($data->uraian . ' - ' . $weight);
+			
+			$penetapantag = '0';
+			$qdetil = sprintf(" and iddetil='%s'", db_escape_string($data->iddetil));
+			$sqllalu = 'select iddetil,kodekeg,kodero,uraian,unitjumlah, 	
+					unitsatuan,volumjumlah,	volumsatuan,harga,total,pengelompokan 
+					from {anggperkegdetil} ' . $where . $qdetil ;
+			$reslalu = db_query($sqllalu);
+			$penetapan = 'Tidak ada (Uraian baru)';
+			if ($reslalu) {
+				if ($datalalu = db_fetch_object($reslalu)) {
+					$penetapan = $datalalu->uraian . ' (' . $datalalu->unitjumlah . ' ' . $datalalu->unitsatuan . ' x ' . $datalalu->volumjumlah . ' ' . $datalalu->volumsatuan . ' x ' . $datalalu->harga . ' : ' . $datalalu->total . ')';
+					$penetapantag = '1';
+				}
+			}
+			
+			if ($data->pengelompokan) {
+				$subdetil = l('Detil', 'apbdkegrekdetilrevisi/' . $kodekeg . '/' . $kodero . '/' . $data->iddetil . '/' . $id , array('html' =>TRUE));			
+				$rows[] = array (
+								'id' => $weight,
+								'iddetil' => $data->iddetil,
+								'space' => '',
+								'pengelompokan' => $data->pengelompokan,
+								'e_pengelompokan' => $data->pengelompokan,
+								'anggaran' => $data->anggaran,
+								'bintang' => $data->bintang,
+								'penetapan' => $penetapan,
+								'penetapantag' => $penetapantag,
+								'uraian' => $data->uraian,
+								'unitjumlah' => '1',
+								'unitsatuan' => '',
+								'volumjumlah' => '1',
+								'volumsatuan' => '',
+								'harga' => $data->total,
+								'e_harga' => $data->total,
+								'subdetil' => $subdetil,
+								'weight' => $weight,
+							);
+
+			} else {
+				$subdetil = '';			
+				$rows[] = array (
+								'id' => $weight,
+								'iddetil' => $data->iddetil,
+								'space' => '',
+								'pengelompokan' => $data->pengelompokan,
+								'e_pengelompokan' => $data->pengelompokan,'penetapan' => $penetapan,
+								'anggaran' => $data->anggaran,	
+								'bintang' => $data->bintang,
+								'penetapantag' => $penetapantag,
+								'uraian' => $data->uraian,
+								'unitjumlah' => $data->unitjumlah,
+								'unitsatuan' => $data->unitsatuan,
+								'volumjumlah' => $data->volumjumlah,
+								'volumsatuan' => $data->volumsatuan,
+								'harga' => $data->harga,
+								'e_harga' => $data->harga,
+								'subdetil' => $subdetil,
+								'weight' => $weight,
+							);
+			}
+		}
+	}
+	
+	$penetapantag = '0';
+	$penetapan = 'Tidak ada (Uraian baru)';
+	if ($allowedit) {
+		for ($x = 1; $x <= 5; $x++) {
+			$weight += 1;
+
+			$rows[] = array (
+							'id' => $weight,
+							'iddetil' => 'new',
+							'space' => '',
+							'pengelompokan' => '',
+							'e_pengelompokan' => '',
+							'anggaran' => '',
+							'bintang' => false,
+							'penetapan' => $penetapan,
+							'penetapantag' => $penetapantag,
+							'uraian' => '',
+							'unitjumlah' => '1',
+							'unitsatuan' => '',
+							'volumjumlah' => '1',
+							'volumsatuan' => '',
+							'harga' => '',
+							'e_harga' => '',
+							'subdetil' => '',
+							'weight' => $weight,
+						);
+		}
+	}
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+        $form['tabledragrows'][$row['id']]['iddetil_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['iddetil'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['space_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#default_value' => '',
+            '#size' => 10,
+        );
+
+		if ($row['bintang']) 
+			if ($row['anggaran']==0) 
+				$b_value = '<img src="/files/bintang.png" style="float:center">';
+			else
+				$b_value = '<img src="/files/bintang1.png" style="float:center">';
+		else 
+			$b_value = '';
+        $form['tabledragrows'][$row['id']]['bintang_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $b_value,
+            '#size' => 10,
+        );
+		
+		if ($row['penetapantag']=='0') {
+			$form['tabledragrows'][$row['id']]['pengelompokan_' . $row['id']] = array(
+				'#type' => 'checkbox',
+				'#default_value' => $row['pengelompokan'],
+				'#size' => 10,
+			);
+		} else {
+			$form['tabledragrows'][$row['id']]['pengelompokan_' . $row['id']] = array(
+				'#type' => 'value',
+				'#value' => $row['pengelompokan'],
+				'#size' => 10,
+			);
+		}
+		$form['tabledragrows'][$row['id']]['penetapantag_' . $row['id']] = array(
+			'#type' => 'value',
+			'#value' => $row['penetapantag'],
+			'#size' => 10,
+		);
+
+        $form['tabledragrows'][$row['id']]['e_pengelompokan_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['e_pengelompokan'],
+            '#size' => 10,
+        );
+
+
+		$form['tabledragrows'][$row['id']]['penetapan_' . $row['id']] = array(
+			'#type' => 'textfield',
+			'#value' => $row['penetapan'],
+			'#size' => 45,
+		);
+
+		$form['tabledragrows'][$row['id']]['uraian_' . $row['id']] = array(
+			'#type' => 'textfield',
+			'#default_value' => $row['uraian'],
+			'#description'  => 'Uraian penetapan = ' . $row['penetapan'],
+			'#size' => 45,
+		);
+
+        $form['tabledragrows'][$row['id']]['unitjumlah_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['unitjumlah'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 5,
+        );
+        $form['tabledragrows'][$row['id']]['unitsatuan_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['unitsatuan'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['volumjumlah_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['volumjumlah'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 5,
+        );
+        $form['tabledragrows'][$row['id']]['volumsatuan_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['volumsatuan'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['harga_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['harga'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['anggaran_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['anggaran'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 10,
+        );		
+
+        $form['tabledragrows'][$row['id']]['e_harga_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['e_harga'],
+            '#size' => 10,
+        );
+		
+		//'#value' => "<span>$data->program (Kode: $data->kodepro)</span>",
+        $form['tabledragrows'][$row['id']]['subdetil_' . $row['id']] = array(
+            '#type' => 'markup',
+            //'#default_value' => $row['subdetil'],
+			//'#value' => "<span>Hai</span>",
+			'#value' => $row['subdetil'],
+            '#size' => 5,
+        );
+		
+        // the weight form element.
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+	$form['maxdetil']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		'#default_value'=> $weight, 
+	); 
+ 
+	if ($kodero != '') {
+		//PREV
+		$sql = 'select kodero from {anggperkegrevisi} where kodekeg=\'%s\' and kodero<\'%s\' order by kodero desc limit 1';
+		$res = db_query(db_rewrite_sql($sql), array ($kodekeg, $kodero));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {
+				$prevkode=$data->kodero;
+
+				$form['prevkode']= array(
+					'#type'         => 'hidden', 
+					'#default_value'=> $prevkode, 
+					//'#weight' => 1,
+				);				
+				
+				
+				$form['formdata']['submitprev'] = array (
+					'#type' => 'submit',
+					'#value' => '<<',
+					//'#weight' => 2,
+				); 
+
+				$form['submitprev'] = array (
+					'#type' => 'submit',
+					'#value' => '<<',
+					//'#weight' => 2,
+				); 
+				
+			}
+		}	
+		
+		//NEXT
+		$sql = 'select kodero from {anggperkegrevisi} where kodekeg=\'%s\' and kodero>\'%s\' order by kodero limit 1';
+		$res = db_query(db_rewrite_sql($sql), array ($kodekeg, $kodero));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {
+				$nextkode=$data->kodero;
+
+				$form['nextkode']= array(
+					'#type'         => 'hidden', 
+					'#default_value'=> $nextkode, 
+					//'#weight' => 3,
+				);				
+
+				$form['formdata']['submitnext'] = array (
+					'#type' => 'submit',
+					'#value' => '>>',
+					//'#weight' => 4,
+				);
+
+				$form['submitnext'] = array (
+					'#type' => 'submit',
+					'#value' => '>>',
+					//'#weight' => 4,
+				);
+				
+			}
+		}		
+	}
+
+	if (isVerifikator()) {
+		if ($id=='0') {			//PERUBAHAN 
+			$form['formdata']['submitverify'] = array (
+				'#type' => 'submit',				
+				'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				'#value' => 'Simpan Catatan Verifikasi',
+				//'#weight' => 6,
+			);
+			$form['submitverify'] = array (
+				'#type' => 'submit',
+				'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				'#value' => 'Simpan Catatan Verifikasi',
+				//'#weight' => 6,
+			);		
+			
+		} else {
+			$form['formdata']['submitverify'] = array (
+				'#type' => 'submit',
+				'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisi/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				'#value' => 'Simpan Catatan Verifikasi',
+				//'#weight' => 6,
+			);
+			$form['submitverify'] = array (
+				'#type' => 'submit',
+				'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisi/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				'#value' => 'Simpan Catatan Verifikasi',
+				//'#weight' => 6,
+			);		
+			
+		}
+	} else {
+
+		if ($allowedit) {
+			if ($jenisrevisi_r != 2) {
+				$form['formdata']['submitnew'] = array (
+					'#type' => 'submit',
+					'#value' => 'Rek. Baru',
+					//'#weight' => 5,
+				);
+				$form['submitnew'] = array (
+					'#type' => 'submit',
+					'#value' => 'Rek. Baru',
+					//'#weight' => 5,
+				);
+			}
+
+		}	
+
+		$form['formdata']['submitnewdetil'] = array (
+			'#type' => 'submit',
+			'#value' => 'Tambah Detil',
+			//'#weight' => 6,
+		);
+		$form['submitnewdetil'] = array (
+			'#type' => 'submit',
+			'#value' => 'Tambah Detil',
+			//'#weight' => 6,
+		);
+	
+		if ($id=='0') {			//PERUBAHAN 
+			$form['formdata']['submit'] = array(
+				'#type' => 'submit',
+				'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				'#value' => 'Simpan',
+				//'#weight' => 7,
+			);
+			$form['submit'] = array(
+				'#type' => 'submit',
+				'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisi/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				'#value' => 'Simpan',
+				//'#weight' => 7,
+			);
+
+		} else {
+			$form['formdata']['submit'] = array(
+				'#type' => 'submit',
+				'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisi/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				//'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				'#value' => 'Simpan',
+				//'#weight' => 7,
+			);
+			$form['submit'] = array(
+				'#type' => 'submit',
+				'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisi/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				//'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan/rekening/" . $kodekeg . "' class='btn_green' style='color: white'>Tutup</a>",
+				'#value' => 'Simpan',
+				//'#weight' => 7,
+			);
+		}	
+
+	
+	}
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the apbdkegrekeningrevisi_form() form.
+ */
+function apbdkegrekeningrevisi_form_validate($form, &$form_state) {
+	$uraianrek = $form_state['values']['kegiatan'];
+	$kodero = $form_state['values']['nk'];
+
+	$kodekeg = $form_state['values']['kodekeg'];
+	$e_kodero = $form_state['values']['e_kodero'];
+	
+	$maxdetil = $form_state['values']['maxdetil'];
+	
+	$anggaran = $form_state['values']['anggaran'];
+	
+
+	if ($kodero=='') {		
+		if ($uraianrek =='') {
+			form_set_error('', 'Rekening belum diisi');
+			
+		} else {			//Rekening diisi dari mengetik
+			$sql = 'select kodero from {rincianobyek} where uraian=\'%s\'';
+			$res = db_query(db_rewrite_sql($sql), array ($uraianrek));
+			if ($res) {
+				$data = db_fetch_object($res);
+				if ($data) {
+					$kodero = $data->kodero;
+				} else {
+					form_set_error('', 'Rekening tidak diisi/dipilih dengan benar');
+				}
+			} 
+		}
+	}
+	
+	if ($e_kodero != $kodero) {		//Rekening baru
+		$sql = 'select kodero from {anggperkegrevisi} where kodekeg=\'%s\' and kodero=\'%s\'';
+		$res = db_query(db_rewrite_sql($sql), array ($kodekeg, $kodero));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {		
+				form_set_error('', 'Rekening sudah digunakan');
+			}
+		}
+		
+		//cek apakah rekening lama ada di penetapan
+		$sql = 'select kodero from {anggperkeg} where kodekeg=\'%s\' and kodero=\'%s\'';
+		$res = db_query(db_rewrite_sql($sql), array ($kodekeg, $e_kodero));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {		
+				form_set_error('', 'Rekening yang sudah ada di APBD Penetapan, tidak bisa langsung diganti. Harus dikosongkan/dikurangi kemudian menambah rekening baru');
+			}
+		}
+		
+	} 
+	
+	//CEK PLAFON
+	$totalrekening = 0;
+	for ($x = 1; $x <= $maxdetil; $x++) 
+	{
+		//Hitung detilnya dulu
+		$uraian = $form_state['values']['uraian_' . $x];
+		$e_pengelompokan = $form_state['values']['e_pengelompokan_' . $x];
+		if ($uraian != '') {
+			if ($e_pengelompokan) {
+				$total = $form_state['values']['e_harga_' . $x];
+				
+			} else {
+				$unitjumlah = $form_state['values']['unitjumlah_' . $x];
+				$volumjumlah = $form_state['values']['volumjumlah_' . $x];
+				$harga = $form_state['values']['harga_' . $x];
+
+				$total = $unitjumlah * $volumjumlah * $harga;
+			}
+			if ($total>0) $totalrekening += $total;
+			
+		} 
+
+	}
+	
+
+	//CEK PER 1000
+	$seribu = 1000;
+	if (($totalrekening % $seribu)>0) form_set_error('', 'Jumlah isian detil rekening ' . apbd_fn($totalrekening) . ', tidak bulat per seribu');
+
+	$e_penetapan = $form_state['values']['e_penetapan'];
+	$jenisrevisi_r = $form_state['values']['jenisrevisi_r'];
+	$geserobyek = $form_state['values']['geserobyek'];
+	$geserrincian = $form_state['values']['geserrincian'];
+	$maxgeser = $form_state['values']['maxgeser'];
+	//if ($anggaran==0) $anggaran = $e_penetapan;
+	
+	if ($jenisrevisi_r==2) {		//CEK ADMINISTRATIF
+		if (($totalrekening<>$e_penetapan) and ($e_penetapan>0)) {		
+			form_set_error('', 'Isian rekening tidak sama dengan penetapan, Penetapan : ' . apbd_fn($e_penetapan) . 
+							   ', Isian Rekening : ' . apbd_fn($totalrekening) );
+		}
+  
+	} 
+	
+	//CEK BINTANG 
+	//if  ($totalrekening < $maxgeser) {		
+	
+	//drupal_set_message('a:' . $anggaran);
+	//drupal_set_message('p:' . $e_penetapan);
+	
+	if ($anggaran != $e_penetapan) {
+		if  (($totalrekening < $maxgeser)  and ($e_penetapan>0)) {		
+			form_set_error('', 'Jumlah setelah pergeseran ' . apbd_fn($totalrekening) . 
+							   ', melewati lebih kecil yang diizinkan ' . apbd_fn($maxgeser) );
+		}
+	}
+	
+	/*
+	if ($jenisrevisi_r==1) {
+		if ($geserrincian==1) {
+
+			$sql = sprintf('select kodero from {anggperkeg} where kodekeg=\'%s\' and left(kodero,5)=\'%s\'', $kodekeg, substr($kodero,0,5));
+			//drupal_set_message($sql);
+
+			$res = db_query($sql);
+
+			if ($res) {
+				//drupal_set_message('res ok');
+				if ($data = db_fetch_object($res)) {
+					////drupal_set_message('rek . '  . $data->kodero);
+					if ($data->kodero=='') 
+						form_set_error('', 'Rekening yang dimasukkan diluar obyek rekening berkenaan');
+				} else 
+					form_set_error('', 'Rekening yang dimasukkan diluar obyek rekening berkenaan');
+
+			}
+
+		} 
+
+		//drupal_set_message($geserobyek);
+		
+		$sql = sprintf('select kodero from {anggperkeg} where kodekeg=\'%s\' and left(kodero,3)=\'%s\'', $kodekeg, substr($kodero,0,3));
+		////drupal_set_message($sql);
+		$res = db_query($sql);	
+		if ($res) {
+			//drupal_set_message('ok');
+			if ($data == db_fetch_object($res)) {
+				////drupal_set_message('ok1');
+				////drupal_set_message('k: ' . $data->kodero);
+				if ($data->kodero=='') 
+				form_set_error('', 'Rekening yang dimasukkan diluar jenis belanja berkenaan');
+			} else
+			form_set_error('', 'Rekening yang dimasukkan diluar jenis belanja berkenaan');
+		
+			
+		}
+
+		
+	}
+	*/
+	
+} 
+/**
+ * Implements hook_submit() for the apbdkegrekeningrevisi_form() form.
+ */
+function apbdkegrekeningrevisi_form_submit($form, &$form_state) {
+    
+	$kodekeg = $form_state['values']['kodekeg'];
+	$id = $form_state['values']['id'];
+	
+    if($form_state['clicked_button']['#value'] == $form_state['values']['submitnext']) {
+		$nextkode = $form_state['values']['nextkode'];
+        $form_state['redirect'] = 'apbdkegrekeningrevisi/' .  $kodekeg . '/' . $nextkode ;
+		////drupal_set_message('Next');
+
+	} else if($form_state['clicked_button']['#value'] == $form_state['values']['submitprev']) {
+		$prevkode = $form_state['values']['prevkode'];
+        $form_state['redirect'] = 'apbdkegrekeningrevisi/' . $kodekeg . '/' . $prevkode ;
+		////drupal_set_message('Next');
+
+	} else if($form_state['clicked_button']['#value'] == $form_state['values']['submitverify']) {
+	
+		$jawaban = $form_state['values']['jawaban'];
+		$jawabanada = $form_state['values']['jawabanada'];
+		$username = $form_state['values']['username'];
+		$kodero = $form_state['values']['nk'];
+		$e_kodero = $form_state['values']['e_kodero'];
+		
+		if ($jawaban=='') {
+			
+			if ($jawabanada) {
+				$sql = 'delete from {anggperkegrevisiverifikasi} where kodekeg=\'%s\' and kodero=\'%s\' and username=\'%s\'';
+				$res = db_query(db_rewrite_sql($sql), array ($kodekeg, $e_kodero, $username));
+				
+			}
+			
+		} else {
+			if ($jawabanada) {
+				$sql = 'update {anggperkegrevisiverifikasi} set kodero=\'%s\',jawaban=\'%s\' where kodekeg=\'%s\' and kodero=\'%s\' and username=\'%s\'';
+				$res = db_query(db_rewrite_sql($sql), array ($kodero, $jawaban, $kodekeg, $e_kodero, $username));
+				
+			} else {
+				$sql = 'insert into {anggperkegrevisiverifikasi} (kodekeg,kodero,username,jawaban) 
+					   values (\'%s\', \'%s\', \'%s\', \'%s\')';        
+				$res = db_query(db_rewrite_sql($sql), array($kodekeg, $kodero,$username, $jawaban));
+			}
+		}
+
+		
+		if ($id=='0')
+			drupal_goto('apbd/kegiatanrevisi/rekening/' . $kodekeg);      
+		else
+			drupal_goto('apbd/kegiatanrevisi/rekening/' . $kodekeg);  		
+	
+	} else {
+		
+		$e_kodero = $form_state['values']['e_kodero'];			
+
+		
+		$uraianrek = $form_state['values']['kegiatan'];
+		$kodero = $form_state['values']['nk'];
+		$maxdetil = $form_state['values']['maxdetil'];
+
+		$jumlah = $form_state['values']['jumlah'];
+		$jumlahsebelum = $form_state['values']['jumlahsebelum'];
+		$jumlahsesudah = $form_state['values']['jumlahsesudah'];
+		
+		$anggaran = $form_state['values']['anggaran'];
+
+		
+		if (($kodero=='') and ($uraianrek !='')) {		//Rekening diisi dari mengetik
+			$sql = 'select kodero from {rincianobyek} where uraian=\'%s\'';
+			$res = db_query(db_rewrite_sql($sql), array ($uraianrek));
+			if ($res) {
+				$data = db_fetch_object($res);
+				if ($data) {
+					
+					$kodero = $data->kodero;
+				} else {
+					$kodero = '';
+				}
+			} else {
+				$kodero = '';
+			}
+		}
+		
+		$totalanggaranrekening = 0; $total = 0;
+		for ($x = 1; $x <= $maxdetil; $x++) 
+		{
+			
+			//Hitung detilnya dulu
+			$uraian = $form_state['values']['uraian_' . $x];
+			//drupal_set_message($uraian . ' - ' . $form_state['values']['iddetil_' . $x] . ' / ' . $form_state['values']['weight_' . $x] );
+			
+			
+			if ($uraian != '') {
+				
+				$iddetil = $form_state['values']['iddetil_' . $x];
+				$e_pengelompokan = $form_state['values']['e_pengelompokan_' . $x];
+				$pengelompokan = $form_state['values']['pengelompokan_' . $x];
+				$weight = $form_state['values']['weight_' . $x];
+
+				if ($e_pengelompokan) {
+					$unitjumlah = '1';
+					$unitsatuan = '';
+					$volumjumlah = '1';
+					$volumsatuan = ''; 
+					$harga = $form_state['values']['e_harga_' . $x];
+					
+				} else {
+					$unitjumlah = $form_state['values']['unitjumlah_' . $x];
+					$unitsatuan = $form_state['values']['unitsatuan_' . $x];
+					$volumjumlah = $form_state['values']['volumjumlah_' . $x];
+					$volumsatuan = $form_state['values']['volumsatuan_' . $x]; 
+					$harga = $form_state['values']['harga_' . $x];
+					
+				}
+
+				
+				$total = $unitjumlah * $volumjumlah * $harga;
+				if ($total>0) $totalrekening += $total;
+				
+				$anggarandetil = $total;
+				$totalanggaranrekening += $total;
+				
+				////drupal_set_message($uraian . ' - ' . $weight);
+				
+				//Simpan detilnya
+				if ($iddetil=='new') {
+					////drupal_set_message('new ' . $kodero);
+					$sql = 'insert into {anggperkegdetilrevisi} (kodekeg, kodero, nourut, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, pengelompokan, anggaran) 
+							values(\'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')';        
+					$res = db_query(db_rewrite_sql($sql), array($kodekeg, $kodero, $weight, $uraian, $unitjumlah, $unitsatuan, $volumjumlah, $volumsatuan, $harga, $total, $pengelompokan, $anggarandetil));	
+				} else {
+					
+					if ($pengelompokan) {
+						$sql = 'update {anggperkegdetilrevisi} set nourut=\'%s\', uraian=\'%s\', unitjumlah=\'%s\', unitsatuan=\'%s\', volumjumlah=\'%s\', volumsatuan=\'%s\', 
+							  pengelompokan=\'%s\', anggaran=\'%s\' where iddetil=\'%s\' ';
+						$res = db_query(db_rewrite_sql($sql), array($weight, $uraian, $unitjumlah, $unitsatuan, $volumjumlah, $volumsatuan, $pengelompokan, $anggarandetil, $iddetil));
+
+					} else {
+						
+						$sql = 'update {anggperkegdetilrevisi} set nourut=\'%s\', uraian=\'%s\', unitjumlah=\'%s\', unitsatuan=\'%s\', volumjumlah=\'%s\', volumsatuan=\'%s\', 
+							   harga=\'%s\', total=\'%s\', pengelompokan=\'%s\', anggaran=\'%s\' where iddetil=\'%s\' ';
+						$res = db_query(db_rewrite_sql($sql), array($weight, $uraian, $unitjumlah, $unitsatuan, $volumjumlah, $volumsatuan, $harga, $total, $pengelompokan, $anggarandetil, $iddetil));
+					}
+				}
+				
+			} else {
+				$iddetil = $form_state['values']['iddetil_' . $x];
+				$penetapantag = $form_state['values']['penetapantag_' . $x];
+				
+				//drupal_set_message($uraian);
+				//drupal_set_message($iddetil);
+				//drupal_set_message($penetapantag);
+				
+				if ($penetapantag=='0') {
+			
+					$sql = 'delete from {anggperkegdetilrevisi} where kodekeg=\'%s\' and kodero=\'%s\' and iddetil=\'%s\'';
+					$res = db_query(db_rewrite_sql($sql), array($kodekeg, $kodero, $iddetil));
+				
+				} else {
+					
+					$unitjumlah = '0';
+					$unitsatuan = '';
+					$volumjumlah = '0';
+					$volumsatuan = ''; 
+					$harga = '0';
+					$anggarandetil = '0';
+
+					$sql = 'update {anggperkegdetilrevisi} set nourut=\'%s\', uraian=\'%s\', unitjumlah=\'%s\', unitsatuan=\'%s\', volumjumlah=\'%s\', volumsatuan=\'%s\', 
+						  harga=\'%s\', total=\'%s\', anggaran=\'%s\' where kodekeg=\'%s\' and kodero=\'%s\' and iddetil=\'%s\' ';
+					$res = db_query(db_rewrite_sql($sql), array($weight, $uraian, $unitjumlah, $unitsatuan, $volumjumlah, $volumsatuan, $harga, $anggarandetil, $anggarandetil, $kodekeg, $kodero, $iddetil));
+					
+				}
+					
+				
+			} 
+			
+		} 
+		
+		
+		if ($totalrekening<0) $totalrekening=0;
+		if ($totalanggaranrekening<0) $totalanggaranrekening=0;
+		
+		if ($e_kodero=='') {
+			$sql = 'insert into {anggperkegrevisi} (kodekeg,kodero,uraian,jumlah,jumlahsebelum,jumlahsesudah,anggaran) 
+				   values (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')';        
+			$res = db_query(db_rewrite_sql($sql), array($kodekeg, $kodero,$uraianrek, $totalrekening, $jumlahsebelum, $jumlahsesudah,$totalanggaranrekening));
+			
+			
+		} else {
+			$sql = 'update {anggperkegrevisi} set uraian=\'%s\', kodero=\'%s\', jumlah=\'%s\', jumlahsebelum=\'%s\', jumlahsesudah=\'%s\', anggaran=\'%s\' where kodekeg=\'%s\' and kodero=\'%s\'';
+			
+			
+			$res = db_query(db_rewrite_sql($sql), array($uraianrek, $kodero, $totalrekening, $jumlahsebelum, $jumlahsesudah, $totalanggaranrekening, $kodekeg, $e_kodero));
+		}
+		
+		//UPDATE JUMLAH KEGIATAN
+		$jumlahsub= 0;
+		$anggaransub = 0;
+		$sql = sprintf("select sum(jumlah) as jumlahsub,sum(anggaran) as anggaransub from {anggperkegrevisi} where kodekeg='%s'", $kodekeg);
+		$result = db_query($sql);
+		if ($data = db_fetch_object($result)) {		
+			$jumlahsub = $data->jumlahsub;
+			$anggaransub = $data->anggaransub;
+			
+			$sql = sprintf("update {kegiatanrevisi} set total='%s', anggaran='%s' where kodekeg='%s'", db_escape_string($jumlahsub), db_escape_string($anggaransub), $kodekeg);		
+			$res = db_query($sql);
+			
+		}
+		
+		
+		
+		if($form_state['clicked_button']['#value'] == $form_state['values']['submitnew']) {
+			$nextkode = $form_state['values']['nextkode'];
+			$form_state['redirect'] = 'apbdkegrekeningrevisi/'  . $kodekeg ;
+
+		} else if ($form_state['clicked_button']['#value'] == $form_state['values']['submitnewdetil']) {
+			$form_state['redirect'] = 'apbdkegrekeningrevisi/'  . $kodekeg . '/' . $kodero  ;
+			
+		} else {
+			
+			
+			if ($res)
+				drupal_set_message('Penyimpanan data berhasil dilakukan');
+			else
+				drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+			
+			if ($id=='0')
+				drupal_goto('apbd/kegiatanrevisi/rekening/' . $kodekeg);      
+			else
+				drupal_goto('apbd/kegiatanrevisi/rekening/' . $kodekeg);    
+			
+		}
+	}
+	
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function apbdkegrekeningrevisi_theme() {
+    return array(
+        'apbdkegrekeningrevisi_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_apbdkegrekeningrevisi_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['iddetil_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['space_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['bintang_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['pengelompokan_' . $id]);
+                //$this_row[] = drupal_render($form['tabledragrows'][$id]['penetapan_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['uraian_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['unitjumlah_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['unitsatuan_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['volumjumlah_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['volumsatuan_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['harga_' . $id]);
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['anggaran_' . $id]);
+				
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['subdetil_' . $id]);
+				
+                //Add the weight field to the row
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row, 'class' => 'draggable');
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+				array('data' => '',  'width'=> '0px'),
+				array('data' => '',  'width'=> '0px'),
+				array('data' => '',  'width'=> '5px'),
+				array('data' => 'Grp',  'width'=> '5px'),
+				 //array('data' => 'Penetapan',  'width'=> '100px'),
+				 array('data' => 'Uraian',  'width'=> '30px'),
+				 array('data' => 'Unit',  'width' => '10px'),
+				 array('data' => '',  'width' => '30px'),
+				 array('data' => 'Volume',  'width' => '10px'),
+				 array('data' => '',  'width' => '30px'),
+				 array('data' => 'Harga',  'width' => '20px'),
+				 //array('data' => '<font color="red">Anggaran</font>',  'width'=> '20px'),
+				 array('data' => '',  'width' => '5px'),
+				 array('data' => 'Weight'),
+				); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

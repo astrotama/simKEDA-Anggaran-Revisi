@@ -1,0 +1,506 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function kasbl_menu() {
+    $items['kasbl'] = array(
+        'title' => 'Anggaran Kas Belanja Langsung',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('kasbl_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function kasbl_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	//drupal_add_js('files/js/kegiatancam.js');
+	
+	$kodekeg = arg(1);
+	$kodeuk = 'XX';
+
+	$title = 'Anggaran Kas ';
+	drupal_set_html_head('<style>label{font-weight: bold; display: block; width: 200px; float: left;}</style>');
+	
+	if (isset($kodekeg)) {
+        $sql = 'select kodekeg,kegiatan,kodeuk,total,tw1,tw2,tw3,tw4 from {kegiatanskpd} where {kodekeg}=\'%s\'';
+        $res = db_query(db_rewrite_sql($sql), array ($kodekeg));
+        if ($res) {
+            $data = db_fetch_object($res);
+			if ($data) {
+				$title .= $data->kegiatan;
+				$anggaran = $data->total;
+				$kodeuk = $data->kodeuk;
+				$tw1 = $data->tw1;
+				$tw2 = $data->tw2;
+				$tw3 = $data->tw3;
+				$tw4 = $data->tw4;
+			}
+		}
+
+		$sql = 'select left(kodero,3) kodej, sum(jumlah) anggaran from {anggperkeg} where {kodekeg}=\'%s\' group by left(kodero,3)';
+        $res = db_query(db_rewrite_sql($sql), array ($kodekeg));
+        if ($res) {
+			while ($data = db_fetch_object($res)) {
+				switch ($data->kodej) {
+					case "521":
+						$pegawai = $data->anggaran;
+						break;
+						
+					case "522":
+						$barangjasa = $data->anggaran;
+						break;
+
+					case "523":
+						$modal = $data->anggaran;
+						break;
+				}
+			}
+		}
+		
+	} 
+	
+	drupal_set_title($title);
+	$form['formdata']['kodekeg']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $kodekeg, 
+	); 
+
+	$form['formdata']['anggaran']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Anggaran',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran, jumlahnya akan terisi secara otomatis saat detilnya diisi', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($anggaran), 
+	); 
+	$form['formdata']['e_anggaran']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $anggaran, 
+	); 
+	$form['formdata']['pegawai']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Pegawai',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran pegawai', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($pegawai), 
+	); 
+	$form['formdata']['e_pegawai']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $pegawai, 
+	); 
+	$form['formdata']['barangjasa']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Barang Jasa',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran barang jasa', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($barangjasa), 
+	); 
+	$form['formdata']['e_barangjasa']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $barangjasa, 
+	); 
+	$form['formdata']['modal']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Modal',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran modal', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($modal), 
+	); 
+	$form['formdata']['e_modal']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $modal, 
+	); 
+
+	$weight = 0;
+	$bulan = 0;
+	$rows= array();
+
+	$where = sprintf(" where kodekeg='%s'", db_escape_string($kodekeg));
+    $sql = 'select kodekeg, bulan, pegawai, barangjasa, modal  
+			from {anggkasbelanja} ' . $where  . ' order by bulan';
+	//($sql);
+	$pres = db_query($sql);
+	while ($data = db_fetch_object($pres)) {
+		$bulan++;
+		$weight++;
+		
+		if ($bulan==3)
+			$tw = apbd_fn($tw1);
+		else if ($bulan==6)
+			$tw = apbd_fn($tw2);
+		else if ($bulan==9)
+			$tw = apbd_fn($tw3);
+		else if ($bulan==12)
+			$tw = apbd_fn($tw4);
+		else
+			$tw = '';
+		
+		$rows[] = array (
+						'id' => $weight,
+						'tag' => 'old',
+						'bulan' => $bulan,
+						'pegawai' => $data->pegawai,
+						'barangjasa' => $data->barangjasa,
+						'modal' => $data->modal,
+						'tw' => $tw,
+						'weight' => $weight,
+					);
+		
+	}
+
+	if ($bulan==0) {
+		for ($bulan = 1; $bulan <= 12; $bulan++) {
+			$weight += 1;
+
+			if ($bulan==3)
+				$tw = apbd_fn($tw1);
+			else if ($bulan==6)
+				$tw = apbd_fn($tw2);
+			else if ($bulan==9)
+				$tw = apbd_fn($tw3);
+			else if ($bulan==12)
+				$tw = apbd_fn($tw4);
+			else
+				$tw = '';
+			
+			$rows[] = array (
+							'id' => $weight,
+							'tag' => 'new',
+							'bulan' => $bulan,
+							'pegawai' => 0,
+							'barangjasa' => 0,
+							'modal' => 0,
+							'tw' => $tw,
+							'weight' => $weight,
+						);
+			
+		}
+	}
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+
+        $form['tabledragrows'][$row['id']]['tag_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['tag'],
+            '#size' => 10,
+        );
+
+		$form['tabledragrows'][$row['id']]['bulan_' . $row['id']] = array(
+			//#type' => 'textfield',
+			'#type' => 'markup',
+			'#value' => $row['bulan'],
+			'#size' => 5,
+		);
+
+        $form['tabledragrows'][$row['id']]['pegawai_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['pegawai'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 20,
+        );
+        $form['tabledragrows'][$row['id']]['barangjasa_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['barangjasa'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 20,
+        );
+        $form['tabledragrows'][$row['id']]['modal_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['modal'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 20,
+        );
+        $form['tabledragrows'][$row['id']]['tw_' . $row['id']] = array(
+            '#type' => 'markup',
+			'#value' => '<p align="right">' . $row['tw'] . '</p>',
+            '#size' => 20,
+        );
+
+        // the weight form element.
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+	if ($kodekeg != '') {
+		//PREV
+		$sql = 'select kodekeg from {kegiatanskpd} where inaktif=0 and jenis=2 and kodeuk=\'%s\' and kodekeg<\'%s\' order by kodekeg desc limit 1';
+		$res = db_query(db_rewrite_sql($sql), array ($kodeuk, $kodekeg));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {
+				$prevkode=$data->kodekeg;
+
+				$form['prevkode']= array(
+					'#type'         => 'hidden', 
+					'#default_value'=> $prevkode, 
+					//'#weight' => 1,
+				);				
+				
+				
+				$form['formdata']['submitprev'] = array (
+					'#type' => 'submit',
+					'#value' => '<<',
+					//'#weight' => 2,
+				); 
+
+				$form['submitprev'] = array (
+					'#type' => 'submit',
+					'#value' => '<<',
+					//'#weight' => 2,
+				); 
+				
+			}
+		}	
+		
+		//NEXT
+		$sql = 'select kodekeg from {kegiatanskpd} where inaktif=0 and jenis=2 and kodeuk=\'%s\' and kodekeg>\'%s\' order by kodekeg limit 1';
+		$res = db_query(db_rewrite_sql($sql), array ($kodeuk, $kodekeg));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {
+				$nextkode=$data->kodekeg;
+
+				$form['nextkode']= array(
+					'#type'         => 'hidden', 
+					'#default_value'=> $nextkode, 
+					//'#weight' => 3,
+				);				
+
+				$form['formdata']['submitnext'] = array (
+					'#type' => 'submit',
+					'#value' => '>>',
+					//'#weight' => 4,
+				);
+
+				$form['submitnext'] = array (
+					'#type' => 'submit',
+					'#value' => '>>',
+					//'#weight' => 4,
+				);
+				
+			}
+		}		
+	}
+	
+	$form['formdata']['submit'] = array(
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanskpd' class='btn_blue' style='color: white'>Tutup</a>",
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+	);
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanskpd' class='btn_blue' style='color: white'>Tutup</a>",
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+	);
+
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the kasbl_form() form.
+ */
+function kasbl_form_validate($form, &$form_state) {
+	
+	$e_anggaran = $form_state['values']['e_anggaran'];
+	$e_pegawai = $form_state['values']['e_pegawai'];
+	$e_barangjasa = $form_state['values']['e_barangjasa'];
+	$e_modal = $form_state['values']['e_modal'];
+
+	$pegawai = 0;
+	$barangjasa = 0;
+	$modal = 0;
+
+	$t_pegawai = 0;
+	$t_barangjasa = 0;
+	$t_modal = 0;
+	
+	for ($x = 1; $x <= 12; $x++) {
+		
+		$pegawai = $form_state['values']['pegawai_' . $x];
+		$barangjasa = $form_state['values']['barangjasa_' . $x];
+		$modal = $form_state['values']['modal_' . $x];
+
+		$t_pegawai += $pegawai;
+		$t_barangjasa += $barangjasa;
+		$t_modal += $modal;
+		
+		if ($x<=3) 
+			$tw1 += $pegawai+$barangjasa+$modal;
+		else if ($x<=6) 
+			$tw2 += $pegawai+$barangjasa+$modal;
+		else if ($x<=9) 	
+			$tw3 += $pegawai+$barangjasa+$modal;
+		else
+			$tw4 += $pegawai+$barangjasa+$modal;
+			
+	}	
+	
+	//Cek 1000
+	$seribu = 1000;
+	if (($tw1 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #1 (' . apbd_fn($tw1) . '), tidak bulat per seribu');
+	if (($tw2 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #2 (' . apbd_fn($tw2) . '), tidak bulat per seribu');
+	if (($tw3 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #3 (' . apbd_fn($tw3) . '), tidak bulat per seribu');
+	if (($tw4 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #4 (' . apbd_fn($tw4) . '), tidak bulat per seribu');
+	
+	//Cek Pegawai
+	if ($t_pegawai > $e_pegawai) form_set_error('', 'Jumlah isian anggaran kas pegawai (' . apbd_fn($t_pegawai) . ') lebih besar daripada anggaran belanja pegawai (' . apbd_fn($e_pegawai) . ')');
+	if ($t_barangjasa > $e_barangjasa) form_set_error('', 'Jumlah isian anggaran kas barang & jasa (' . apbd_fn($t_barangjasa) . ') lebih besar daripada anggaran belanja barang & jasa (' . apbd_fn($e_barangjasa) . ')');
+	if ($t_modal > $e_modal) form_set_error('', 'Jumlah isian anggaran kas modal (' . apbd_fn($t_modal) . ') lebih besar daripada anggaran belanja modal (' . apbd_fn($e_modal) . ')');
+	
+} 
+
+/**
+ * Implements hook_submit() for the kasbl_form() form.
+ */
+function kasbl_form_submit($form, &$form_state) {
+
+    if($form_state['clicked_button']['#value'] == $form_state['values']['submitnext']) {
+		$nextkode = $form_state['values']['nextkode'];
+        $form_state['redirect'] = 'kasbl/' .  $nextkode ;
+		//drupal_set_message('Next');
+
+	} else if($form_state['clicked_button']['#value'] == $form_state['values']['submitprev']) {
+		$prevkode = $form_state['values']['prevkode'];
+        $form_state['redirect'] = 'kasbl/' . $prevkode ;
+		//drupal_set_message('Next');
+
+	} else {
+	
+		$kodekeg = $form_state['values']['kodekeg'];
+		$tw1 =0;
+		$tw2 =0;
+		$tw3 =0;
+		$tw4 =0;
+
+		for ($x = 1; $x <= 12; $x++) {
+			
+			$tag = $form_state['values']['tag_' . $x];
+			$pegawai = $form_state['values']['pegawai_' . $x];
+			$barangjasa = $form_state['values']['barangjasa_' . $x];
+			$modal = $form_state['values']['modal_' . $x];
+
+			if ($x<=3) 
+				$tw1 += $pegawai+$barangjasa+$modal;
+			else if ($x<=6) 
+				$tw2 += $pegawai+$barangjasa+$modal;
+			else if ($x<=9) 	
+				$tw3 += $pegawai+$barangjasa+$modal;
+			else
+				$tw4 += $pegawai+$barangjasa+$modal;
+				
+			//Simpan detilnya
+			if ($tag == 'new') {
+
+				$sql = "insert into {anggkasbelanja} (kodekeg,bulan,pegawai,barangjasa,modal) 
+					   values('%s', '%s', '%s', '%s', '%s')";
+				$res = db_query(db_rewrite_sql($sql), array($kodekeg, $x, $pegawai, $barangjasa, $modal));
+
+			} 	else {
+				$sql = sprintf("update {anggkasbelanja} set pegawai='%s', barangjasa='%s', modal='%s' where kodekeg='%s' and bulan='%s'", $pegawai, $barangjasa, $modal, $kodekeg, $x);
+				$res = db_query($sql);
+				
+			}	
+		}	
+
+		//$sql = sprintf("update {kegiatanskpd} set tw1='%s', tw2='%s', tw3='%s', tw4='%s' where kodekeg='%s'", 		$tw1, $tw2, $tw3, $tw4, $kodekeg);
+		//$res = db_query($sql);
+
+		if ($res)
+			drupal_set_message('Penyimpanan data berhasil dilakukan');
+		else
+			drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+		
+		//drupal_set_message($sql);
+	}
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function kasbl_theme() {
+    return array(
+        'kasbl_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_kasbl_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['iddetil_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['space_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['bulan_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['pegawai_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['barangjasa_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['modal_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['tw_' . $id]);
+				
+                //Add the weight field to the row
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+				array('data' => '',  'width'=> '0px'),
+				 array('data' => 'Bulan',  'width'=> '10px'),
+				 array('data' => 'Pegawai',  'width' => '10px'),
+				 array('data' => 'Barang & Jasa',  'width' => '30px'),
+				 array('data' => 'Modal',  'width' => '10px'),
+				 array('data' => 'Triwulan',  'width' => '10px'),
+				 array('data' => 'Weight'),
+				); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

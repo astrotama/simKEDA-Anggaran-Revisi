@@ -1,0 +1,1937 @@
+<?php
+
+function batchrevisi_menu() {
+	$revisi = variable_get('apbdrevisi', 1);
+	
+	$items = array();
+	$items['batchrevisi'] = array(
+		'title' => 'Pengesahan Revisi Kegiatan',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('batchrevisi_simple_form'),
+		'access callback' => TRUE,
+	);
+	return $items;
+}
+
+function batchrevisi_simple_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+
+	$kodekeg = arg(1);
+	
+	$revisi = variable_get('apbdrevisi', 1);
+	
+	if ($kodekeg == '') {
+		$form['uraian']= array(
+			'#type'         => 'markup', 
+			'#value'=> 'PENGESAHAN REVISI #' . $revisi, 
+		); 	
+		/*
+		$form['resetdpano']= array(
+			'#type' => 'radios', 
+			'#title' => t('Reset Penomoran DPA/DPPA'), 
+			'#options' => array(	
+				 '0' => t('Tidak'), 	
+				 '1' => t('<FONT COLOR="red">Ya (Kosongkan). Perhatian! Mengosongkan Nomor DPA/DPPA menyebabkan semua nomor DPPA yang sudah dimasukkan akan terhapus</FONT>'), 	
+			   ),
+			'#default_value' => '0',
+		);
+		*/
+		$form['twauto']= array(
+			'#type' => 'radios', 
+			'#title' => t('Isikan Triwulan Otomatis'), 
+			'#options' => array(	
+				 '0' => t('Tidak'), 	
+				 '1' => t('<FONT COLOR="blue">Ya (Pada Triwulan IV). Pada kegiatan yang isian triwulan-nya belum benar, dimana total triwulan tidak sama dengan anggaran, akan otomatis diisikan pada Triwulan IV</FONT>'), 	
+			   ),
+			'#default_value' => '0',
+		);
+
+		$form['latarauto']= array(
+			'#type' => 'radios', 
+			'#title' => t('Isikan Latar Belakang Otomatis'), 
+			'#options' => array(	
+				 '0' => t('Tidak'), 	
+				 '1' => t('<FONT COLOR="blue">Ya. Pada kegiatan yang isian latar belakangnya belum diisi, akan secara otomatis diisi dengan kalinat "Menyesuaikan kebutuhan belanja"</FONT>'), 	
+			   ),
+			'#default_value' => '0',
+		);
+		
+		$form['formdata']['ss'] = array (
+			'#type' => 'item',
+			'#value' => "<div style='clear:both;'></div>",
+		);		 
+		
+		$form['submit'] = array(
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan' class='btn_green' style='color: white'>Tutup</a>",
+		'#value' => 'Sahkan',
+		);
+		
+	} else {
+
+		$sql = 'select kegiatan from {kegiatanskpd} where kodekeg=\'%s\'' ;
+		$res = db_query(db_rewrite_sql($sql), array ($kodekeg));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {    
+				$kegiatan = $data->kegiatan;
+			}
+		}	
+		$form['uraian']= array(
+			'#type'         => 'markup', 
+			'#value'=> $kegiatan, 
+		); 	
+
+		$form['kodekeg']= array(
+			'#type' => 'value', 
+			'#value' => $kodekeg,
+		);
+		$form['formdata']['ss'] = array (
+			'#type' => 'item',
+			'#value' => "<div style='clear:both;'></div>",
+		);		 
+		
+		$form['submitsingle'] = array(
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan' class='btn_green' style='color: white'>Tutup</a>",
+		'#value' => 'Sahkan Kegiatan',
+		);		
+	}
+	return $form;
+}
+
+
+function batchrevisi_simple_form_submit($form, &$form_state) {
+	
+	if($form_state['clicked_button']['#value'] == $form_state['values']['submit']) {
+		//no. dppa
+		$resetdpano = $form_state['values']['resetdpano'];
+		$_SESSION['batch_resetdpano'] = $resetdpano;
+		
+		//twauto
+		$twauto = $form_state['values']['twauto'];
+		$_SESSION['batch_twauto'] = $twauto;
+
+		//latarbelakang auto
+		$latarauto = $form_state['values']['latarauto'];
+		$_SESSION['batch_latarauto'] = $latarauto;
+		
+		$function = 'batchrevisi_batch_2';				
+		//$function = 'batchrevisi_batch_single';
+
+		// Load the $batch variable with an array containing the details
+		// of what to run
+		$batch = $function();
+
+		// Start the batch process running
+		batch_set($batch);
+		
+		//batch_process('batchrevisi');
+		batch_process('batchrevisi');
+		
+	} else {
+		
+		$kodekeg = $form_state['values']['kodekeg'];
+		//drupal_set_message($kodekeg);
+		
+		$_SESSION['batch_kodekeg'] = $kodekeg;
+		
+		$_SESSION['batch_resetdpano'] = 0;		
+		$_SESSION['batch_twauto'] = 0;
+		$_SESSION['batch_latarauto'] = 0;
+
+		$function = 'batchrevisi_batch_single';
+
+		// Load the $batch variable with an array containing the details
+		// of what to run
+		$batch = $function();
+
+		// Start the batch process running
+		batch_set($batch);
+		
+		//batch_process('batchrevisi');
+		batch_process('batchrevisi');	
+		
+		drupal_goto('apbd/kegiatanrevisi');	
+	}
+	
+	
+
+}
+  
+
+function batchrevisi_batch_2() {
+	$operations = array();
+	
+	
+	$operations[] = array('pengesahanrevisi', array('000000000000', '0', '0', '0', 'Inisialisasi'));
+	$operations[] = array('pengesahanrevisi', array('222222222222', '0', '0', '0', 'Admin'));
+	$operations[] = array('pengesahanrevisi', array('111111111111', '0', '0', '0', 'Geser'));
+	$operations[] = array('pengesahanrevisi', array('333333333333', '0', '0', '0', 'Baru'));
+	
+	
+	$sql = "select kp.id, kp.kodekeg, kp.jenisrevisi, kr.kegiatan from {kegiatanrevisiperubahan} kp inner join {kegiatanrevisi} kr on kp.kodekeg=kr.kodekeg where kp.status=1 order by kp.jenisrevisi, kr.kegiatan" ;	
+	
+	$res = db_query($sql); 
+	while ($data = db_fetch_object($res)) {
+		drupal_set_message($data->kodekeg . ' - ' . $data->id . ' - ' . $data->jenisrevisi);
+
+		$operations[] = array('pengesahanrevisi', array($data->kodekeg, $data->id, $data->jenisrevisi, '0', $data->kegiatan));
+	}
+	
+	//admin geser detil
+	/*
+	$sql = "select kp.id, kp.kodekeg, kp.jenisrevisi, kr.kegiatan, kp.detiluraian from {kegiatanrevisiperubahan} kp inner join {kegiatanrevisi} kr on kp.kodekeg=kr.kodekeg where kp.status=1 and kp.jenisrevisi=2 and (kp.detiluraian=1 or kp.rab=1) order by kp.jenisrevisi, kr.kegiatan" ;		 
+	$res = db_query($sql); 
+	while ($data = db_fetch_object($res)) {
+		drupal_set_message($data->kodekeg . ' - ' . $data->id . ' - ' . $data->jenisrevisi);
+
+		$operations[] = array('pengesahanrevisi', array($data->kodekeg, $data->id, $data->jenisrevisi, $data->detiluraian, $data->kegiatan));
+	}
+	*/
+	
+	//admin ganti program
+	$sql = "select distinct kr.kodekeg, kr.kodepro, kr.kegiatan, krp.jenisrevisi from kegiatanrevisi kr inner join kegiatanskpd k on kr.kodekeg=k.kodekeg and kr.kodepro<>k.kodepro inner join kegiatanrevisiperubahan krp on kr.kodekeg=krp.kodekeg where krp.jenisrevisi=2 and krp.status=1" ;		 
+	$res = db_query($sql); 
+	while ($data = db_fetch_object($res)) {
+		drupal_set_message($data->kodekeg . ' - ' . $data->id . ' - ' . $data->jenisrevisi);
+
+		$operations[] = array('pengesahanrevisi', array($data->kodekeg, '0', 'kodepro', 'kodepro', $data->kegiatan));
+	}
+	
+	//ZZZZZZZZZZZZ
+	$operations[] = array('pengesahanrevisi', array('ZZZZZZZZZZZZ', '0', '0', '0', 'Clean up penetapan'));
+	
+	//XXXXXXXXXXXX
+	//Pada revisi 2, dilewati
+	//$operations[] = array('pengesahanrevisi', array('XXXXXXXXXXXX', '0', '0', '0', 'Fixing kode kegiatan'));
+	
+	$operations[] = array('pengesahanrevisi', array('CCCCCCCCCCCC', '0', '0', '0', 'Clean up nol'));
+	
+	//AAAAAAAAAAAA	PENOMORAN DPA
+	/*
+	$resetdpano = $_SESSION['batch_resetdpano'];
+	if ($resetdpano=='1') {
+		$operations[] = array('pengesahanrevisi', array('AAAAAAAAAAAA', '0', '0', '0', 'Penomoran DPA Revisi'));
+	}
+	*/
+	
+	//twauto
+	$twauto = $_SESSION['batch_twauto'];
+	if ($twauto=='1') {
+		$operations[] = array('pengesahanrevisi', array('TTTTTTTTTTTT', '0', '0', '0', 'Pengisian Tri Wulan Otomatis'));
+	}
+
+	//latarauto
+	$latarauto = $_SESSION['batch_latarauto'];
+	if ($latarauto=='1') {
+		$operations[] = array('pengesahanrevisi', array('LLLLLLLLLLLL', '0', '0', '0', 'Pengisian otomatis latar belakang yang belum diisi'));
+	}
+	
+	
+	
+	
+	$batch = array(
+		'operations' => $operations,
+		'finished' => 'batchrevisi_finished',
+		// We can define custom messages instead of the default ones.
+		'title' => t('Mengesahkan Revisi Kegiatan DPPA'),
+		'init_message' => t('Pengesahan dimulai..'),
+		'progress_message' => t('Pengesahan @current dari @total kegiatan'),
+		'error_message' => t('Terjadi kesalahan.'),
+	);
+	return $batch;
+}
+
+function batchrevisi_batch_2_asli() {
+	$operations = array();
+	
+	$operations[] = array('pengesahanrevisi', array('000000000000', '0', '0', 'Inisialisasi'));
+	
+	$sql = 'select kp.id, kp.kodekeg, kp.jenisrevisi, kr.kegiatan from {kegiatanrevisiperubahan} kp inner join {kegiatanrevisi} kr on kp.kodekeg=kr.kodekeg where kp.status=1 order by kp.jenisrevisi, kr.kegiatan' ;		
+	
+	/*
+	$kodekeg = '201658025108';
+	$sqlkeg = sprintf(' where kr.kodekeg=\'%s\'', $kodekeg); 
+	$sql = 'select kp.id, kp.kodekeg, kp.jenisrevisi, kr.kegiatan from {kegiatanrevisiperubahan} kp inner join {kegiatanrevisi} kr on kp.kodekeg=kr.kodekeg ' . $sqlkeg . ' order by kp.jenisrevisi, kr.kegiatan' ;		
+	*/
+	
+	$res = db_query($sql); 
+	while ($data = db_fetch_object($res)) {
+		//drupal_set_message($data->kodekeg . ' - ' . $data->id . ' - ' . $data->jenisrevisi);
+		$operations[] = array('pengesahanrevisi', array($data->kodekeg, $data->id, $data->jenisrevisi, $data->kegiatan));
+	}
+	
+	//ZZZZZZZZZZZZ
+	$operations[] = array('pengesahanrevisi', array('ZZZZZZZZZZZZ', '0', '0', 'Clean up penetapan'));
+	
+	//XXXXXXXXXXXX
+	//Pada revisi 2, dilewati
+	//$operations[] = array('pengesahanrevisi', array('XXXXXXXXXXXX', '0', '0', 'Fixing kode kegiatan'));
+	
+	$batch = array(
+		'operations' => $operations,
+		'finished' => 'batchrevisi_finished',
+		// We can define custom messages instead of the default ones.
+		'title' => t('Mengesahkan Revisi Kegiatan DPPA'),
+		'init_message' => t('Pengesahan dimulai..'),
+		'progress_message' => t('Pengesahan @current dari @total kegiatan'),
+		'error_message' => t('Terjadi kesalahan.'),
+	);
+	return $batch;
+}
+function batchrevisi_batch_single() { 
+	
+	$kodekeg = $_SESSION['batch_kodekeg'];
+	
+	$operations = array();
+	
+	$sqlkeg = sprintf(' and kr.kodekeg=\'%s\'', $kodekeg); 
+	$sql = 'select kp.id, kp.kodekeg, kp.jenisrevisi, kr.kegiatan from {kegiatanrevisiperubahan} kp inner join {kegiatanrevisi} kr on kp.kodekeg=kr.kodekeg where kp.status=1 ' . $sqlkeg . ' order by kp.jenisrevisi, kr.kegiatan' ;		
+	$res = db_query($sql); 
+	while ($data = db_fetch_object($res)) {
+		//drupal_set_message($data->kodekeg . ' - ' . $data->id . ' - ' . $data->jenisrevisi);
+		$operations[] = array('pengesahanrevisi', array($data->kodekeg, $data->id, $data->jenisrevisi, $data->kegiatan));
+	}
+	
+	
+	$batch = array(
+		'operations' => $operations,
+		'finished' => 'batchrevisi_finished',
+		// We can define custom messages instead of the default ones.
+		'title' => t('Mengesahkan Revisi Kegiatan DPPA'),
+		'init_message' => t('Pengesahan dimulai..'),
+		'progress_message' => t('Pengesahan @current dari @total kegiatan'),
+		'error_message' => t('Terjadi kesalahan.'),
+	);
+	return $batch;
+}
+
+
+function batchrevisi_finished($success, $results, $operations) {
+  if ($success) {
+    // Here we could do something meaningful with the results.
+    // We just display the number of nodes we processed...
+    //$message = count($results) . ' kegiatan sudah disahkan menjadi DPPA-SKPD.';
+	$message = 'Semua kegiatan sudah disahkan menjadi DPPA-SKPD.';
+  }
+  else {
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    $message = 'An error occurred while processing ' . $error_operation[0] . ' with arguments :' . print_r($error_operation[0], TRUE);
+  }
+  drupal_set_message($message);
+}
+
+function pengesahanrevisi_single($kodekeg, $id, $jenisrevisi, $kegiatan, &$context) {	
+	
+	$sqlkeg = sprintf(' where kodekeg=\'%s\'', $kodekeg);  
+	
+	
+	$context['message'] = check_plain($kegiatan);
+	
+	$str = '1.1. Reset kegiatan perubahan revisi';
+	$sql = 'delete from kegiatanperubahan' . $sqlkeg;
+	////drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '1.2. Reset rekening kegiatan perubahan revisi';
+	$sql = 'delete from anggperkegperubahan' . $sqlkeg;
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '1.3. Reset detil rekening kegiatan perubahan revisi';
+	$sql = 'delete from anggperkegdetilperubahan' . $sqlkeg;
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '1.4. Reset sub detil rekening kegiatan perubahan revisi';
+	$sql = 'delete from anggperkegdetilsubperubahan' . $sqlkeg;
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '2.1. Populate kegiatan perubahan revisi dari penetapan';
+	$sql = 'insert into kegiatanperubahan (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, periode) select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, total totalp, tw1 tw1p, tw2 tw2p, tw3 tw3p, tw4 tw4p, 1 periode from kegiatanskpd'  . $sqlkeg;
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '2.2. Populate rekening kegiatan perubahan revisi dari penetapan';
+	$sql = 'insert into anggperkegperubahan (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum) select kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum from anggperkeg' . $sqlkeg;
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '2.3. Populate detil rekening kegiatan perubahan revisi dari penetapan';
+	$sql = 'insert into anggperkegdetilperubahan (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut) select iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut from anggperkegdetil' . $sqlkeg;
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '2.4. Populate sub detil rekening kegiatan perubahan revisi dari penetapan';
+	$sql = 'insert into anggperkegdetilsubperubahan (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut from anggperkegdetilsub where iddetil in (select iddetil from anggperkegdetil ' . $sqlkeg . ')';
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '3.1. Menandai kegiatan penetapan';
+	$sql = 'update kegiatanperubahan set totalp=total,periode=1' . $sqlkeg;
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '3.2. Menandai rekening kegiatan penetapan';
+	$sql = 'update anggperkegperubahan set jumlahp=jumlah,periode=1' . $sqlkeg;
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '3.3. Menandai detil rekening kegiatan penetapan';
+	$sql = 'update anggperkegdetilperubahan set periode=1 ' . $sqlkeg;
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	$str = '3.4. Menandai sub detil rekening kegiatan penetapan';
+	$sql = 'update anggperkegdetilsubperubahan set periode=1  where iddetil in (select iddetil from anggperkegdetil ' . $sqlkeg . ')';
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	switch ($jenisrevisi) {
+		case 1:		//Geser2
+			
+			$context['message'] = 'GESER : ' . check_plain($kegiatan);
+			
+			drupal_set_message('4.2. Pengesahan kegiatan `' . $kegiatan . '` -> GESER...');
+			
+			$str = '4.2.0 Aktifkan kegiatan';
+			$sql = sprintf('update kegiatanperubahan set inaktif=0 where kodekeg=\'%s\'', $kodekeg) ;
+			//drupal_set_message($sql);
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+			
+			reset_rekening_kegiatan($kodekeg);
+			insert_rek_kegiatan($kodekeg);
+			break;
+			
+		case 2:		//Admin
+			
+			$context['message'] = 'ADMIN : ' . check_plain($kegiatan);
+			
+			drupal_set_message('4.2. Pengesahan kegiatan `' . $kegiatan . '` -> ADMIN...');
+			$str = '4.2.0 Aktifkan kegiatan';
+			$sql = sprintf('update kegiatanperubahan set inaktif=0 where kodekeg=\'%s\'', $kodekeg) ;
+			//drupal_set_message($sql);
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+			
+			
+			$sql = sprintf('select lokasi, geserblokir, geserrincian, geserobyek, sumberdana, kinerja, sasaran, detiluraian, rab, triwulan from {kegiatanrevisiperubahan} where id=\'%s\'', $id) ;		
+			$reskeg = db_query($sql);
+			if ($datakeg = db_fetch_object($reskeg)) {
+				update_kegiatan_admin($datakeg->kodekeg, $datakeg->lokasi, $datakeg->geserblokir, $datakeg->geserrincian, $datakeg->geserobyek, $datakeg->sumberdana, $datakeg->kinerja, $datakeg->sasaran, $datakeg->detiluraian, $datakeg->rab, $datakeg->triwulan);
+			}
+			
+			break;
+		
+		case 3:		//DAK
+			
+			$context['message'] = 'TRANSFER : ' . check_plain($kegiatan);
+			
+			drupal_set_message('4.2. Pengesahan kegiatan `' . $kegiatan . '` -> TRANSFER...');
+			update_kegiatan_dak($kodekeg);
+			break;
+
+		case 9:		//MURNI
+			
+			$context['message'] = 'TRANSFER : ' . check_plain($kegiatan);
+			
+			drupal_set_message('4.2. Pengesahan kegiatan `' . $kegiatan . '` -> TRANSFER...');
+			update_kegiatan_dak($kodekeg);
+			break;
+			
+	}
+
+
+	$context['finished'] = 1;
+	
+}
+
+function pengesahanrevisi($kodekeg, $id, $jenisrevisi, $ubahdetil, $kegiatan, &$context) {	
+	
+	if ($kodekeg=='000000000000') {			//INISIALISASI
+	
+		$context['message'] = check_plain($kegiatan);
+		
+		$str = '1.1. Reset kegiatan perubahan revisi';
+		$sql = 'delete from kegiatanperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+
+		$str = '1.2. Reset rekening kegiatan perubahan revisi';
+		$sql = 'delete from anggperkegperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+
+		$str = '1.3. Reset detil rekening kegiatan perubahan revisi';
+		$sql = 'delete from anggperkegdetilperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+
+		$str = '1.4. Reset sub detil rekening kegiatan perubahan revisi';
+		$sql = 'delete from anggperkegdetilsubperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+		
+		$revisi = variable_get('apbdrevisi', 1);
+		$revisi_lalu = $revisi - 1;
+		drupal_set_message('Posting revisi #' . $revisi);
+		if ($revisi==1) {
+			$str = '2.1. Populate kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into kegiatanperubahan (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, periode, anggaran, bintang) select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, total totalp, tw1 tw1p, tw2 tw2p, tw3 tw3p, tw4 tw4p, 1 periode, anggaran, bintang from kegiatanskpd';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.2. Populate rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegperubahan (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, anggaran, bintang) select kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, anggaran, bintang from anggperkeg';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.3. Populate detil rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegdetilperubahan (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang) select iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang from anggperkegdetil';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.4. Populate sub detil rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegdetilsubperubahan (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang from anggperkegdetilsub';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.1. Menandai kegiatan penetapan';
+			$sql = 'update kegiatanperubahan set totalp=total,periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.2. Menandai rekening kegiatan penetapan';
+			$sql = 'update anggperkegperubahan set jumlahp=jumlah,periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.3. Menandai detil rekening kegiatan penetapan';
+			$sql = 'update anggperkegdetilperubahan set periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.4. Menandai sub detil rekening kegiatan penetapan';
+			$sql = 'update anggperkegdetilsubperubahan set periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+			
+		} 
+
+	} else if ($kodekeg=='111111111111') {			// GESER
+		$str = '3. Transfer geser rekening';
+		$str = '3.1. Update kegiatanperubahan';
+		$sql = 'update kegiatanperubahan kp inner join kegiatanrevisi kr on kp.kodekeg=kr.kodekeg set kp.programsasaran=kr.programsasaran, kp.programtarget=kr.programtarget, kp.masukansasaran=kr.masukansasaran, kp.masukantarget=kr.masukantarget, kp.keluaransasaran=kr.keluaransasaran, kp.keluarantarget=kr.keluarantarget, kp.hasilsasaran=kr.hasilsasaran, kp.hasiltarget=kr.hasiltarget, kp.tw1p=kr.tw1, kp.tw2p=kr.tw2, kp.tw3p=kr.tw3, kp.tw4p=kr.tw4, kp.kelompoksasaran=kr.kelompoksasaran, kp.sumberdana1=kr.sumberdana1, kp.lokasi=kr.lokasi, kp.latarbelakang=kr.latarbelakang, kp.totalp=kr.total, kp.periode=2 where kp.kodekeg=kr.kodekeg and kp.kodekeg in (select kodekeg from q_revisi_geser)';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+		
+	
+	} else if ($kodekeg=='222222222222') {			// ADMIN
+		$str = '3. Transfer administrasi';
+		$sql = 'update kegiatanperubahan kp inner join kegiatanrevisi kr on kp.kodekeg=kr.kodekeg set kp.programsasaran=kr.programsasaran, kp.programtarget=kr.programtarget, kp.masukansasaran=kr.masukansasaran, kp.masukantarget=kr.masukantarget, kp.keluaransasaran=kr.keluaransasaran, kp.keluarantarget=kr.keluarantarget, kp.hasilsasaran=kr.hasilsasaran, kp.hasiltarget=kr.hasiltarget, kp.tw1p=kr.tw1, kp.tw2p=kr.tw2, kp.tw3p=kr.tw3, kp.tw4p=kr.tw4, kp.kelompoksasaran=kr.kelompoksasaran, kp.sumberdana1=kr.sumberdana1, kp.lokasi=kr.lokasi, kp.latarbelakang=kr.latarbelakang, kp.totalp=kr.total, kp.periode=2 where kp.kodekeg=kr.kodekeg and kp.kodekeg in (select kodekeg from q_revisi_admin)';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+	
+	} else if ($kodekeg=='333333333333') {			//  BARU	
+		$str = '4. Transfer kegiatan baru';
+		$str = '4.1. Insert kegiatanperubahan';
+		$sql = 'insert into kegiatanperubahan (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, periode, anggaran, bintang) select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, 0 tw1, 0 tw2, 0 tw3, 0 tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, total totalp, tw1 tw1p, tw2 tw2p, tw3 tw3p, tw4 tw4p, 2 periode, total anggaran, bintang from kegiatanrevisi where kodekeg in (select kodekeg from q_revisi_baru)';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+		
+
+	} else if ($kodekeg=='AAAAAAAAAAAA') {			//no dpa otomatis
+
+		batch_penomoran_dpa();
+	
+	} else if ($kodekeg=='TTTTTTTTTTTT') {			//fixing triwulan
+		
+		batch_fixing_triwulan();
+	
+	} else if ($kodekeg=='LLLLLLLLLLLL') {			//fixing latarbelakang
+		
+		batch_fixing_latar_belakang();
+		
+	} else if ($kodekeg=='IIIIIIIIIIII') {
+		
+		batch_kegiatan_dinolkan();
+	
+	} else if ($kodekeg=='BBBBBBBBBBBB') {
+		
+		batch_kegiatan_anggaran_tersedia();
+		
+	} else if ($kodekeg=='ZZZZZZZZZZZZ') {
+		
+		$str = '9. Update kegiatanperubahan dari penetapan';
+		$sql = 'UPDATE anggperkegperubahan INNER JOIN anggperkeg ON anggperkegperubahan.kodekeg=anggperkeg.kodekeg AND anggperkegperubahan.kodero=anggperkeg.kodero SET anggperkegperubahan.jumlah=anggperkeg.jumlah';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+
+	} else if ($kodekeg=='CCCCCCCCCCCC') {
+		
+		//kegiatan
+		$str = '6. Clean up';
+		drupal_set_message($str);
+
+		$sql = "select kodekeg,kodero from {anggperkegperubahan} where jumlahp=0" ;	
+		
+		$res = db_query($sql); 
+		while ($data = db_fetch_object($res)) {
+			
+			$sql = sprintf('select kodekeg,kodero from {anggperkeg} where jumlah=0 and kodekeg=\'%s\' and kodero=\'%s\'', $data->kodekeg, $data->kodero);
+			$res_p = db_query($sql);
+			while ($data = db_fetch_object($res_p)) {
+				
+				$str = '6.1. Clean up ' . $data->kodekeg . ', ' . $data->kodero;
+
+				$sql = sprintf('delete from anggperkegperubahan where kodekeg=\'%s\' and kodero=\'%s\'', $data->kodekeg, $data->kodero);
+				$res_del = db_query($sql);
+				if ($res_del) $str .= ' ok';
+				drupal_set_message($str);			
+				
+				
+			}	
+
+		}
+	
+		//update kegiatanperubahan set total=0 where periode=2 and kodekeg not in (select kodekeg from kegiatanskpd)
+		$str = '6.2. Nolkan anggaran penetapan kegiatan baru';
+		$sql = 'update kegiatanperubahan set total=0 where periode=2 and kodekeg not in (select kodekeg from kegiatanskpd)';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);			
+		
+	} else {
+		
+		/*
+		if ($jenisrevisi=='2') {
+			if ($ubahdetil=='1') {
+				$str = '3.4. Insert anggperkegdetilperubahan';
+				$sql =  sprintf('DELETE FROM anggperkegdetilperubahan WHERE kodekeg=\'%s\'', $kodekeg);
+				$res_x = db_query($sql);
+				
+				$sql =  sprintf('INSERT INTO anggperkegdetilperubahan (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran) SELECT iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, 2 periode, total anggaran FROM anggperkegdetilrevisi WHERE kodekeg=\'%s\'', $kodekeg);
+				$res_x = db_query($sql);
+				if ($res_x) $str .= ' ok';
+				drupal_set_message($str);
+				
+				$str = '5. Transfer sub detil';
+				$str = '5.1. Delete anggperkegdetilsubperubahan ' . $kodekeg;
+				$sql = sprintf('delete from {anggperkegdetilsubperubahan} where iddetil in (select iddetil from {anggperkegdetilperubahan} where kodekeg=\'%s\')', $kodekeg);
+				$res_x = db_query($sql);
+				if ($res_x) $str .= ' ok';
+				drupal_set_message($str);
+				
+				$str = '5.2. insert anggperkegdetilsubperubahan ' . $kodekeg;
+				$sql = sprintf('insert into anggperkegdetilsubperubahan (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, 2 periode, total anggaran from anggperkegdetilsubrevisi where iddetil in (select iddetil from {anggperkegdetilrevisi} where kodekeg=\'%s\')', $kodekeg);
+				$res_x = db_query($sql);
+				if ($res_x) $str .= ' ok';
+				drupal_set_message($str);
+			}
+		
+		} else
+		*/
+	
+		if ($jenisrevisi=='kodepro') {
+			$str = '5. Update program';
+			$str = '5.1. Update kegiatanperubahan';
+			$sql = sprintf('update kegiatanperubahan kp inner join kegiatanrevisi kr on kp.kodekeg=kr.kodekeg set kp.kodepro=kr.kodepro, kp.periode=2 where kp.kodekeg=\'%s\'', $kodekeg);
+			drupal_set_message($sql);
+			$res_x = db_query($sql);
+			if ($res_x) $str .= ' ok';
+			drupal_set_message($str);			
+				
+		} else {	
+			
+			if ($jenisrevisi=='2'){
+				$ada = true;
+				$sql = sprintf('select kodekeg from {kegiatanrevisiperubahan} where jenisrevisi!=2 and kodekeg=\'%s\'', $kodekeg);
+				
+				$res = db_query($sql); 
+				while ($data = db_fetch_object($res)) {
+					$ada = false;
+				}
+			} else {
+				$ada = true;
+			}
+			if ($ada){
+				$str = '3.1. Update kegiatanperubahan';
+				$sql = sprintf('update kegiatanperubahan kp inner join kegiatanrevisi kr on kp.kodekeg=kr.kodekeg set kp.programsasaran=kr.programsasaran, kp.programtarget=kr.programtarget, kp.masukansasaran=kr.masukansasaran, kp.masukantarget=kr.masukantarget, kp.keluaransasaran=kr.keluaransasaran, kp.keluarantarget=kr.keluarantarget, kp.hasilsasaran=kr.hasilsasaran, kp.hasiltarget=kr.hasiltarget, kp.tw1p=kr.tw1, kp.tw2p=kr.tw2, kp.tw3p=kr.tw3, kp.tw4p=kr.tw4, kp.kelompoksasaran=kr.kelompoksasaran, kp.sumberdana1=kr.sumberdana1, kp.lokasi=kr.lokasi, kp.latarbelakang=kr.latarbelakang, kp.totalp=kr.total, kp.periode=2 where kp.kodekeg=\'%s\'', $kodekeg);
+				$res_x = db_query($sql);
+				if ($res_x) $str .= ' ok';
+				drupal_set_message($str);
+			
+				$sql = sprintf('DELETE FROM anggperkegperubahan WHERE kodekeg=\'%s\'', $kodekeg);
+				$res_x = db_query($sql);
+				
+				$str = '3.2. Insert anggperkegperubahan';
+				$sql = sprintf('INSERT INTO anggperkegperubahan (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, periode, jumlahp, anggaran) SELECT kodero, kodekeg, uraian, 0 as jumlah, jumlahsesudah, jumlahsebelum, 2 as periode, jumlah as jumlahp, jumlah as anggaran FROM anggperkegrevisi WHERE kodekeg=\'%s\'', $kodekeg);
+				$res_x = db_query($sql);
+				if ($res_x) $str .= ' ok';
+				drupal_set_message($str);
+				
+				
+				$str = '3.4. Insert anggperkegdetilperubahan';
+				$sql =  sprintf('DELETE FROM anggperkegdetilperubahan WHERE kodekeg=\'%s\'', $kodekeg);
+				$res_x = db_query($sql);
+				
+				$sql =  sprintf('INSERT INTO anggperkegdetilperubahan (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran) SELECT iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, 2 periode, total anggaran FROM anggperkegdetilrevisi WHERE kodekeg=\'%s\'', $kodekeg);
+				$res_x = db_query($sql);
+				if ($res_x) $str .= ' ok';
+				drupal_set_message($str);
+				
+				$str = '5. Transfer sub detil';
+				$str = '5.1. Delete anggperkegdetilsubperubahan ' . $kodekeg;
+				$sql = sprintf('delete from {anggperkegdetilsubperubahan} where iddetil in (select iddetil from {anggperkegdetilperubahan} where kodekeg=\'%s\')', $kodekeg);
+				$res_x = db_query($sql);
+				if ($res_x) $str .= ' ok';
+				drupal_set_message($str);
+				
+				$str = '5.2. insert anggperkegdetilsubperubahan ' . $kodekeg;
+				$sql = sprintf('insert into anggperkegdetilsubperubahan (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, 2 periode, total anggaran from anggperkegdetilsubrevisi where iddetil in (select iddetil from {anggperkegdetilrevisi} where kodekeg=\'%s\')', $kodekeg);
+				$res_x = db_query($sql);
+				if ($res_x) $str .= ' ok';
+				drupal_set_message($str);
+			}
+		}
+		
+
+	}
+
+	/*
+	// Update our progress information
+	$context['sandbox']['progress']++;
+	$context['sandbox']['current_node'] = $kodekeg;
+	$context['message'] = $data->kodekeg;
+	
+	// Inform the batch engine that we are not finished,
+	// and provide an estimation of the completion level we reached.
+	if ($context['sandbox']['progress'] >= $context['sandbox']['max']) {
+		// We should always check if the current progress is equal or greater to
+		// the total number of items to process. For example, if a node is added
+		// while this batch process is running, the progress value will end up being
+		// one greater than the max value. This will cause an infinite loop. We
+		// prevent this from happening by always checking if progress is greater
+		// than or equal to max.
+		$context['finished'] = 1;
+	} else {
+		$context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+	}
+	*/
+	$context['finished'] = 1;
+	
+}
+
+function pengesahanrevisi_backup_2019_2($kodekeg, $id, $jenisrevisi, $kegiatan, &$context) {	
+	
+	if ($kodekeg=='000000000000') {			//INISIALISASI
+	
+		$context['message'] = check_plain($kegiatan);
+		
+		$str = '1.1. Reset kegiatan perubahan revisi';
+		$sql = 'delete from kegiatanperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+
+		$str = '1.2. Reset rekening kegiatan perubahan revisi';
+		$sql = 'delete from anggperkegperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+
+		$str = '1.3. Reset detil rekening kegiatan perubahan revisi';
+		$sql = 'delete from anggperkegdetilperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+
+		$str = '1.4. Reset sub detil rekening kegiatan perubahan revisi';
+		$sql = 'delete from anggperkegdetilsubperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+		
+		$revisi = variable_get('apbdrevisi', 1);
+		$revisi_lalu = $revisi - 1;
+		drupal_set_message('Posting revisi #' . $revisi);
+		if ($revisi==1) {
+			$str = '2.1. Populate kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into kegiatanperubahan (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, periode, anggaran, bintang) select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, total totalp, tw1 tw1p, tw2 tw2p, tw3 tw3p, tw4 tw4p, 1 periode, anggaran, bintang from kegiatanskpd';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.2. Populate rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegperubahan (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, anggaran, bintang) select kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, anggaran, bintang from anggperkeg';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.3. Populate detil rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegdetilperubahan (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang) select iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang from anggperkegdetil';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.4. Populate sub detil rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegdetilsubperubahan (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang from anggperkegdetilsub';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.1. Menandai kegiatan penetapan';
+			$sql = 'update kegiatanperubahan set totalp=total,periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.2. Menandai rekening kegiatan penetapan';
+			$sql = 'update anggperkegperubahan set jumlahp=jumlah,periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.3. Menandai detil rekening kegiatan penetapan';
+			$sql = 'update anggperkegdetilperubahan set periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.4. Menandai sub detil rekening kegiatan penetapan';
+			$sql = 'update anggperkegdetilsubperubahan set periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+			
+		} 
+
+	} else if ($kodekeg=='111111111111') {			// GESER
+		$str = '3. Transfer geser rekening';
+		$str = '3.1. Update kegiatanperubahan';
+		$sql = 'update kegiatanperubahan kp inner join kegiatanrevisi kr on kp.kodekeg=kr.kodekeg set kp.programsasaran=kr.programsasaran, kp.programtarget=kr.programtarget, kp.masukansasaran=kr.masukansasaran, kp.masukantarget=kr.masukantarget, kp.keluaransasaran=kr.keluaransasaran, kp.keluarantarget=kr.keluarantarget, kp.hasilsasaran=kr.hasilsasaran, kp.hasiltarget=kr.hasiltarget, kp.tw1p=kr.tw1, kp.tw2p=kr.tw2, kp.tw3p=kr.tw3, kp.tw4p=kr.tw4, kp.kelompoksasaran=kr.kelompoksasaran, kp.sumberdana1=kr.sumberdana1, kp.lokasi=kr.lokasi, kp.latarbelakang=kr.latarbelakang, kp.totalp=kr.total, kp.periode=2 where kp.kodekeg=kr.kodekeg and kp.kodekeg in (select kodekeg from q_revisi_geser)';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+		
+		//$sql = 'DELETE FROM anggperkegperubahan WHERE kodekeg IN (SELECT kodekeg FROM q_revisi_geser)';
+		//$res_x = db_query($sql);
+		
+		$str = '3.2. Insert anggperkegperubahan';
+		$sql = 'INSERT INTO anggperkegperubahan (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, periode, jumlahp, anggaran) SELECT a.kodero, a.kodekeg, a.uraian, 0 as jumlah, a.jumlahsesudah, a.jumlahsebelum, 2 as periode, a.jumlah as jumlahp, a.jumlah as anggaran FROM anggperkegrevisi as a inner join q_revisi_geser as r on a.kodekeg=r.kodekeg';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+		
+		$str = '3.3. Update kegiatanperubahan';
+		$sql = 'UPDATE anggperkegperubahan INNER JOIN anggperkeg ON anggperkegperubahan.kodekeg=anggperkeg.kodekeg AND anggperkegperubahan.kodero=anggperkeg.kodero SET anggperkegperubahan.jumlah=anggperkeg.jumlah';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+		
+		$str = '3.4. Insert anggperkegdetilperubahan';
+		//$sql = 'DELETE FROM anggperkegdetilperubahan WHERE kodekeg IN  (SELECT kodekeg FROM q_revisi_geser)';
+		//$res_x = db_query($sql);
+		
+		$sql = 'INSERT INTO anggperkegdetilperubahan (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran) SELECT a.iddetil, a.kodero, a.kodekeg, a.pengelompokan, a.uraian, a.unitjumlah, a.unitsatuan, a.volumjumlah, a.volumsatuan, a.harga, a.total, a.nourut, 2 periode, a.total anggaran FROM anggperkegdetilrevisi as a INNER JOIN q_revisi_geser as r ON a.kodekeg=r.kodekeg';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+	
+	} else if ($kodekeg=='222222222222') {			// ADMIN
+		$str = '3. Transfer administrasi';
+		$sql = 'update kegiatanperubahan kp inner join kegiatanrevisi kr on kp.kodekeg=kr.kodekeg set kp.programsasaran=kr.programsasaran, kp.programtarget=kr.programtarget, kp.masukansasaran=kr.masukansasaran, kp.masukantarget=kr.masukantarget, kp.keluaransasaran=kr.keluaransasaran, kp.keluarantarget=kr.keluarantarget, kp.hasilsasaran=kr.hasilsasaran, kp.hasiltarget=kr.hasiltarget, kp.tw1p=kr.tw1, kp.tw2p=kr.tw2, kp.tw3p=kr.tw3, kp.tw4p=kr.tw4, kp.kelompoksasaran=kr.kelompoksasaran, kp.sumberdana1=kr.sumberdana1, kp.lokasi=kr.lokasi, kp.latarbelakang=kr.latarbelakang, kp.totalp=kr.total, kp.periode=2 where kp.kodekeg=kr.kodekeg and kp.kodekeg in (select kodekeg from q_revisi_admin)';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+	
+	} else if ($kodekeg=='333333333333') {			//  BARU	
+		$str = '4. Transfer kegiatan baru';
+		$str = '4.1. Insert kegiatanperubahan';
+		$sql = 'insert into kegiatanperubahan (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, periode, anggaran, bintang) select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, 0 tw1, 0 tw2, 0 tw3, 0 tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, total totalp, tw1 tw1p, tw2 tw2p, tw3 tw3p, tw4 tw4p, 2 periode, total anggaran, bintang from kegiatanrevisi where kodekeg in (select kodekeg from q_revisi_baru)';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+		
+		//$sql = 'DELETE FROM anggperkegperubahan WHERE kodekeg IN (SELECT kodekeg FROM q_revisi_baru);';
+		//$res_x = db_query($sql);
+		
+		$str = '4.2. Insert anggperkegperubahan';
+		$sql = 'INSERT INTO anggperkegperubahan (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, periode, jumlahp, anggaran) SELECT a.kodero, a.kodekeg, a.uraian, 0 as jumlah, a.jumlahsesudah, a.jumlahsebelum, 2 as periode, a.jumlah as jumlahp, a.jumlah as anggaran FROM anggperkegrevisi as a inner join q_revisi_baru as r on a.kodekeg=r.kodekeg';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+				
+		$str = '4.3. Insert anggperkegdetilperubahan';
+		
+		//$sql = 'DELETE FROM anggperkegdetilperubahan WHERE kodekeg IN  (SELECT kodekeg FROM q_revisi_baru);';
+		//$res_x = db_query($sql);
+		
+		$sql = 'INSERT INTO anggperkegdetilperubahan (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran) SELECT a.iddetil, a.kodero, a.kodekeg, a.pengelompokan, a.uraian, a.unitjumlah, a.unitsatuan, a.volumjumlah, a.volumsatuan, a.harga, a.total, a.nourut, 2 periode, a.total anggaran FROM anggperkegdetilrevisi as a INNER JOIN q_revisi_baru as r ON a.kodekeg=r.kodekeg';
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+		
+
+	} else if ($kodekeg=='AAAAAAAAAAAA') {			//no dpa otomatis
+
+		batch_penomoran_dpa();
+	
+	} else if ($kodekeg=='TTTTTTTTTTTT') {			//fixing triwulan
+		
+		batch_fixing_triwulan();
+	
+	} else if ($kodekeg=='LLLLLLLLLLLL') {			//fixing latarbelakang
+		
+		batch_fixing_latar_belakang();
+		
+	} else if ($kodekeg=='IIIIIIIIIIII') {
+		
+		batch_kegiatan_dinolkan();
+	
+	} else if ($kodekeg=='BBBBBBBBBBBB') {
+		
+		batch_kegiatan_anggaran_tersedia();
+		
+	} else {
+
+		$str = '5. Transfer sub detil';
+		$str = '5.1. Delete anggperkegdetilsubperubahan ' . $kodekeg;
+		$sql = sprintf('delete from {anggperkegdetilsubperubahan} where iddetil in (select iddetil from {anggperkegdetilperubahan} where kodekeg=\'%s\')', $kodekeg);
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+		
+		$str = '5.2. insert anggperkegdetilsubperubahan ' . $kodekeg;
+		$sql = sprintf('insert into anggperkegdetilsubperubahan (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, 2 periode, total anggaran from anggperkegdetilsubrevisi where iddetil in (select iddetil from {anggperkegdetilrevisi} where kodekeg=\'%s\')', $kodekeg);
+		$res_x = db_query($sql);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+	
+
+		
+
+	}
+
+	/*
+	// Update our progress information
+	$context['sandbox']['progress']++;
+	$context['sandbox']['current_node'] = $kodekeg;
+	$context['message'] = $data->kodekeg;
+	
+	// Inform the batch engine that we are not finished,
+	// and provide an estimation of the completion level we reached.
+	if ($context['sandbox']['progress'] >= $context['sandbox']['max']) {
+		// We should always check if the current progress is equal or greater to
+		// the total number of items to process. For example, if a node is added
+		// while this batch process is running, the progress value will end up being
+		// one greater than the max value. This will cause an infinite loop. We
+		// prevent this from happening by always checking if progress is greater
+		// than or equal to max.
+		$context['finished'] = 1;
+	} else {
+		$context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+	}
+	*/
+	$context['finished'] = 1;
+	
+}
+
+
+function pengesahanrevisi_backup_2019($kodekeg, $id, $jenisrevisi, $kegiatan, &$context) {	
+	
+	if ($kodekeg=='000000000000') {			//INISIALISASI
+	
+		$context['message'] = check_plain($kegiatan);
+		
+		$str = '1.1. Reset kegiatan perubahan revisi';
+		$sql = 'delete from kegiatanperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+
+		$str = '1.2. Reset rekening kegiatan perubahan revisi';
+		$sql = 'delete from anggperkegperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+
+		$str = '1.3. Reset detil rekening kegiatan perubahan revisi';
+		$sql = 'delete from anggperkegdetilperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+
+		$str = '1.4. Reset sub detil rekening kegiatan perubahan revisi';
+		$sql = 'delete from anggperkegdetilsubperubahan';
+		$res = db_query($sql);
+		if ($res) $str .= ' ok';
+		drupal_set_message($str);
+		
+		$revisi = variable_get('apbdrevisi', 1);
+		$revisi_lalu = $revisi - 1;
+		drupal_set_message('Posting revisi #' . $revisi);
+		if ($revisi==1) {
+			$str = '2.1. Populate kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into kegiatanperubahan (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, periode, anggaran, bintang) select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, total totalp, tw1 tw1p, tw2 tw2p, tw3 tw3p, tw4 tw4p, 1 periode, anggaran, bintang from kegiatanskpd';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.2. Populate rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegperubahan (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, anggaran, bintang) select kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, anggaran, bintang from anggperkeg';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.3. Populate detil rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegdetilperubahan (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang) select iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang from anggperkegdetil';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.4. Populate sub detil rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegdetilsubperubahan (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang from anggperkegdetilsub';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.1. Menandai kegiatan penetapan';
+			$sql = 'update kegiatanperubahan set totalp=total,periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.2. Menandai rekening kegiatan penetapan';
+			$sql = 'update anggperkegperubahan set jumlahp=jumlah,periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.3. Menandai detil rekening kegiatan penetapan';
+			$sql = 'update anggperkegdetilperubahan set periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '3.4. Menandai sub detil rekening kegiatan penetapan';
+			$sql = 'update anggperkegdetilsubperubahan set periode=1';
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+			
+		} else {
+			$str = '2.1. Populate kegiatan perubahan revisi dari perubahan sebelumnya';
+			$sql = 'insert into kegiatanperubahan (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, periode, anggaran) select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, 3, anggaran from kegiatanperubahan' . $revisi_lalu;
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.2. Populate rekening kegiatan perubahan revisi dari perubahan sebelumnya';
+			$sql = 'insert into anggperkegperubahan (kodero, kodekeg, uraian, jumlah, jumlahp, jumlahsesudah, jumlahsebelum, periode, anggaran, bintang) select kodero, kodekeg, uraian, jumlah, jumlahp, jumlahsesudah, jumlahsebelum, periode, anggaran, bintang from anggperkegperubahan' . $revisi_lalu;
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.3. Populate detil rekening kegiatan perubahan revisi dari perubahan sebelumnya';
+			$sql = 'insert into anggperkegdetilperubahan (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran, bintang) select iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran, bintang from anggperkegdetilperubahan' . $revisi_lalu;
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			$str = '2.4. Populate sub detil rekening kegiatan perubahan revisi dari penetapan';
+			$sql = 'insert into anggperkegdetilsubperubahan (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran, bintang) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran, bintang from anggperkegdetilsubperubahan' . $revisi_lalu;
+			$res = db_query($sql);
+			if ($res) $str .= ' ok';
+			drupal_set_message($str);
+
+			
+		}
+
+	} else if ($kodekeg=='ZZZZZZZZZZZZ') {			//CLEAN UP PENETAPAN
+		
+		$context['message'] = check_plain($kegiatan);
+		
+		$sql = 'select p.kodero, p.kodekeg, p.jumlah, p.anggaran from {anggperkeg} p inner join {kegiatanskpd} k on p.kodekeg=k.kodekeg where k.inaktif=0';
+		$res_kro = db_query($sql);
+		
+		while ($data_kro = db_fetch_object($res_kro)) {
+			$str = '5. Reset penetapan';
+			$sql = sprintf('select kodero from {anggperkegperubahan} where kodekeg=\'%s\' and kodero=\'%s\'',  
+			$data_kro->kodekeg, $data_kro->kodero);
+			$res_cek = db_query($sql);
+			if ($data_cek = db_fetch_object($res_cek)) {
+				$str .= ' exist';
+				
+			} else {
+				$sql = sprintf('insert into {anggperkegperubahan} (kodekeg, kodero, uraian, jumlah, jumlahsebelum, jumlahsesudah, jumlahp, anggaran) values (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')', $data_kro->kodekeg, $data_kro->kodero, $data_kro->uraian, $data_kro->jumlah, $data_kro->jumlahsebelum, $data_kro->jumlahsesudah, 0, $data_kro->anggaran); 
+				$res_ikro = db_query($sql);
+				if ($res_ikro) $str .= ' new ok';
+				
+				////drupal_set_message($sql);
+				drupal_set_message($str);
+			}
+			
+
+		}
+
+	} else if ($kodekeg=='XXXXXXXXXXXX') {			//TDK DIPAKAI
+		
+		$context['message'] = check_plain($kegiatan);
+		
+		$sql = 'select kodekeg, nomorkeg, kegiatan from {kegiatanperubahan_kodevalid}';
+		$res_kro = db_query($sql);
+		
+		while ($data_kro = db_fetch_object($res_kro)) {
+			$str = '6. Fixing kode kegiatan ' .  $data_kro->kegiatan;
+			$sql = sprintf('update {kegiatanperubahan} set nomorkeg=\'%s\' where kodekeg=\'%s\'',  
+			$data_kro->nomorkeg, $data_kro->kodekeg);
+			$res_cek = db_query($sql);
+			if ($res_cek) $str .= ' ok';
+			drupal_set_message($str);
+			
+		}
+
+		$sql = 'select kodekeg, tw1, tw2, tw3, tw4,inaktif, kegiatan from {kegiatanskpd}';
+		$res_kro = db_query($sql);
+		
+		while ($data_kro = db_fetch_object($res_kro)) {
+			$str = '7. Fixing triwulan ' .  $data_kro->kegiatan;
+			
+			if ($data_kro->inaktif==0) {
+				$sql = sprintf('update {kegiatanperubahan} set tw1=\'%s\',tw2=\'%s\',tw3=\'%s\',tw4=\'%s\' where kodekeg=\'%s\'',  
+				$data_kro->tw1, $data_kro->tw2, $data_kro->tw3, $data_kro->tw4, $data_kro->kodekeg);
+			} else {
+				$sql = sprintf('update {kegiatanperubahan} set tw1=0,tw2=0,tw3=0,tw4=0 where kodekeg=\'%s\'',  
+				$data_kro->kodekeg);
+			}
+			
+			$res_cek = db_query($sql);
+			if ($res_cek) $str .= ' ok';
+			drupal_set_message($str);
+			
+		}
+
+	} else if ($kodekeg=='AAAAAAAAAAAA') {			//no dpa otomatis
+
+		batch_penomoran_dpa();
+	
+	} else if ($kodekeg=='TTTTTTTTTTTT') {			//fixing triwulan
+		
+		batch_fixing_triwulan();
+	
+	} else if ($kodekeg=='LLLLLLLLLLLL') {			//fixing latarbelakang
+		
+		batch_fixing_latar_belakang();
+		
+	} else if ($kodekeg=='IIIIIIIIIIII') {
+		
+		batch_kegiatan_dinolkan();
+	
+	} else if ($kodekeg=='BBBBBBBBBBBB') {
+		
+		batch_kegiatan_anggaran_tersedia();
+		
+	} else {
+		
+		$revisi = variable_get('apbdrevisi', 1);
+		$periode = $revisi +1;
+		switch ($jenisrevisi) {
+			case 1:		//Geser2
+				
+				$context['message'] = 'GESER : ' . check_plain($kegiatan);
+				
+				drupal_set_message('4.2. Pengesahan kegiatan `' . $kegiatan . '` -> GESER...');
+				
+				$str = '4.2.0 Aktifkan kegiatan';
+				$sql = sprintf('update kegiatanperubahan set inaktif=0, r_geser=1, periode=\'%s\' where kodekeg=\'%s\'', $periode, $kodekeg) ;
+				$res = db_query($sql);
+				if ($res) $str .= ' ok';
+				drupal_set_message($str);
+
+				update_kegiatan_admin($kodekeg, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1);
+					
+				reset_rekening_kegiatan($kodekeg);
+				insert_rek_kegiatan($kodekeg);
+				break;
+				
+			case 2:		//Admin
+				
+				$context['message'] = 'ADMIN : ' . check_plain($kegiatan);
+				
+				drupal_set_message('4.2. Pengesahan kegiatan `' . $kegiatan . '` -> ADMIN...');
+				$str = '4.2.0 Aktifkan kegiatan';
+				$sql = sprintf('update kegiatanperubahan set inaktif=0, r_admin=1, periode=\'%s\' where kodekeg=\'%s\'', $periode, $kodekeg) ;
+				$res = db_query($sql);
+				if ($res) $str .= ' ok';
+				drupal_set_message($str);
+
+				$sql = sprintf('select lokasi, geserblokir, geserrincian, geserobyek, sumberdana, kinerja, sasaran, detiluraian, rab, triwulan from {kegiatanrevisiperubahan} where id=\'%s\'', $id) ;		
+				$reskeg = db_query($sql);
+				if ($datakeg = db_fetch_object($reskeg)) {
+					update_kegiatan_admin($kodekeg, $datakeg->lokasi, $datakeg->geserblokir, $datakeg->geserrincian, $datakeg->geserobyek, $datakeg->sumberdana, $datakeg->kinerja, $datakeg->sasaran, $datakeg->detiluraian, $datakeg->rab, $datakeg->triwulan);
+				}
+				//reset_rekening_kegiatan($kodekeg);
+				//insert_rek_kegiatan($kodekeg);
+				break;
+			
+			case 3:		//DAK
+				
+				$context['message'] = 'TRANSFER : ' . check_plain($kegiatan);
+				
+				drupal_set_message('4.2. Pengesahan kegiatan `' . $kegiatan . '` -> TRANSFER...');
+				update_kegiatan_dak($kodekeg);
+				break;
+
+			case 9:		//MURNI
+				
+				$context['message'] = 'PERUBAHAN : ' . check_plain($kegiatan);
+				
+				drupal_set_message('4.2. Pengesahan kegiatan `' . $kegiatan . '` -> PERUBAHAN...');
+				update_kegiatan_dak($kodekeg);
+				break;
+
+			case 0:		//KEGIATAN BARU
+				
+				$context['message'] = 'PERUBAHAN : ' . check_plain($kegiatan);
+				
+				drupal_set_message('4.2. Pengesahan kegiatan `' . $kegiatan . '` -> PERUBAHAN...');
+				update_kegiatan_dak($kodekeg);
+				break;
+				
+		}
+		
+
+	}
+
+	/*
+	// Update our progress information
+	$context['sandbox']['progress']++;
+	$context['sandbox']['current_node'] = $kodekeg;
+	$context['message'] = $data->kodekeg;
+	
+	// Inform the batch engine that we are not finished,
+	// and provide an estimation of the completion level we reached.
+	if ($context['sandbox']['progress'] >= $context['sandbox']['max']) {
+		// We should always check if the current progress is equal or greater to
+		// the total number of items to process. For example, if a node is added
+		// while this batch process is running, the progress value will end up being
+		// one greater than the max value. This will cause an infinite loop. We
+		// prevent this from happening by always checking if progress is greater
+		// than or equal to max.
+		$context['finished'] = 1;
+	} else {
+		$context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+	}
+	*/
+	$context['finished'] = 1;
+	
+}
+
+function reset_rekening_kegiatan($kodekeg) {
+	//I. DELETE FIRST
+	
+	//1. Delete Sub Detil
+	$str = '4.2.1 Reset sub detil perubahan';
+	$sql_e = sprintf('delete from {anggperkegdetilsubperubahan} where iddetil in (select iddetil from {anggperkegdetilperubahan} where kodekeg=\'%s\')', $kodekeg);
+	////drupal_set_message($sql_e);
+	$res_e = db_query($sql_e);
+	if ($res_e) $str .= ' ok';
+	drupal_set_message($str);
+	
+	//2. Delete Detil
+	$str = '4.2.2 Reset detil perubahan';
+	$sql_e = sprintf('delete from {anggperkegdetilperubahan} where kodekeg=\'%s\'', $kodekeg);
+	$res_e = db_query($sql_e);
+	if ($res_e) $str .= ' ok';
+	drupal_set_message($str);
+	
+	//3. Delete Rekening
+	$str = '4.2.2 Reset rekening perubahan';
+	$sql_e = sprintf('delete from {anggperkegperubahan} where kodekeg=\'%s\'', $kodekeg);
+	$res_e = db_query($sql_e);
+	if ($res_e) $str .= ' ok';
+	drupal_set_message($str);	
+}
+
+function update_kegiatan_dak($kodekeg) { 
+
+	$revisi = variable_get('apbdrevisi', 1);
+	$periode = $revisi +1;
+	
+	reset_rekening_kegiatan($kodekeg);
+	
+	//3. Delete Kegiatan
+	$str = '4.2.3 Reset kegiatan perubahan';
+	$sql_e = sprintf('delete from kegiatanperubahan where kodekeg=\'%s\'', $kodekeg);
+	$res_e = db_query($sql_e);
+	if ($res_e) $str .= ' ok';
+	drupal_set_message($str);
+
+	//II. REINSERT
+	//1. kegiatanperubahan
+	$str = '4.2.4 Baca kegiatan di penetapan...';
+	$total = 0;		//total lalu
+	$tw1 = 0; $tw2 = 0; $tw3 = 0; $tw4 = 0; 
+	$sql_e = sprintf('select total, tw1, tw2, tw3, tw4 from {kegiatanskpd} where kodekeg=\'%s\'', $kodekeg);	
+	$res_x = db_query($sql_e);
+	if ($data_x = db_fetch_object($res_x)) {
+		$total = $data_x->total;
+		$tw1 = $data_x->tw1;
+		$tw2 = $data_x->tw2;
+		$tw3 = $data_x->tw3;
+		$tw4 = $data_x->tw4;
+		
+		$str .= 'Ada, dengan anggaran ' . apbd_fn($total);
+		
+	} else {
+		$str .= 'Tidak Ada';
+	}
+	drupal_set_message($str);
+
+	//CEK USULAN PERUBAHAN
+	$totalrevisi = 0;
+	$sql_e = sprintf('select total from {kegiatanrevisi} where kodekeg=\'%s\'', $kodekeg);	
+	$res_x = db_query($sql_e);
+	if ($data_x = db_fetch_object($res_x)) {
+		$totalrevisi = $data_x->total;
+		
+	}	
+	
+	//MASUK KE DPA KALO PENETAPAN ADA DAN/ATAU PERUBAHAN ADA
+	if (($total+$totalrevisi)>0 ) {
+		//drupal_set_message('HOHOHO...');
+		//drupal_set_message($total);
+		//drupal_set_message($totalrevisi);
+		$str = '4.3 Memasukkan kegiatan revisi ke perubahan';
+		$sql_e = sprintf("insert into kegiatanperubahan (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, periode, r_transfer, anggaran) select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, '%s', plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, '%s', '%s', '%s', '%s', adminok, 0 inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, total totalp, tw1 tw1p, tw2 tw2p, tw3 tw3p, tw4 tw4p, '%s', 1 r_transfer, anggaran from kegiatanrevisi where kodekeg='%s'", $total, $tw1, $tw2, $tw3, $tw4, $periode, $kodekeg);
+		//drupal_set_message($sql_e);
+		$res_e = db_query($sql_e);
+		if ($res_e) $str .= ' ok';
+		drupal_set_message($str);
+
+		//2. Rekening
+		//drupal_set_message('4.4 Memasukkan rekening kegiatan revisi ke perubahan...');
+		insert_rek_kegiatan($kodekeg);
+	}
+}
+
+function update_kegiatan_admin($kodekeg, $lokasi, $geserblokir, $geserrincian, $geserobyek, $sumberdana, $kinerja, $sasaran, $detiluraian, $rab, $triwulan) {
+	
+	//Lokasi 
+	$str = 'Latar belakang';
+	$sql = sprintf("update {kegiatanperubahan} kp, {kegiatanrevisi} kr set kp.bintang=0, kp.latarbelakang=kr.latarbelakang where kp.kodekeg=kr.kodekeg and kp.kodekeg='%s'", $kodekeg);
+	$res = db_query($sql);
+	
+	$str .= ' [x]';
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	//Lokasi
+	$str = '4.2.1 Update lokasi';
+	if ($lokasi) {
+		$sql = sprintf("update {kegiatanperubahan} kp, {kegiatanrevisi} kr set kp.lokasi=kr.lokasi where kp.kodekeg=kr.kodekeg and kp.kodekeg='%s'", $kodekeg);
+		$res = db_query($sql);
+		
+		$str .= ' [x]';
+		if ($res) $str .= ' ok';
+	}
+	drupal_set_message($str);
+
+	//sumberdana
+	$str = '4.2.2 Update sumber dana';
+	if ($sumberdana) {
+		$sql = sprintf("update {kegiatanperubahan} kp, {kegiatanrevisi} kr set kp.sumberdana1=kr.sumberdana1 where kp.kodekeg=kr.kodekeg and kp.kodekeg='%s'", $kodekeg);
+		$res = db_query($sql);
+		
+		$str .= ' [x]';
+		if ($res) $str .= ' ok';
+	}
+	drupal_set_message($str);
+
+	//sasaran
+	$str = '4.2.3 Update sasaran';
+	if ($sasaran) {
+		$sql = sprintf("update {kegiatanperubahan} kp, {kegiatanrevisi} kr set kp.kelompoksasaran=kr.kelompoksasaran where kp.kodekeg=kr.kodekeg and kp.kodekeg='%s'", $kodekeg);
+		$res = db_query($sql);
+		
+		$str .= ' [x]';
+		if ($res) $str .= ' ok';
+	}
+	drupal_set_message($str);
+
+	//triwulan
+	$str = '4.2.4 Update triwulan';
+	if ($triwulan) {
+		$sql = sprintf("update {kegiatanperubahan} kp, {kegiatanrevisi} kr set kp.tw1p=kr.tw1, kp.tw2p=kr.tw2, kp.tw3p=kr.tw3, kp.tw4p=kr.tw4 where kp.kodekeg=kr.kodekeg and kp.kodekeg='%s'", $kodekeg);
+
+		//drupal_set_message($sql);
+		$res = db_query($sql);
+		
+		$str .= ' [x]';
+		if ($res) $str .= ' ok';
+	}
+	drupal_set_message($str);
+
+	//kinerja
+	$str = '4.2.5 Update kinerja';
+	if ($kinerja) {
+		$sql = sprintf("update {kegiatanperubahan} kp, {kegiatanrevisi} kr set kp.programsasaran=kr.programsasaran, kp.programtarget=kr.programtarget, kp.masukansasaran=kr.masukansasaran, kp.masukantarget=kr.masukantarget, kp.keluaransasaran=kr.keluaransasaran, kp.keluarantarget=kr.keluarantarget, kp.hasilsasaran=kr.hasilsasaran, kp.hasiltarget=kr.hasiltarget where kp.kodekeg=kr.kodekeg and kp.kodekeg='%s'", $kodekeg);
+		$res = db_query($sql);
+		
+		$str .= ' [x]';
+		if ($res) $str .= ' ok';
+	}
+	drupal_set_message($str);
+	
+	//rekening
+	if (($geserobyek) or ($geserrincian)) {
+		//drupal_set_message('4.4 Memasukkan rekening kegiatan revisi ke perubahan...');
+		reset_rekening_kegiatan($kodekeg);
+		insert_rek_kegiatan($kodekeg);
+		
+	} else {
+
+		if (($detiluraian) or ($rab)) {
+			//drupal_set_message('4.4 Memasukkan rekening kegiatan revisi ke perubahan...');
+			reset_rekening_kegiatan($kodekeg);
+			insert_rek_kegiatan_admin($kodekeg);
+		} 	
+	}	
+	
+}
+
+function insert_rek_kegiatan($kodekeg) {
+	//2. Rekening
+	//drupal_set_message('4.4.1 Membaca rekening revisi...');
+	
+	$revisi = variable_get('apbdrevisi', 1);
+	$periode = $revisi+1;
+	
+	$sebelumnya_inaktif = 0;
+	$sql_e = sprintf('select kodekeg,inaktif from {kegiatanskpd} where kodekeg=\'%s\'', $kodekeg);
+	$res_r = db_query($sql_e);
+	if ($data_r = db_fetch_object($res_r)) {
+		$sebelumnya_inaktif = $data->inaktif;
+	}
+	
+	//
+	$sql_e = sprintf('select p.kodero, p.kodekeg, p.uraian, p.jumlah jumlahp, p.jumlahsesudah, p.jumlahsebelum, t.jumlah, p.anggaran anggaranp, t.anggaran, p.bintang from {anggperkegrevisi} p left join {anggperkeg} t on p.kodekeg=t.kodekeg and p.kodero=t.kodero where p.kodekeg=\'%s\'', $kodekeg);
+	
+	drupal_set_message($sql_e);
+	
+	$res_r = db_query($sql_e);
+	while ($data_r = db_fetch_object($res_r)) {
+	
+		$str = '4.4.1.1 Memasukkan rekening ' . $data_r->kodero . ' - ' . $data_r->uraian;
+		 
+		$jumlah = $data_r->jumlah;
+		if ($jumlah=='') {				//DIPENETAPAN TIDAK ADA
+			$jumlah = 0;
+			$anggaranp = $data_r->anggaranp;
+		
+		} else {						//ADA DI PENETAPAN
+			if ($data_r->anggaranp == 0)
+				$anggaranp = $data_r->anggaran;
+			else 
+				$anggaranp = $data_r->anggaranp;
+		}
+		
+		
+		$str .= '(' . $anggaranp . ')';
+		
+		if (($jumlah+$data_r->jumlahp)>0) {
+			$sql_x = sprintf("insert into {anggperkegperubahan} (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, jumlahp, periode, anggaran, bintang) values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $data_r->kodero, $data_r->kodekeg, $data_r->uraian, $jumlah, $data_r->jumlahsesudah, $data_r->jumlahsebelum, $data_r->jumlahp, $periode, $anggaranp, $data_r->bintang);
+			drupal_set_message($data_r->jumlahp);
+			drupal_set_message($sql_x);
+			$res_x = db_query($sql_x);
+			if ($res_x) $str .= ' ok';
+			drupal_set_message($str);
+
+			//3. Detil
+			$str = '4.4.1.2 Memasukkan detil rekening';
+			$sql_x = sprintf("insert into {anggperkegdetilperubahan} (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran, bintang) select iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, '%s', anggaran, bintang from {anggperkegdetilrevisi} where kodekeg='%s' and kodero='%s'", $periode, $kodekeg, $data_r->kodero);	
+			//drupal_set_message($sql_x);
+			$res_x = db_query($sql_x);
+			if ($res_x) $str .= ' ok';
+			drupal_set_message($str);		
+
+			//4. Detil Sub
+			$str = '4.4.1.3 Memasukkan sub detil rekening';
+			$sql_x = sprintf("insert into {anggperkegdetilsubperubahan} (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode, anggaran, bintang) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, '%s', anggaran, bintang from anggperkegdetilsubrevisi where iddetil in (select iddetil from {anggperkegdetilrevisi} where kodekeg='%s' and kodero='%s')", $periode, $kodekeg, $data_r->kodero);	
+			$res_x = db_query($sql_x);
+			if ($res_x) $str .= ' ok';
+			drupal_set_message($str);	
+			
+		}	
+	}
+
+	
+	if ($sebelumnya_inaktif==1) {
+		$sql_x = sprintf('update {anggperkegperubahan} set jumlah=0 where kodekeg=\'%s\'', $kodekeg);
+		////drupal_set_message($sql_x);
+		$res_x = db_query($sql_x);
+		if ($res_x) $str = 'ok';
+
+		$sql_x = sprintf('delete from {anggperkegdetilperubahan} where kodekeg=\'%s\'', $kodekeg);
+		////drupal_set_message($sql_x);
+		if ($res_x) $str = 'ok';
+
+		drupal_set_message('RESET INAKTIF');	
+	}
+}		
+
+function insert_rek_kegiatan_admin($kodekeg) {
+
+	$revisi = variable_get('apbdrevisi', 1);
+	$periode = $revisi+1;
+	
+	//
+	$sql_e = sprintf('select kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum from {anggperkeg} where kodekeg=\'%s\'', $kodekeg);
+	$res_r = db_query($sql_e);
+	while ($data_r = db_fetch_object($res_r)) {
+	
+		$str = '4.4.1.1 Memasukkan rekening penetapan ' . $data_r->kodero . ' - ' . $data_r->uraian;
+		
+		$sql_x = sprintf("insert into {anggperkegperubahan} (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, jumlahp, periode) values ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $data_r->kodero, $data_r->kodekeg, $data_r->uraian, $data_r->jumlah, $data_r->jumlahsesudah, $data_r->jumlahsebelum, $data_r->jumlah, 1);
+		////drupal_set_message($sql_x);
+		$res_x = db_query($sql_x);
+		if ($res_x) $str .= ' ok';
+		drupal_set_message($str);
+		
+		$jumlahrevisi = 0;
+		$sql_cek = sprintf('select kodero, kodekeg, jumlah from {anggperkegrevisi} where kodekeg=\'%s\' and kodero=\'%s\'', $kodekeg, $data_r->kodero);
+		$res_cek = db_query($sql_cek);
+		if ($res_cek) {
+			if ($data_cek = db_fetch_object($res_cek)) {
+				$jumlahrevisi = $data_cek->jumlah;	
+			}
+		}
+		
+		if ($jumlahrevisi == $data_r->jumlah) {		//SAMA, AMBIL PERUBAHAN DARI REVISI
+
+			//3. Detil
+			$str = '4.4.1.2 Memasukkan detil rekening revisi';
+			$sql_x = sprintf("insert into {anggperkegdetilperubahan} (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode) select iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, " . $periode . " from {anggperkegdetilrevisi} where kodekeg='%s' and kodero='%s'", $kodekeg, $data_r->kodero);	
+			//drupal_set_message($sql_x);
+			$res_x = db_query($sql_x);
+			if ($res_x) $str .= ' ok';
+			drupal_set_message($str);
+			
+			//3. Detil Sub
+			$str = '4.4.1.3 Memasukkan sub detil rekening revisi';
+			$sql_x = sprintf("insert into {anggperkegdetilsubperubahan} (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, " . $periode . " from anggperkegdetilsubrevisi where iddetil in (select iddetil from {anggperkegdetilrevisi} where kodekeg='%s' and kodero='%s')", $kodekeg, $data_r->kodero);	
+			$res_x = db_query($sql_x);
+			if ($res_x) $str .= ' ok';
+			drupal_set_message($str);				
+		
+		} else {									//TIDAK SAMA, AMBIL PERUBAHAN DARI PENETAPAN
+			//3. Detil
+			$str = '4.4.1.2 Memasukkan detil rekening penetapan';
+			$sql_x = sprintf("insert into {anggperkegdetilperubahan} (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode) select iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, " . $periode . " from {anggperkegdetil} where kodekeg='%s' and kodero='%s'", $kodekeg, $data_r->kodero);	
+			//drupal_set_message($sql_x);
+			$res_x = db_query($sql_x);
+			if ($res_x) $str .= ' ok';
+			drupal_set_message($str);
+			
+			//3. Detil Sub
+			$str = '4.4.1.3 Memasukkan sub detil rekening penetapan';
+			$sql_x = sprintf("insert into {anggperkegdetilsubperubahan} (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, periode) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, " . $periode . " from anggperkegdetilsub where iddetil in (select iddetil from {anggperkegdetil} where kodekeg='%s' and kodero='%s')", $kodekeg, $data_r->kodero);	
+			$res_x = db_query($sql_x);
+			if ($res_x) $str .= ' ok';
+			drupal_set_message($str);				
+			
+		}
+		
+	}
+
+}		
+
+
+function cekrevisikegiatan() {
+	$sql = 'select kr.kodekeg from {kegiatanrevisiperubahan} kp inner join {kegiatanrevisi} kr on kp.kodekeg=kr.kodekeg' ;		
+	$reskeg = db_query($sql); 
+	if ($reskeg) drupal_set_message('Load kodekeg OK');
+	while ($datakeg = db_fetch_object($reskeg)) {
+		$sql = sprintf('select * from {anggperkegdetil} where kodekeg=\'%s\'', $datakeg->kodekeg); 	
+		$resdet = db_query($sql); 
+		//if ($resdet) drupal_set_message('Load detil OK');
+		while ($datadet = db_fetch_object($resdet)) {
+			
+			$sql = sprintf('select * from {anggperkegdetilrevisi} where iddetil=\'%s\'', $datadet->iddetil); 
+			$rescek = db_query($sql); 			
+			//if ($rescek) drupal_set_message('Load cek detil OK');
+			if ($datacek = db_fetch_object($rescek)) {
+			
+			} else {
+				drupal_set_message($datadet->iddetil . ' - ' . $datadet->uraian);
+				
+				/*
+				$sql = 'insert into {anggperkegdetilrevisi} (iddetil, kodekeg, kodero, nourut, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, pengelompokan) 
+						values(\'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')';        
+				$res_x = db_query(db_rewrite_sql($sql), array($datadet->iddetil, $datadet->kodekeg, $datadet->kodero, $datadet->weight, $datadet->uraian, $datadet->unitjumlah, $datadet->unitsatuan, $datadet->volumjumlah, $datadet->volumsatuan, $datadet->harga, $datadet->total, $datadet->pengelompokan));	
+				if ($res_x) drupal_set_message('Exec OK');
+				*/
+				
+			}
+				
+		}
+	}
+	
+}
+
+function cekrevisikegiatandetil() {
+
+	$sql = 'select * from {anggperkegdetilsub}'; 	
+	$resdet = db_query($sql); 
+	if ($resdet) drupal_set_message('Load sub OK');
+	while ($datadet = db_fetch_object($resdet)) {
+		
+		$sql = sprintf('select * from {anggperkegdetilsubrevisi} where idsub=\'%s\'', $datadet->idsub); 
+		$rescek = db_query($sql); 			
+		//if ($rescek) drupal_set_message('Load cek sub OK');
+		if (($datacek = db_fetch_object($rescek))==false) {
+			drupal_set_message($datadet->idsub . ' - ' . $datadet->uraian);
+			
+			/*
+			$sql = 'insert into {anggperkegdetilsubrevisi} (idsub, iddetil, nourut, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total) 
+					values(\'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')';        
+			$res_x = db_query(db_rewrite_sql($sql), array($datadet->idsub, $datadet->iddetil, $datadet->weight, $datadet->uraian, $datadet->unitjumlah, $datadet->unitsatuan, $datadet->volumjumlah, $datadet->volumsatuan, $datadet->harga, $datadet->total));	
+
+			if ($res_x) drupal_set_message('Exec OK');
+			
+			*/
+			
+		}
+			
+	}
+
+	
+}
+
+/*
+function fixingkodekegiatan() {
+	//RESET
+	$str = '1.1. Reset temporary code';
+	$sql = 'delete from cekkode'
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+	
+	//RESET
+	$str = '1.2. Populate temporary code - Step 1';
+	$sql = 'insert into cekkode (kodeuk,kodepro,nomorkeg,x) select kodeuk,kodepro,nomorkeg,count(kodekeg) from {kegiatanrevisi} group by kodeuk,kodepro,nomorkeg'
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+	
+	$str = '1.3. Populate temporary code - Step 2';
+	$sql = 'delete from cekkode where x=1'
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	//FIXIGG KODE
+	$str = '1.4. Fixing code';
+	$sql = 'select kodeuk,kodepro,nomorkeg from {cekkode}'; 	
+	$res = db_query($sql); 
+	while ($data = db_fetch_object($res)) {
+		
+		$str_keg = '1.4.1. Fixing kode kegiatan';
+		$sql = "select kodekeg,kegiatan,total,kodeuk,kodepro,nomorkeg,total from {kegiatanrevisi} where kodeuk='" . $data->kodeuk . "' and kodepro='" . $data->kodepro . "' and nomorkeg='" . $data->nomorkeg . "'"; 
+		$reskeg = db_query($sql); 
+		while ($datakeg = db_fetch_object($reskeg)) {
+			
+			$totalp = $datakeg->total;
+			$total = 0;
+			
+			//CEK DI PENETAPAN
+			$sql = "select kodekeg,total,kodeuk,kodepro,nomorkeg,total from {kegiatanskpd} where inaktif=0 and kodekeg='" . $data->kodekeg . "'"; 
+			$respen = db_query($sql); 
+			if ($datapen = db_fetch_object($respen)) {
+				$total = $datapen->total;
+			}
+			
+			//KEGIATAN BARU
+			if ($total==0) {
+				
+				drupal_set_message($datakeg->kegiatan . ': ' . $datakeg->nomorkeg . '->' . substr($datakeg->kodekeg,-3);
+				$sql = "update {kegiatanrevisi} set nomorkeg='" . substr($datakeg->kodekeg,-3) . "' where kodekeg='" . $datakeg->kodekeg . "'"; 
+				
+				$resexe = db_query($sql); 
+				drupal_set_message('ok');
+				
+			} else {
+				drupal_set_message($datakeg->kegiatan . ': tetap');
+			}
+			
+		}
+		
+	}	
+	
+	//cek ulang
+	$sql = 'select kodeuk,kodepro,nomorkeg,count(kodekeg) x from {kegiatanrevisi} group by kodeuk,kodepro,nomorkeg'
+	$res = db_query($sql);
+	while ($data = db_fetch_object($res)) {
+		if ($data->x>1) {
+			drupal_set_message($data->kodeuk . '.' . $data->kodepro . '.' . $data->nomorkeg);
+		}
+	}
+	
+	if ($res) $str .= ' selesai';
+	drupal_set_message($str);
+	
+}
+*/
+/**
+ * @} End of "defgroup batchrevisi".
+ */
+
+ function batch_penomoran_dpa() {
+	//SELECT DISTINCT kodeuk FROM kegiatanrevisiperubahan where status=1
+	$revisi = variable_get('apbdrevisi', 1);
+	
+	$str = '8. Mempersiapkan Nomor DPA - Reset';
+	$sql = 'DELETE FROM dpanomor' . $revisi;
+	$res_cek = db_query($sql);
+	if ($res_cek) $str .= ' ok';
+	drupal_set_message($str);
+
+	//$str = '8. Mempersiapkan Nomor DPA - Populate';
+	//$sql = 'INSERT INTO dpanomor' . $revisi . ' (kodeuk) SELECT DISTINCT kodeuk FROM kegiatanrevisiperubahan where status=1';
+	//$res_cek = db_query($sql);
+	//if ($res_cek) $str .= ' ok';
+	//drupal_set_message($str);
+
+	$revisisebelum = $revisi-1;
+	$sql = 'SELECT kodeuk FROM unitkerja';
+	$res_cek = db_query($sql);
+	while ($data_cek = db_fetch_object($res_cek)) {
+		$blok = 0; $btlok = 0;
+		
+		drupal_set_message($data_cek->kodeuk);
+		
+		//PENDAPATAN
+		$penok = 0;
+		$perubahan = 0;
+		$sql = "SELECT SUM(jumlahp) perubahan FROM anggperukperubahan" . $revisi . " WHERE kodeuk='" .$data_cek->kodeuk . "'";
+		$res_keg = db_query($sql);
+		if ($data_keg = db_fetch_object($res_keg)) {
+			$perubahan = $data_keg->perubahan;
+		}
+		$sebelumnya = 0;
+		$sql = "SELECT SUM(jumlahp) sebelumnya FROM anggperukperubahan" . $revisisebelum . " WHERE kodeuk='" .$data_cek->kodeuk . "'";
+		$res_keg = db_query($sql);
+		if ($data_keg = db_fetch_object($res_keg)) {
+			$sebelumnya = $data_keg->sebelumnya;
+		}
+		
+		if ($sebelumnya!=$perubahan) $penok=1;
+		
+		//BTL
+		$sql = "SELECT COUNT(kr.kodeuk) num FROM kegiatanrevisiperubahan kr INNER JOIN kegiatanrevisi k ON kr.kodekeg=k.kodekeg WHERE k.jenis=1 AND isppkd=0 AND kr.status=1 AND kr.kodeuk='" .$data_cek->kodeuk . "'";
+		$res_keg = db_query($sql);
+		if ($data_keg = db_fetch_object($res_keg)) {
+			$btlok = $data_keg->num;
+		}
+		
+		//BL
+		$sql = "SELECT COUNT(kr.kodeuk) num FROM kegiatanrevisiperubahan kr INNER JOIN kegiatanrevisi k ON kr.kodekeg=k.kodekeg WHERE k.jenis=2 AND kr.status=1 AND kr.kodeuk='" .$data_cek->kodeuk . "'";
+		$res_keg = db_query($sql);
+		if ($data_keg = db_fetch_object($res_keg)) {
+			$blok = $data_keg->num;
+		}
+		
+		//UPDATE
+		if (($btlok+$blok)>0) {
+			$str = '8. Mempersiapkan Nomor DPA - Populate';
+			$sql = "INSERT INTO dpanomor" . $revisi . " (kodeuk,btlok,blok,penok) VALUES ('" . $data_cek->kodeuk . "'," . $btlok . "," . $blok . "," . $penok . ")";
+			////drupal_set_message($sql);
+			$res_exe = db_query($sql);
+			if ($res_exe) $str .= ' ok';
+			drupal_set_message($str);
+			
+		}
+		
+	}	 
+ }
+ 
+ function batch_fixing_triwulan() {
+	 
+	//nolkan tw yg totalnya 0
+	$str = '7. Fixing triwulan yg perubahannya NOL';
+	$sql = "update {kegiatanperubahan} set tw1p=0,tw2p=0,tw3p=0,tw4p=0 where totalp=0";
+	$res_exe = db_query($sql);
+	if ($res_exe) $str .= ' ok';
+	drupal_set_message($str);
+
+	drupal_set_message('7. Fixing triwulan perubahan');
+	$sql = 'select kodekeg, tw1p, tw2p, tw3p, tw4p, totalp, kegiatan from {kegiatanperubahan} where (tw1p+tw2p+tw3p+tw4p)<>totalp';
+	$res_tw = db_query($sql);
+	  
+	while ($data_tw = db_fetch_object($res_tw)) {
+		$str = '7. Fixing triwulan ' .  $data_tw->kegiatan;
+		
+		if ($data_tw->totalp==0) {
+			$tw1p = 0;
+			$tw2p = 0;
+			$tw3p = 0;
+			$tw4p = 0;
+		} else {
+			
+			if (($data_tw->tw1p+$data_tw->tw2p+$data_tw->tw3p+$data_tw->tw4p) > $data_tw->totalp) {
+				$tw1p = 0;
+				$tw2p = $data_tw->tw2p;
+				$tw3p = $data_tw->tw3p;
+				$tw4p = $data_tw->totalp - ($tw1p+$tw2p+$tw3p);
+			
+			} else {
+			
+				$tw1p = $data_tw->tw1p;
+				$tw2p = $data_tw->tw2p;
+				$tw3p = $data_tw->tw3p;
+				$tw4p = $data_tw->totalp - ($tw1p+$tw2p+$tw3p);
+			}
+		}	
+		$sql = "update {kegiatanperubahan} set tw1p=" . $tw1p . ",tw2p=" . $tw2p . ",tw3p=" . $tw3p . ",tw4p=" . $tw4p . " where kodekeg='" . $data_tw->kodekeg . "'";
+		////drupal_set_message($sql);
+		
+		$res_exe = db_query($sql);
+		if ($res_exe) $str .= ' ok';
+		drupal_set_message($str);
+		
+	}	
+		
+ }
+ 
+ function batch_fixing_latar_belakang() {
+	 
+	//nolkan tw yg totalnya 0
+	drupal_set_message('7. Fixing kegiatan yang latar belakangnya belum diisi');
+	$sql = 'select kodekeg, kegiatan, latarbelakang from {kegiatanperubahan} where inaktif=0';
+	$res = db_query($sql);
+	  
+	while ($data = db_fetch_object($res)) {
+		$str = '7. Fixing kegiatan ' .  $data->kegiatan;
+		
+		$latarbelakang = trim($data->latarbelakang);
+		$latarbelakang = str_replace('.', '', $latarbelakang);
+		
+		if (strlen($latarbelakang)<=5) 	{
+			$sql = "update {kegiatanperubahan} set latarbelakang='Menyesuaikan kebutuhan belanja' where kodekeg='" . $data->kodekeg . "'";
+			
+			////drupal_set_message($sql);
+			
+			$res_exe = db_query($sql);
+			if ($res_exe) $str .= ' update latar belakang ok';
+			drupal_set_message($str);
+		} 	
+	}	
+		
+ }
+ 
+ function batch_kegiatan_dinolkan() {
+	 
+	//nolkan tw yg totalnya 0
+	drupal_set_message('7. Fixing kegiatan yang dinolkan di perubahan');
+	$sql = 'select kodekeg, kegiatan from {kegiatanperubahan} where totalp=0 and inaktif=1';
+	$res = db_query($sql);
+	  
+	while ($data = db_fetch_object($res)) {
+		$str = '7. Fixing kegiatan ' .  $data->kegiatan;
+		
+		$penetapan_aktif = false;
+		$sql = "select kodekeg, total, inaktif, kegiatan from {kegiatanskpd} where kodekeg='" . $data->kodekeg . "'";
+		$res_pen = db_query($sql);
+		if ($data_pen = db_fetch_object($data_pen)) {
+			if (($data_pen->total>0) and ($data_pen->inaktif=0)) {
+				$penetapan_aktif = true;
+			}
+		}
+		
+		if ($penetapan_aktif) {
+			$sql = "update {kegiatanperubahan} set inaktif=0 where kodekeg='" . $data->kodekeg . "'";
+			
+			$res_exe = db_query($sql);
+			if ($res_exe) $str .= ' set aktif ok';
+			drupal_set_message($str);
+		} else {
+			$str .= ' tetap inaktif';
+			drupal_set_message($str);			
+		}	
+	}	
+		
+ }
+
+ function batch_kegiatan_anggaran_tersedia() {
+	
+	$periode = variable_get('apbdrevisi', 1);
+	$periode++;	
+	
+	drupal_set_message('8.1. Penetapan anggaran tersedia non bintang');
+	$sql = 'select kodekeg, kegiatan from {kegiatanperubahan} where periode=' . $periode . ' and kodekeg not in (select kodekeg from {kegiatanbintang})';
+	drupal_set_message($sql);
+	$res = db_query($sql);
+	  
+	while ($data = db_fetch_object($res)) {
+		$str = '8.1. Penyediaan anggaran kegiatan ' .  $data->kegiatan;
+			$sql = "update {kegiatanperubahan} set anggaran=totalp where kodekeg='" . $data->kodekeg . "'";		
+			//rupal_set_message($sql);			
+			$res_exe = db_query($sql);
+
+			$sql = "update {anggperkegperubahan} set anggaran=jumlahp where kodekeg='" . $data->kodekeg . "'";		
+			//drupal_set_message($sql);			
+			$res_exe = db_query($sql);
+			
+	}	
+		
+ }

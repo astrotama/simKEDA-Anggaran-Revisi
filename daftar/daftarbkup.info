@@ -1,0 +1,829 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function daftar_menu() {
+    $items['daftar'] = array(
+        'title' => 'Kas',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('daftar_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function daftar_form() {
+	//drupal_add_css('files/css/kegiatancam.css');
+	
+
+	$title = 'daftar Prioritas';
+	$koder=arg(1);
+	if($koder!=0){
+		$where=' where kode='.$koder;
+		$arbulan= array(1,2,3,4,5,6,7,8,9,10,11,12);
+		$cekbulan=array();
+		$sql = 'select bulan from {triwulan}'.$where;
+		
+		//drupal_set_message($koder);
+		$res = db_query($sql);
+		$n = 0;
+		$rows= array();
+		if ($res) {
+			while ($data = db_fetch_object($res)) {
+				$cekbulan[$n] = $data->bulan;
+				//drupal_set_message($n.' = '.$cekbulan[$n]);
+				$n++;
+			}
+			
+		}
+		$isi= array();
+		$indexisi= 0;
+		for($l=0;$l<12;$l++)
+		{
+			$ketemu=null;
+			for($ind=0;$ind<count($cekbulan);$ind++)
+			{
+				if($arbulan[$l]==$cekbulan[$ind])
+				{
+					$ketemu=$cekbulan[$ind];
+				}
+				else if($ketemu==null && $ind==(count($cekbulan)-1))
+				{
+					$isi[$indexisi]=$arbulan[$l];
+					$indexisi++;
+				};
+				drupal_set_message($isi[0]);
+			
+			}
+		}
+	}
+	else{
+		$where='';
+	}
+	
+	
+    $sql = 'select no,kode,bulan, gaji, barangjasa, pegawai, tanah, mesin, gedung,jaringan, lainya from {triwulan} '.$where.' order by bulan';
+	
+	//drupal_set_message($koder);
+	$res = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	if ($res) {
+		
+		while ($data = db_fetch_object($res)) {
+			$weight += 1;
+			//drupal_set_message($data->gaji);
+			$rows[] = array (
+							'id' => $weight,
+							'e_no' => $data->no,
+							'no' => $data->no,
+							'kode' => $data->kode,
+							'bulan' => $data->bulan,
+							'gaji' => $data->gaji,
+							'barangjasa'=>$data->barangjasa,
+							'pegawai' => $data->pegawai,
+							'tanah' => $data->tanah,
+							'mesin' => $data->mesin,
+							'gedung' => $data->gedung,
+							'jaringan' => $data->jaringan,
+							'lainya' => $data->lainya,
+							'weight' => $weight,
+						);
+		}
+	}
+	
+	
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+        $form['tabledragrows'][$row['id']]['e_no_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['e_no'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['no_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['no'],
+            '#size' => 5,
+        );
+
+		$form['tabledragrows'][$row['id']]['kode_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['kode'],
+            '#size' => 5,
+        );
+		$form['tabledragrows'][$row['id']]['bulan_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['bulan'],
+            '#size' => 10,
+			//'#attributes' => array('disabled' => 'disabled'),
+        );
+		$form['tabledragrows'][$row['id']]['gaji_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['gaji'],
+            '#size' => 12,
+        );
+		$form['tabledragrows'][$row['id']]['barangjasa_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['barangjasa'],
+            '#size' => 12,
+        );
+		$form['tabledragrows'][$row['id']]['pegawai_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['pegawai'],
+            '#size' => 12,
+        );
+		$form['tabledragrows'][$row['id']]['tanah_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['tanah'],
+            '#size' => 12,
+        );
+		$form['tabledragrows'][$row['id']]['mesin_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['mesin'],
+            '#size' => 12,
+        );
+		$form['tabledragrows'][$row['id']]['gedung_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['gedung'],
+            '#size' => 12,
+        );
+		$form['tabledragrows'][$row['id']]['jaringan_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['jaringan'],
+            '#size' => 12,
+        );
+		$form['tabledragrows'][$row['id']]['lainya_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['lainya'],
+            '#size' => 12,
+        );
+
+
+        // the weight form element.
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+	$form['maxno']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		'#default_value'=> $weight, 
+	); 
+ 
+ 	
+	
+    // A submit element
+    $form['submit'] = array(
+        '#type' => 'submit',
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+    );
+	$form['cetak'] = array(
+        '#type' => 'submit',
+		'#value' => 'Cetak',
+		//'#weight' => 7,
+    );
+ 
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the daftar_form() form.
+ */
+function daftar_form_validate($form, &$form_state) {
+
+} 
+
+/**
+ * Implements hook_submit() for the daftar_form() form.
+ */
+function daftar_form_submit($form, &$form_state) {
+    
+
+	$maxno = $form_state['values']['maxno'];
+
+	for ($x = 1; $x <= $maxno; $x++) 
+	{
+		
+		//Read
+		$e_no = $form_state['values']['e_no_' . $x];
+		$no = $form_state['values']['no_' . $x];
+		$kode = $form_state['values']['kode_' . $x];
+		$bulan = $form_state['values']['bulan_' . $x];
+		$gaji = $form_state['values']['gaji_' . $x];
+		$barangjasa = $form_state['values']['barangjasa_' . $x];
+		$pegawai = $form_state['values']['pegawai_' . $x];
+		$tanah = $form_state['values']['tanah_' . $x];
+		$mesin = $form_state['values']['mesin_' . $x];
+		$gedung = $form_state['values']['gedung_' . $x];
+		$jaringan = $form_state['values']['jaringan_' . $x];
+		$lainya = $form_state['values']['lainya_' . $x];
+
+		if ($no != '') {
+			
+			//drupal_set_message($bulan);
+			
+			//Simpan detilnya
+			if ($e_no=='new') {
+				//drupal_set_message($e_no);
+				$sql = 'insert into {triwulan} (no, kode, bulan, gaji, barangjasa, pegawai, tanah, mesin, gedung,jaringan, lainya) values(\'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')';        
+				$res = db_query(db_rewrite_sql($sql), array($no, $kode, $bulan, $gaji, $barangjasa, $pegawai, $tanah, $mesin, $gedung, $jaringan, $lainya));	
+			} else {
+				
+				$sql = 'update {triwulan} set no=\'%s\', kode=\'%s\', bulan=\'%s\', gaji=\'%s\', barangjasa=\'%s\',pegawai=\'%s\', tanah=\'%s\', mesin=\'%s\', gedung=\'%s\', jaringan=\'%s\', lainya=\'%s\' where no=\'%s\' ';
+				$res = db_query(db_rewrite_sql($sql), array($no, $kode, $bulan, $gaji, $barangjasa, $pegawai, $tanah, $mesin, $gedung, $jaringan, $lainya, $e_no));
+				
+			}
+			
+		} else {
+		//drupal_set_message('no'.$no.'#');
+			$e_no = $form_state['values']['e_no_' . $x];
+			if ($iddetil!=='new') {
+
+				//$sql = 'delete from {triwulan} where no=\'%s\'';
+				//$res = db_query(db_rewrite_sql($sql), array($e_no));
+				
+			}
+			
+		}
+
+	}
+	
+	
+	if ($form_state['clicked_button']['#value'] == $form_state['values']['cetak']) {
+		$pdfFile = 'Cek cetak.pdf';
+		$html = GenReportFormContent();
+		$header= null;
+		data_ExportPDF('L',$header, 'F4', $html, $pdfFile);
+		
+	}else {
+		
+		if ($res)
+			drupal_set_message('Penyimpanan data berhasil dilakukan');
+			
+		else
+			drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+			$koder = $form_state['values']['kode_' . 1];
+			//drupal_set_message($koder);
+			drupal_goto('/daftar/'.$koder);    
+	}
+
+	
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function daftar_theme() {
+    return array(
+        'daftar_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_daftar_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledrag rows'][$id]['iddetil_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['bulan_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['gaji_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['barangjasa_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['pegawai_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['tanah_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['mesin_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['gedung_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['jaringan_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['lainya_' . $id]);
+				
+                //Add the weight field to the row
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['no_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['kode_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+	
+				 array('data' => 'Bulan',  'width' => '90px'),
+				 array('data' => 'Gaji',  'width' => '90px'),
+				 array('data' => 'Barang jasa',  'width' => '90px'),
+				 array('data' => 'Pegawai',  'width' => '90px'),
+				 array('data' => 'Tanah',  'width' => '90px'),
+				 array('data' => 'Mesin',  'width' => '90px'),
+				 array('data' => 'Gedung',  'width' => '90px'),
+				 array('data' => 'Jaringan',  'width' => '90px'),
+				 array('data' => 'Lainya',  'width' => '90px'),
+				 //array('data' => 'Weight'),
+				); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}
+
+function GenReportFormContent() {
+
+	$rowsdata[]= array (
+						 array('data' => 'Kegiatan ', 'width' => '70px', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => ':', 'width' => '200px', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => 'Anggaran', 'width' => '70px',  'style' => 'border:none;text-align:left;font-size: 90%;'),
+						 array('data' => ':', 'width' => '20px', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	
+						 
+	
+	
+	$headerkosong = array();
+	$rowsdata[] = array (
+						 array('data' => '', 'width' => '30px', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+					);
+					
+	$rowsdata[] = array (
+								
+							 array('data' => 'No', 'width' => '30px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black; border-left: 0.5px solid black;bg-color: red; text-align:center;'),
+							 array('data' => 'Uraian', 'width' => '75px', 'colspan'=>'2','style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Total Anggaran', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Januari', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Februari', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Maret',  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'April', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Mei', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Juni',  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Juli', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Agustus', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'September', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Oktober',  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'November', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+							 array('data' => 'Desember', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:center;'),
+							 
+								 
+						 );
+///***GAJI..................................................................................
+	$sql = "select gaji from {triwulan} order by bulan".$where;
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalg=array();
+		$tamp=array();
+		$line=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalg[$line]=$datacetak->gaji;
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[$line]=$datacetak->gaji;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '1', 'width' => '30px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 90%;'),
+												 array('data' => 'Gaji', 'width' => '75px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 90%;'),
+												 array('data' => 'anggaran', 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[5],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[6], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[7], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[8], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[9],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[10], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[11], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+													 
+														 
+												 );
+					}
+
+///***PEGAWAI..................................................................................
+$sql = "select pegawai from {triwulan} order by bulan".$where;
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalp=array();
+		$tamp=array();
+		$line=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalp[$line]=$datacetak->pegawai;
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[$line]=$datacetak->pegawai;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '2', 'width' => '30px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 90%;'),
+												 array('data' => 'Pegawai', 'width' => '75px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 90%;'),
+												 array('data' => 'anggaran', 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[5],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[6], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[7], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[8], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[9],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[10], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[11], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+													 
+														 
+												 );
+					}
+///***BARANG JASA..............................................................................
+$sql = "select barangjasa from {triwulan} order by bulan".$where;
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalb=array();
+		$tamp=array();
+		$line=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalb[$line]=$datacetak->barangjasa;
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[$line]=$datacetak->barangjasa;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '3', 'width' => '30px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 90%;'),
+												 array('data' => 'Barang Jasa', 'width' => '75px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 90%;'),
+												 array('data' => 'anggaran', 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[5],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[6], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[7], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[8], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[9],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[10], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[11], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+													 
+														 
+												 );
+					}
+///***MODAL..............................................................................
+$sql = "select tanah, mesin, gedung, jaringan, lainya from {triwulan} order by bulan".$where;
+	//drupal_set_message($where);
+	//$sql .= ' group by l.kodek,l.uraian order by l.kodek';
+		
+		//echo $sql;
+		$totalm=array();
+		$tamp=array();
+		$line=0;$line2=0;
+		$result = db_query($sql);
+		if ($result) {
+			while ($datacetak = db_fetch_object($result)) {
+															
+															$totalm[0][$line]=$datacetak->tanah;
+															$totalm[1][$line]=$datacetak->mesin;
+															$totalm[2][$line]=$datacetak->gedung;
+															$totalm[3][$line]=$datacetak->jaringan;
+															$totalm[4][$line]=$datacetak->lainya;
+															
+															//$sub=$datacetak->harga*$datacetak->jumlah;
+															$tamp[0][$line]=$datacetak->tanah;
+															$tamp[1][$line]=$datacetak->mesin;
+															$tamp[2][$line]=$datacetak->gedung;
+															$tamp[3][$line]=$datacetak->jaringan;
+															$tamp[4][$line]=$datacetak->lainya;
+															$line++;
+															}
+							$rowsdata[] = array (
+																						
+												 array('data' => '4', 'width' => '30px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 90%;'),
+												 array('data' => 'Tanah', 'width' => '75px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 90%;'),
+												 array('data' => 'anggaran', 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][0], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][1], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][2],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][3], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][4], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][5],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][6], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][7], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][8], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][9],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][10], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[0][11], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '5', 'width' => '30px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 90%;'),
+												 array('data' => 'Mesin', 'width' => '75px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 90%;'),
+												 array('data' => 'anggaran', 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][0], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][1], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][2],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][3], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][4], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][5],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][6], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][7], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][8], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][9],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][10], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[1][11], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '6', 'width' => '30px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 90%;'),
+												 array('data' => 'Gedung', 'width' => '75px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 90%;'),
+												 array('data' => 'anggaran', 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][0], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][1], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][2],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][3], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][4], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][5],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][6], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][7], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][8], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][9],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][10], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[2][11], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '7', 'width' => '30px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 90%;'),
+												 array('data' => 'Jaringan', 'width' => '75px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 90%;'),
+												 array('data' => 'anggaran', 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][0], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][1], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][2],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][3], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][4], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][5],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][6], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][7], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][8], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][9],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][10], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[3][11], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+													 
+														 
+												 );
+							$rowsdata[] = array (
+																						
+												 array('data' => '8', 'width' => '30px', 'style' => ' border-left: 0.5px solid black;bg-color: red; text-align:center;font-size: 90%;'),
+												 array('data' => 'Lainya', 'width' => '75px', 'colspan'=>'2','style' => 'border-left: 0.5px solid black; text-align:left;font-size: 90%;'),
+												 array('data' => 'anggaran', 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][0], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][1], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][2],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][3], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][4], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][5],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][6], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][7], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][8], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][9],  'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][10], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+												 array('data' => $tamp[4][11], 'width' => '60px', 'style' => 'border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+													 
+														 
+												 );
+					}
+///END_VALUE....................................................................................................................................................
+$totalbulan=array();
+$totalbulan[0]=$totalg[0]+$totalp[0]+$totalb[0]+$totalm[0][0]+$totalm[1][0]+$totalm[2][0]+$totalm[3][0]+$totalm[4][0];
+$totalbulan[1]=$totalg[1]+$totalp[1]+$totalb[1]+$totalm[0][1]+$totalm[1][1]+$totalm[2][1]+$totalm[3][1]+$totalm[4][1];
+$totalbulan[2]=$totalg[2]+$totalp[2]+$totalb[2]+$totalm[0][2]+$totalm[1][2]+$totalm[2][2]+$totalm[3][2]+$totalm[4][2];
+$totalbulan[3]=$totalg[3]+$totalp[3]+$totalb[3]+$totalm[0][3]+$totalm[1][3]+$totalm[2][3]+$totalm[3][3]+$totalm[4][3];
+$totalbulan[4]=$totalg[4]+$totalp[4]+$totalb[4]+$totalm[0][4]+$totalm[1][4]+$totalm[2][4]+$totalm[3][4]+$totalm[4][4];
+$totalbulan[5]=$totalg[5]+$totalp[5]+$totalb[5]+$totalm[0][5]+$totalm[1][5]+$totalm[2][5]+$totalm[3][5]+$totalm[4][5];
+$totalbulan[6]=$totalg[6]+$totalp[6]+$totalb[6]+$totalm[0][6]+$totalm[1][6]+$totalm[2][6]+$totalm[3][6]+$totalm[4][6];
+$totalbulan[7]=$totalg[7]+$totalp[7]+$totalb[7]+$totalm[0][7]+$totalm[1][7]+$totalm[2][7]+$totalm[3][7]+$totalm[4][7];
+$totalbulan[8]=$totalg[8]+$totalp[8]+$totalb[8]+$totalm[0][8]+$totalm[1][8]+$totalm[2][8]+$totalm[3][8]+$totalm[4][8];
+$totalbulan[9]=$totalg[9]+$totalp[9]+$totalb[9]+$totalm[0][9]+$totalm[1][9]+$totalm[2][9]+$totalm[3][9]+$totalm[4][9];
+$totalbulan[10]=$totalg[10]+$totalp[10]+$totalb[10]+$totalm[0][10]+$totalm[1][10]+$totalm[2][10]+$totalm[3][10]+$totalm[4][10];
+$totalbulan[11]=$totalg[11]+$totalp[11]+$totalb[11]+$totalm[0][11]+$totalm[1][11]+$totalm[2][11]+$totalm[3][11]+$totalm[4][11];
+	$rowsdata[] = array (
+									
+								 array('data' => 'Total', 'width' => '105px', 'colspan'=>'3','style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+								 array('data' => 'anggaran', 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[0], 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[1], 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[2],  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[3], 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[4], 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[5],  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[6], 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[7], 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[8], 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[9],  'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[10], 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[11], 'width' => '60px', 'style' => 'border-bottom: 0.5px solid black;border-top: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 
+									 
+							 );
+	
+	$rowsdata[] = array (
+									
+								 array('data' => 'Total Tri Wulan', 'width' => '165px', 'colspan'=>'3','style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:center;'),
+								 array('data' => $totalbulan[0]+$totalbulan[1]+$totalbulan[2], 'width' => '180px', 'colspan'=>'3','style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[3]+$totalbulan[4]+$totalbulan[5], 'width' => '180px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[6]+$totalbulan[7]+$totalbulan[8],  'width' => '180px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 array('data' => $totalbulan[9]+$totalbulan[10]+$totalbulan[11], 'width' => '180px','colspan'=>'3', 'style' => 'border-bottom: 0.5px solid black;border-left: 0.5px solid black; border-right: 0.5px solid black; text-align:right;font-size: 90%;'),
+								 
+									 
+							 );
+	
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => 'Jepara,', 'width' => '175px', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => 'PPTK', 'width' => '175px', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+						
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => 'Nama', 'width' => '175px', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	$rowsdata[]= array (
+						 array('data' => '', 'width' => '700px','colspan'=>'12', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						 array('data' => 'NIP.', 'width' => '175px', 'style' => 'border:none; text-align:left;font-size: 90%;'),
+						);
+	
+	$opttb0 = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0`');
+	$opttbl = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '1');
+	$headerkosong = array();
+	
+	
+	$output .= theme_box('', theme_table($headerkosong, $rowsdata, $opttb0));
+	
+	$output .= $toutput;
+	if ($limit >0)
+		$output .= theme ('pager', NULL, $limit, 0);
+	
+	return $output;
+}
+
+function data_ExportPDF($pageOrientation, $htmlhader , $pageSize, $htmlContent, $pdfFiel) {
+    require_once('files/tcpdf/config/lang/eng.php');
+    require_once('files/tcpdf/tcpdf.php');
+
+	class MYPDF extends TCPDF {  
+	
+	   // Page footer
+	    //var $htmlHeader;
+
+		/*public function setHtmlHeader($htmlHeader) {
+			$this->htmlHeader = $htmlHeader;
+		}*/
+
+		public function Header() {
+			$headerData = $this->getHeaderData();
+			$this->SetFont('helvetica', 'B', 10);
+			$this->writeHTML($headerData['string']);
+		}
+
+		public function Footer() {
+			// Position at 15 mm from bottom
+			//$this->SetY(-10);
+			// Set font
+		$this->SetFont('helvetica', 'I', 8);
+			// Page number
+		  //$this->Cell(0, 10, $this->getAliasNumPage().' dari '.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');     
+		  $this->Cell(0,0,$this->PageNo(),'T',0,'R');
+		}      
+	} 
+	
+    $pdf = new MYPDF($pageOrientation, PDF_UNIT, $pageSize, true, 'UTF-8', false);
+    set_time_limit(0);
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('SIPPD');
+    $pdf->SetTitle('PDF Gen');
+    $pdf->SetSubject('PDF Gen');
+    $pdf->SetKeywords('APBD');
+    $pdf->setPrintHeader(true);
+	//$pdf->setHeaderData($ln='', $lw=0, $ht='', $hs='<table cellspacing="0" cellpadding="1" border="1">tr><td rowspan="3">test</td><td>test</td></tr></table>', $tc=array(0,0,0), $lc=array(0,0,0));
+    
+	$pdf->setHeaderMargin(10);
+	$pdf->setHeaderData($ln='', $lw=0, $ht='', $hs=$htmlhader, $tc=array(0,0,0), $lc=array(0,0,0));
+	$pdf->setHeaderFont(array('helvetica','', 10));
+	$pdf->setFooterFont(array('helvetica','', 10));
+    $pdf->setFooterMargin(10);
+	$pdf->setRightMargin(1);
+    //$pdf->setFooterMargin(PDF_MARGIN_FOOTER);	
+	if ($pageOrientation=='L') {
+		$pdf->setHeaderMargin(0);
+		//$pdf->SetMargins(5,20);
+		$pdf->SetMargins(10,30);
+	} else {
+		$pdf->setHeaderMargin(10);
+		$pdf->SetMargins(20,10);
+	}
+	
+	//$pdf->SetMargins(15,15);
+    $pdf->SetAutoPageBreak(true, 11);
+    $pdf->setLanguageArray($l);
+    $pdf->SetFont('helvetica','', 10);
+    $pdf->AddPage();
+    $pdf->writeHTML($htmlContent, true, 0, true, 0);
+	
+	//$ypos = $pdf->GetY();
+	//$pdf->Write(0, $ypos, '', 0, 'L', true, 0, false, false, 0);
+	//$ypos = $ypos-10;
+	//$pdf->Write(0, $ypos, '', 0, 'L', true, 0, false, false, 0);
+	
+	//$pdf->SetY($ypos, true, false);
+	
+	//$pdf->writeHTML($htmlContent, true, 0, true, 0);
+    $pdf->Output($pdfFiel, 'I');
+	
+}
+
+
+

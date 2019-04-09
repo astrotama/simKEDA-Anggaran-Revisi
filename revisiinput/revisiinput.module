@@ -1,0 +1,339 @@
+<?php
+
+function revisiinput_menu() {
+	
+  $items['revisiinput'] = array(
+    'title' => t('Revisi Anggaran'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('revisiinput'),
+    'access callback' => TRUE,
+    'description' => t('Revisi Anggaran'),
+    //'type' => MENU_LOCAL_TASK,
+    //'file' => 'form_example_tutorial.inc',
+    //'weight' => 10,
+  );	
+    return $items;
+
+}
+
+function revisiinput($form_state) {
+
+  // Display page 2 if $form_state['storage']['page_two'] is set
+  if (isset($form_state['storage']['page_two'])) {
+    return revisiinput_page_two($form_state);
+  }
+  $form['description'] = array(
+    '#type' => 'item',
+    '#title' => t('Langkah #1, Revisi Anggaran'),
+  );
+
+  // Page 1 is displayed if $form_state['storage']['page_two'] is not set
+	$form['jenisrevisi']= array(
+		'#type' => 'radios', 
+		'#title' => t('Jenis Revisi'), 
+		//'#description'  => 'Jenis belanja',
+		'#default_value' => !empty($form_state['values']['jenisrevisi']) ? $form_state['values']['jenisrevisi'] : '', // changed
+		'#options' => array(	
+			 '1' => t('Perubahan/Pergeseran Anggaran Tetap'), 	
+			 '2' => t('Kesalahan Administratif'),	
+			 '3' => t('Penambahan/Pengurangan pada Pagu Anggaran Tetap dari Dana Transfer (DAK/Banprov)'), 	
+			 '4' => t('Mendesak/Darurat'), 	
+		   ), 
+	);
+	
+  $form['keterangan'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Keterangan'),
+    '#default_value' => !empty($form_state['values']['keterangan']) ? $form_state['values']['keterangan'] : '', // added
+  );
+
+  $form['clear'] = array(
+    '#type' => 'submit',
+    '#value' => 'Reset form',
+    '#validate' => array('revisiinput_clear'),
+  );
+  $form['next'] = array(
+    '#type' => 'submit',
+    '#value' => 'Next >>',
+  );
+  return $form;
+}
+
+// New function created to help make the code more manageable.
+function revisiinput_page_two($form_state) {
+	$form['description'] = array(
+	'#type' => 'item',
+	'#title' => t('Langkah #2, Revisi Anggaran'),
+	);
+
+	$form_state['storage']['page_one_values'] = $form_state['values'];
+    $page_one_values = $form_state['storage']['page_one_values'];
+	$jenisrevisi = $page_one_values['jenisrevisi'];
+	$form['jenisrevisi'] = array(
+	'#type' => 'hidden',
+	'#title' => 'Step #1',
+	'#default_value' => $jenisrevisi,	
+	);
+
+	if (isSuperuser())
+		$kodeuk = '81';	
+	else
+		$kodeuk = apbd_getuseruk();
+	
+	$form['kodeuk'] = array(
+	'#type' => 'hidden',
+	'#default_value' => $kodeuk,	
+	);
+	
+	$subjenisrevisitype = 'hidden';
+	switch($jenisrevisi) {
+		case '1':
+			$subjenisrevisitype = 'radios';
+			$arrgeser = array(	
+					 '1' => t('Pergeseran Blokir'), 	
+					 '2' => t('Pergeseran Rekening Rincian Obyek'),	
+					 '3' => t('Pergeseran Rekening Obyek'), 	
+					);
+			break;
+		case '2':
+			$arrgeser = array();
+			break;
+		case '3':
+			$qlike = " and sumberdana1 in ('BANPROV','DAK')";
+			$arrgeser = array();
+			break;
+		case '4':
+			$arrgeser = array();
+			break;
+	}
+
+	$form['subjenisrevisi']= array(
+		'#type' => $subjenisrevisitype, 
+		'#title' => t('Kategori'), 
+		//'#description'  => 'Jenis belanja',
+		'#default_value' => !empty($form_state['values']['subjenisrevisi']) ? $form_state['values']['subjenisrevisi'] : '1', // changed
+		'#options' => $arrgeser, 
+	);
+	
+	$form['color'] = array(
+	'#type' => 'textfield',
+	'#title' => 'Alasan revisi',
+	);
+	
+	//DAFTAR KEGIATAN
+	$where = sprintf(" and kodeuk='%s'", db_escape_string($kodeuk));
+    $sql = 'select kodekeg,kegiatan,total,sumberdana1 from {kegiatanskpd} where total>0 ' . $where  . $qlike . ' order by jenis,kegiatan';
+
+	//drupal_set_message($sql);
+	$resdetil = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	if ($resdetil) {
+		//drupal_set_message('res ok');
+		while ($data = db_fetch_object($resdetil)) {
+			$weight += 1;
+			//drupal_set_message($data->uraian . ' - ' . $weight);
+			
+			$rows[] = array (
+							'id' => $weight,
+							'nomor' => '<p align="right">' . $weight . '</p>',
+							'kodekeg' => $data->kodekeg,
+							'kegiatan' => $data->kegiatan . ' (' .  apbd_fn($data->total) . ')',
+							'sumberdana1' => $data->sumberdana1,
+							'weight' => $weight,
+						);
+
+		}
+	}	
+
+    foreach ($rows as $row) {
+
+        $form['tabledragrows'][$row['id']]['nomor_' . $row['id']] = array(
+			'#type' => 'markup',
+			'#value' => $row['nomor'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+			'#size' => 5,
+        );
+
+        $form['tabledragrows'][$row['id']]['kodekeg_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['kodekeg'],
+            '#size' => 10,
+        );
+
+		$form['tabledragrows'][$row['id']]['kegiatan_' . $row['id']] = array(
+			'#type' => 'markup',
+			'#value' => $row['kegiatan'],
+			'#size' => 45,
+		);
+
+		/*
+		$form['tabledragrows'][$row['id']]['total_' . $row['id']] = array(
+			'#type' => 'markup',
+			'#value' => $row['total'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+			'#size' => 15,
+		);
+		*/
+		
+        $form['tabledragrows'][$row['id']]['sumberdana1_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['sumberdana1'],
+            '#size' => 10,
+        );
+		
+        // the weight form element.
+		
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }	
+	$form['submit'] = array(
+	'#type' => 'submit',
+	'#value' => 'Submit',
+	);
+  return $form;
+}
+
+
+function revisiinput_clear($form, &$form_state) {
+  unset($form_state['values']);
+  unset($form_state['storage']);
+
+  $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * The validate function now validates page 2 as well.
+ */
+function revisiinput_validate($form, &$form_state) {
+  // Validate page 2 here
+  if (isset($form_state['storage']['page_two'])) {
+    $color = $form_state['values']['color'];
+    //if (!$color) {
+    //  form_set_error('color', t('Please enter a color.'));
+    //}
+    return;
+  }
+
+  $jenisrevisi = $form_state['values']['jenisrevisi'];
+  $keterangan = $form_state['values']['keterangan'];
+  if (!$jenisrevisi) {
+    form_set_error('jenisrevisi', t('Jenis revisi harus dipilih salah satu.'));
+  }
+  if (!$keterangan) {
+    form_set_error('keterangan', t('Keterangan agar diisi.'));
+  }
+  
+}
+
+/**
+ * Modifies this function so that it will respond appropriately based on
+ * which page was submitted. If the jenisrevisi page is being submitted,
+ * values in the 'storage' array are saved and the form gets
+ * automatically reloaded. 
+ *
+ * If page 2 was submitted, we display a message and redirect the
+ * user to another page.
+ */ 
+function revisiinput_submit($form, &$form_state) {
+  // Handle page 1 submissions
+  if ($form_state['clicked_button']['#id'] == 'edit-next') {
+    $form_state['storage']['page_two'] = TRUE; // We set this to determine
+                                               // which elements to display
+                                               // when the page reloads.
+
+    // Values below in the $form_state['storage'] array are saved
+    // to carry forward to subsequent pages in the form.
+    $form_state['storage']['page_one_values'] = $form_state['values'];
+  }
+  // Handle page 2 submissions.
+  else {
+    /*
+     Normally, some code would go here to alter the database with the data
+     collected from the form. Sets a message with drupal_set_message()
+     to validate working code.
+     */ 
+    $page_one_values = $form_state['storage']['page_one_values'];
+    //drupal_set_message(t('The form has been submitted. name="@jenisrevisi @keterangan", year of birth=@year_of_birth',
+      //array('@jenisrevisi' => $page_one_values['jenisrevisi'], '@keterangan' => $page_one_values['keterangan'])));
+
+    //drupal_set_message(t('And the favorite color is @color', array('@color' => $form_state['values']['color'])));
+
+	drupal_set_message($page_one_values['jenisrevisi']);
+	drupal_set_message($form_state['values']['color']);
+    // $form_state['storage'] must be unset for redirection to occur. Otherwise
+    // $form_state['rebuild'] is automatically set and this form will be
+    // rebuilt.
+    unset($form_state['storage']);
+    //$form_state['redirect'] = 'node'; // Redirects the user to /node.
+  }
+}
+
+function revisiinput_theme() {
+    return array(
+        'revisiinput_page_two' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+
+function theme_revisiinput_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['iddetil_' . $id]);
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['space_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['nomor_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['kegiatan_' . $id]);
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['total_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['sumberdana1_' . $id]);
+				
+                //Add the weight field to the row
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+				//array('data' => '',  'width'=> '5px'),
+				array('data' => 'No.',  'width'=> '3px'),
+				array('data' => 'Kegiatan',  'width'=> '150px'),
+				//array('data' => 'Anggaran',  'width' => '10px'),
+				array('data' => 'Sumber Dana',  'width' => '250px'),
+				array('data' => 'Weight'),
+			); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

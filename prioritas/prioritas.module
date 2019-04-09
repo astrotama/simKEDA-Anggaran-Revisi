@@ -1,0 +1,318 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function prioritas_menu() {
+    $items['prioritas'] = array(
+        'title' => 'Prioritas Pembangunan',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('prioritas_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function prioritas_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	
+	$title = 'Prioritas Pembangunan';
+	$prov=arg(1);
+	if (isset($prov)) {
+		$title .= ' Provinsi';
+		$prov='prov';
+	}
+	drupal_set_title($title);
+	drupal_set_html_head('<style>label{display: block; width: 200px; float: left;}</style>');
+	
+    $sql = 'select prioritasno,kodebid,uraian,tema from {prioritas' . $prov . '} order by prioritasno';
+	
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	if ($res) {
+		//drupal_set_message('res ok');
+		while ($data = db_fetch_object($res)) {
+			$weight += 1;
+			
+			if ($prov=='')
+				$matriks = l('Matriks', 'matriks/' . $data->prioritasno , array('html' =>TRUE));
+			else
+				$matriks = l('Matriks', 'matriks/' . $data->prioritasno . '/prov', array('html' =>TRUE));
+		
+			$rows[] = array (
+							'id' => $weight,
+							'nomor' => $weight,
+							'prioritasno' => $data->prioritasno,
+							'kodebid' => $data->kodebid,
+							'uraian' => $data->uraian,
+							'tema' => $data->tema,
+							'matriks' => $matriks,
+							//'weight' => $weight,
+						);
+		}
+	}
+	
+	for ($x = 1; $x <= 5; $x++) {
+		$weight += 1;
+
+		$rows[] = array (
+						'id' => $weight,
+						'nomor' => $weight,
+						'prioritasno' => 'new',
+						'kodebid' => '',
+						'uraian' => '',
+						'tema' => '',
+						'matriks' => 'Matriks',
+						//'weight' => $weight,
+					);
+	}
+
+	$sql = "select kodebid, namasingkat from {bidang} order by kodebid" ;
+	$res = db_query($sql);
+	$bidopt = array();
+	$bidopt[''] = '- Bidang -';
+	while ($data = db_fetch_object($res)) {
+		$bidopt[$data->kodebid] = $data->namasingkat;
+	}
+
+    // Tabledrag element
+    foreach ($rows as $row) {
+        $form['tabledragrows'][$row['id']]['prioritasno_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['prioritasno'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['nomor_' . $row['id']] = array(
+            '#type' => 'markup',
+            //'#default_value' => $row['nomor'],
+			'#value' => $row['nomor'],
+            '#size' => 2,
+        );
+        $form['tabledragrows'][$row['id']]['kodebid_' . $row['id']] = array(
+            '#type' => 'select',
+			'#options'		=> $bidopt,
+            '#default_value' => $row['kodebid'],
+        );
+
+		$form['tabledragrows'][$row['id']]['uraian_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['uraian'],
+			'#maxlength' => 150,
+            '#size' => 90,
+        );
+		$form['tabledragrows'][$row['id']]['tema_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['tema'],
+            '#size' => 15,
+        );
+		$form['tabledragrows'][$row['id']]['matriks_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['matriks'],
+            '#size' => 10,
+        );
+
+
+        // the weight form element.
+        /*
+		$form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+		*/
+    }
+ 
+	$form['maxno']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $weight, 
+	); 
+	$form['prov']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $prov, 
+	); 
+ 
+ 	$form['submitnewdetil'] = array (
+		'#type' => 'submit',
+		'#value' => 'Tambah',
+		//'#weight' => 6,
+	);
+
+ 	$form['print'] = array (
+		'#type' => 'submit',
+		'#value' => 'Cetak',
+		//'#weight' => 6,
+	);
+	
+    // A submit element
+    $form['submit'] = array(
+        '#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/matriksprioritas' class='btn_blue' style='color: white'>Tutup</a>",
+        '#value' => 'Simpan',
+		//'#weight' => 7,
+    );
+ 
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the prioritas_form() form.
+ */
+function prioritas_form_validate($form, &$form_state) {
+
+} 
+
+/**
+ * Implements hook_submit() for the prioritas_form() form.
+ */
+function prioritas_form_submit($form, &$form_state) {
+    
+	if($form_state['clicked_button']['#value'] == $form_state['values']['print']) {
+		$prov = $form_state['values']['prov'];
+		if ($prov=='prov') {
+			drupal_goto('apbd/laporan/apbd/sinkronisasiprov/1');
+		} else {
+			drupal_goto('apbd/laporan/apbd/sinkronisasi/0');
+		}
+		
+
+	} else {
+		$maxno = $form_state['values']['maxno'];
+		$prov = $form_state['values']['prov'];
+		$newno = $maxno;
+
+		for ($x = 1; $x <= $maxno; $x++) 
+		{
+			
+			//Read
+			$prioritasno = $form_state['values']['prioritasno_' . $x];
+			$kodebid = $form_state['values']['kodebid_' . $x];
+			$uraian = $form_state['values']['uraian_' . $x];
+			$tema = $form_state['values']['tema_' . $x];
+
+			if ($uraian != '') {
+				
+				//drupal_set_message($tema);
+				
+				//Simpan detilnya
+				if ($prioritasno=='new') {
+					$newno += 1;
+					//drupal_set_message('new ' . $kodero);
+					$sql = 'insert into {prioritas' . $prov . '} (prioritasno, kodebid, uraian, tema) values(\'%s\', \'%s\', \'%s\', \'%s\')';        
+					$res = db_query(db_rewrite_sql($sql), array($newno, $kodebid, $uraian, $tema));	
+				} else {
+					
+					$sql = 'update {prioritas' . $prov . '} set kodebid=\'%s\', uraian=\'%s\', tema=\'%s\' where prioritasno=\'%s\' ';
+					$res = db_query(db_rewrite_sql($sql), array($kodebid, $uraian, $tema, $prioritasno));
+					
+				}
+				
+			} else {
+				$prioritasno = $form_state['values']['prioritasno_' . $x];
+				if ($iddetil!=='new') {
+
+					$sql = 'delete from {prioritas' . $prov . '} where prioritasno=\'%s\'';
+					$res = db_query(db_rewrite_sql($sql), array($prioritasno));
+					
+				}
+				
+			}
+
+		}
+		
+		
+		if ($form_state['clicked_button']['#value'] == $form_state['values']['submitnewdetil']) {
+			$form_state['redirect'] = 'prioritas/';
+			
+		} else {
+			
+			if ($res)
+				drupal_set_message('Penyimpanan data berhasil dilakukan');
+			else
+				drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+			drupal_goto('/matriksprioritas');    
+		}
+
+	}
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function prioritas_theme() {
+    return array(
+        'prioritas_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_prioritas_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledrag rows'][$id]['iddetil_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['nomor_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['kodebid_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['uraian_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['tema_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['matriks_' . $id]);
+				
+                //Add the weight field to the row
+                //$this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+				 array('data' => 'No.',  'width'=> '10px'),
+				 array('data' => 'Bidang',  'width'=> '10px'),
+				 array('data' => 'Prioritas',  'width' => '120px'),
+				 array('data' => 'Tema',  'width' => '30px'),
+				 array('data' => '',  'width' => '10px'),
+				// array('data' => 'Weight'),
+				); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

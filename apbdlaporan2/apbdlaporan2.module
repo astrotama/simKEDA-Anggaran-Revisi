@@ -1,0 +1,449 @@
+<?php
+
+function apbdlaporan2_menu() {
+  // $items = array();
+  $items['apbdlaporan2'] = array(
+    'title' => 'Laporan APBD',
+    'page callback' => 'drupal_get_form',
+	'access arguments' => array ('laporan viewer'),
+    'page arguments' => array('apbdlaporan2_penetapan_form'),
+    'access callback' => TRUE,
+  );
+  $items['apbdlaporan2/penetapan'] = array(
+    'title' => 'APBD Penetapan',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 4,
+  );
+  $items['apbdlaporan2/revisi1'] = array(
+    'title' => 'APBD Revisi #1',
+    'page callback' => 'drupal_get_form',
+	'access arguments' => array ('laporan viewer'),
+    'page arguments' => array('apbdlaporan2_revisi1_form'),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+  );
+
+  $items['apbdlaporan2/revisiterakhir'] = array(
+    'title' => 'APBD Revisi (#2)',
+    'page callback' => 'drupal_get_form',
+	'access arguments' => array ('laporan viewer'),
+    'page arguments' => array('apbdlaporan2_revisiterakhir_form'),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  $items['apbdlaporan2/revisiperubahan'] = array(
+    'title' => 'APBD Revisi Perubahan Murni (#3)',
+    'page callback' => 'drupal_get_form',
+	'access arguments' => array ('laporan viewer'),
+    'page arguments' => array('apbdlaporan2_revisiperubahan_form'),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+
+  $items['apbdlaporan2/revisiperubahan'] = array(
+    'title' => 'APBD Revisi Setelah Perubahan Murni (#4)',
+    'page callback' => 'drupal_get_form',
+	'access arguments' => array ('laporan viewer'),
+    'page arguments' => array('apbdlaporan2_revisiperubahan_form'),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 0,
+  );
+  
+  return $items;
+}
+
+function apbdlaporan2_penetapan_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	drupal_add_css('files/css/laporan.css');
+	$form['uraian']= array(
+		'#type'         => 'markup', 
+		'#value'		=> getLaporanPenetapan2(), 
+	); 	
+
+
+	return $form;
+}
+
+function getLaporanPenetapan2() {
+    $header = array (
+       array('data' => 'Laporan',  'colspan'=>'2'),
+       array('data' => 'Keterangan'),
+    );
+
+	if (isSuperuser() || isUserview()) {
+		$rows[] = array (array('data' => 'LAPORAN RKA-SKPD',  'colspan'=>'3', 'style' => 'font-weight:bold;'),
+						array('data' => 'LAPORAN RKA-PPKD',  'colspan'=>'3', 'style' => 'font-weight:bold;'),
+						array('data' => 'LAPORAN APBD',  'colspan'=>'3', 'style' => 'font-weight:bold;'),
+						);
+		//1
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Ringkasan APBD', 'apbd/laporanpenetapan/rka/ringkasananggaran/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan ringkasan APBD sampai dengan rekening jenis', 'valign'=>'top'),
+
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('Ringkasan RKA-PPKD', 'apbd/laporanpenetapan/rka/ringkasananggaranppkd'), 'valign'=>'top'),
+						array('data' => 'Menampilkan ringkasan RKA-PPKD', 'valign'=>'top'),		
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran I - APBD', 
+						'apbd/laporanpenetapan/apbd/lampiran1'), 'valign'=>'top'),
+						array('data' => 'Menampilkan lampiran I, ringkasan APBD', 'valign'=>'top'),
+
+						);
+
+		//2			
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Pendapatan', 
+						'apbd/laporanpenetapan/rka/rekapaggpad/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran pendapatan', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('RKA-PPKD Pendapatan', 
+						'apbd/pendapatanppkd/print'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rincian RKA-PPKD Pendapatan', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran II - APBD', 
+						'apbd/laporanpenetapan/apbd/lampiran2'), 'valign'=>'top'),
+						array('data' => 'Menampilkan ringkasan apbd menurut urusan pemerintahan daerah dan oanisasi', 'valign'=>'top'),
+						
+						);
+		//3
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja', 
+						'apbd/laporanpenetapan/rka/rekapaggbelanja/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('RKA-PPKD Belanja', 
+						'apbd/kegiatanppkd/print'), 'valign'=>'top'),
+						array('data' => 'Menampilkan RKA-PPKD Belanja', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran III - APBD', 
+						'apbd/laporanpenetapan/apbd/lampiran3'), 'valign'=>'top'),
+						array('data' => 'Menampilkan anggaran pendapatan dan belanja SKPD', 'valign'=>'top'),
+						);
+		
+		//4
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja Tidak Langsung', 
+						'apbd/laporanpenetapan/rka/rekapaggbl/00/51'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja tidak langsung (Gaji)', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('RKA-PPKD Penerimaan Pembiayaan', 
+						'apbd/pembiayaan/print/61'), 'valign'=>'top'),
+						array('data' => 'Menampilkan RKA-PPKD Penerimaan Pembiayaan', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran IV - APBD', 
+						'apbd/laporanpenetapan/apbd/lampiran4'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi belanja menurut urusan pemerintahan daerah - organisasi - program & kegiatan', 'valign'=>'top'),
+						);
+		
+		//5
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja Langsung', 
+						'apbd/laporanpenetapan/rka/rekapaggbl/00/52'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja langsung', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('RKA-PPKD Pengeluaran Pembiayaan', 
+						'apbd/pembiayaan/print/62'), 'valign'=>'top'),
+						array('data' => 'Menampilkan RKA-PPKD Pengeluaran Pembiayaan', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran V - APBD', 
+						'apbd/laporanpenetapan/apbd/lampiran5'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja daerah untuk keselarasan dan keterpaduan urusan pemerintahan daerah dan fungsi dalam kerangka pengelolaan keuangan negara', 'valign'=>'top'),
+						);
+		//6
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja Langsung per Program/Kegiatan',		
+						'apbd/laporanpenetapan/rka/rekapaggblprogram/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja langsung per program/kegiatan/jenis rekening', 'valign'=>'top'),
+						
+						array('data' => ''),
+						array('data' => '', 'valign'=>'top'),
+						array('data' => '', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Perda/Perbup APBD', 
+						'apbd/laporanpenetapan/apbd/perdabup'), 'valign'=>'top'),
+						array('data' => 'Menampilkan lampiran Peraturan Daerah atau Pelaturan Bupati tentang APBD', 'valign'=>'top'),
+						);
+		//7
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja Langsung per Program/Kegiatan per Triwulan', 
+						'apbd/laporanpenetapan/rka/rekapaggblprogramtw/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja langsung per program/kegiatan per triwulan', 'valign'=>'top'),
+						
+						array('data' => ''),
+						array('data' => '', 'valign'=>'top'),
+						array('data' => '', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Publikasi Kegiatan per Kecamatan', 
+						'apbd/laporanpenetapan/apbd/lapkegkecamatan'), 'valign'=>'top'),
+						array('data' => 'Menampilkan daftar kegiatan per Kecamatan', 'valign'=>'top'),
+						);						
+		//8
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Plafon dan Anggaran SKPD', 
+						'apbd/laporanpenetapan/rka/rekapplafonagg'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi plafon dan anggaran SKPD', 'valign'=>'top'),
+						
+						array('data' => ''),
+						array('data' => '', 'valign'=>'top'),
+						array('data' => '', 'valign'=>'top'),
+						
+						array('data' => ''),
+						array('data' => '', 'valign'=>'top'),
+						array('data' => '', 'valign'=>'top'),
+						);						
+
+						
+					
+		
+		
+						
+
+	} else {
+		$kodeuk = apbd_getuseruk();
+		
+		
+		
+
+	}
+				   
+    //$output .= theme_box('Penyusunan RKA-SKPD', theme_table($header, $rows));
+	$output .= theme_box('Penyusunan APBD', theme_table('', $rows));
+    return $output;;
+}
+
+function apbdlaporan2_revisi1_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	drupal_add_css('files/css/laporan.css');
+	$form['uraian']= array(
+		'#type'         => 'markup', 
+		'#value'		=> getLaporanRevisi2(9), 
+	); 	
+
+	/*
+	$form['formdata']['ss'] = array (
+		'#type' => 'item',
+		'#value' => "<div style='clear:both;'></div>",
+	);		
+	
+	$form['submit'] = array(
+	'#type' => 'submit',
+	'#value' => 'Dua',
+	);
+	*/
+
+	return $form;
+}
+
+function apbdlaporan2_revisiterakhir_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	drupal_add_css('files/css/laporan.css');
+	$form['uraian']= array(
+		'#type'         => 'markup', 
+		'#value'		=> getLaporanRevisi2(2), 
+	); 	
+
+	/*
+	$form['formdata']['ss'] = array (
+		'#type' => 'item',
+		'#value' => "<div style='clear:both;'></div>",
+	);		
+	
+	$form['submit'] = array(
+	'#type' => 'submit',
+	'#value' => 'Dua',
+	);
+	*/
+
+	return $form;
+}
+
+function apbdlaporan2_revisiperubahan_form() {
+		drupal_add_css('files/css/kegiatancam.css');
+		drupal_add_css('files/css/laporan.css');
+	$form['uraian']= array(
+		'#type'         => 'markup', 
+		'#value'		=> getLaporanRevisi2(9), 
+	); 	
+
+
+	return $form;
+}
+
+function getLaporanRevisi2($revisi) {
+     $header = array (
+       array('data' => 'Laporan',  'colspan'=>'2'),
+       array('data' => 'Keterangan'),
+    );
+	if($revisi==9){
+		$str_p=" (*)";
+	}
+	else{
+		$str_p="";
+	}
+	if (isSuperuser() || isUserview()) {
+		$rows[] = array (array('data' => 'LAPORAN RKA-SKPD',  'colspan'=>'3', 'style' => 'font-weight:bold;'),
+						array('data' => 'LAPORAN RKA-PPKD',  'colspan'=>'3', 'style' => 'font-weight:bold;'),
+						array('data' => 'LAPORAN APBD',  'colspan'=>'3', 'style' => 'font-weight:bold;'),
+						);
+		//1
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Ringkasan APBD', 'apbd/laporan/rka/ringkasananggaran/'. $revisi.'/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan ringkasan APBD sampai dengan rekening jenis', 'valign'=>'top'),
+
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('Ringkasan RKA-PPKD', 'apbd/laporan/rka/ringkasananggaranppkd/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan ringkasan RKA-PPKD', 'valign'=>'top'),		
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran I - APBD', 
+						'apbd/laporan/apbd/lampiran1/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan lampiran I, ringkasan APBD', 'valign'=>'top'),
+
+						);
+
+		//2			
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Pendapatan', 
+						'apbd/laporan/rka/rekapaggpad/' . $revisi.'/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran pendapatan', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('RKA-PPKD Pendapatan', 
+						'apbd/pendapatanppkd/print/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan rincian RKA-PPKD Pendapatan', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran II - APBD', 
+						'apbd/laporan/apbd/lampiran2/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan ringkasan apbd menurut urusan pemerintahan daerah dan oanisasi', 'valign'=>'top'),
+						
+						);
+		//3
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja', 
+						'apbd/laporan/rka/rekapaggbelanja/' . $revisi.'/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('RKA-PPKD Belanja', 
+						'apbd/kegiatanppkd/print/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan RKA-PPKD Belanja', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran III - APBD', 
+						'apbd/laporan/apbd/lampiran3/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan anggaran pendapatan dan belanja SKPD', 'valign'=>'top'),
+						);
+		
+		//4
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja Tidak Langsung'.$str_p, 
+						'apbd/laporan/rka/rekapaggbl/' . $revisi.'/00/51'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja tidak langsung (Gaji)', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('RKA-PPKD Penerimaan Pembiayaan', 
+						'apbd/pembiayaan/print/' . $revisi.'/61/'), 'valign'=>'top'),
+						array('data' => 'Menampilkan RKA-PPKD Penerimaan Pembiayaan', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran IV - APBD', 
+						'apbd/laporan/apbd/lampiran4/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi belanja menurut urusan pemerintahan daerah - organisasi - program & kegiatan', 'valign'=>'top'),
+						);
+		
+		//5
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja Langsung', 
+						'apbd/laporan/rka/rekapaggbl/' . $revisi.'/00/52'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja langsung', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap3.png'>", 'valign'=>'top'),
+						array('data' => l('RKA-PPKD Pengeluaran Pembiayaan', 
+						'apbd/pembiayaan/print/' . $revisi.'/62'), 'valign'=>'top'),
+						array('data' => 'Menampilkan RKA-PPKD Pengeluaran Pembiayaan', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Lampiran V - APBD', 
+						'apbd/laporan/apbd/lampiran5/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja daerah untuk keselarasan dan keterpaduan urusan pemerintahan daerah dan fungsi dalam kerangka pengelolaan keuangan negara', 'valign'=>'top'),
+						);
+		//6
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja Langsung per Program/Kegiatan',		
+						'apbd/laporan/rka/rekapaggblprogram/' . $revisi.'/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja langsung per program/kegiatan/jenis rekening', 'valign'=>'top'),
+						
+						array('data' => ''),
+						array('data' => '', 'valign'=>'top'),
+						array('data' => '', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Perda/Perbup APBD', 
+						'apbd/laporan/apbd/perdabup/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan lampiran Peraturan Daerah atau Pelaturan Bupati tentang APBD', 'valign'=>'top'),
+						);
+		//7
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Anggaran Belanja Langsung per Program/Kegiatan per Triwulan', 
+						'apbd/laporan/rka/rekapaggblprogramtw/' . $revisi.'/00'), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi anggaran belanja langsung per program/kegiatan per triwulan', 'valign'=>'top'),
+						
+						array('data' => ''),
+						array('data' => '', 'valign'=>'top'),
+						array('data' => '', 'valign'=>'top'),
+						
+						array('data' => "<img src='/files/lap5.png'>", 'valign'=>'top'),
+						array('data' => l('Publikasi Kegiatan per Kecamatan', 
+						'apbd/laporan/apbd/lapkegkecamatan/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan daftar kegiatan per Kecamatan', 'valign'=>'top'),
+						);						
+		//8
+		$rows[] = array (array('data' => "<img src='/files/lap2.png'>", 'valign'=>'top'),
+						array('data' => l('Rekapitulasi Plafon dan Anggaran SKPD', 
+						'apbd/laporan/rka/rekapplafonagg/' . $revisi), 'valign'=>'top'),
+						array('data' => 'Menampilkan rekapitulasi plafon dan anggaran SKPD', 'valign'=>'top'),
+						
+						array('data' => ''),
+						array('data' => '', 'valign'=>'top'),
+						array('data' => '', 'valign'=>'top'),
+						
+						array('data' => ''),
+						array('data' => '', 'valign'=>'top'),
+						array('data' => '', 'valign'=>'top'),
+						);						
+
+						
+					
+		
+		
+						
+
+	} else {
+		$kodeuk = apbd_getuseruk();
+		
+		
+		
+
+	}
+				   
+    //$output .= theme_box('Penyusunan RKA-SKPD', theme_table($header, $rows));
+	$output .= theme_box('Penyusunan APBD', theme_table('', $rows));
+    return $output;
+}
+

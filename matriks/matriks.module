@@ -1,0 +1,343 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function matriks_menu() {
+    $items['matriks'] = array(
+        'title' => 'Matrik Prioritas',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('matriks_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function matriks_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	//drupal_add_js('files/js/kegiatancam.js');
+	
+	$prioritasno = arg(1);
+	$prov = arg(2);
+	$title = 'Matrik Prioritas';
+
+	if (isset($prov)) {
+		$title .= ' Provinsi';
+		$prov='prov';
+	}
+	//drupal_set_title($title);
+	//drupal_set_html_head('<style>label{display: block; width: 200px; float: left;}</style>');
+
+	if (isset($prioritasno)) {
+		$sql = 'select prioritasno, uraian from {prioritas' . $prov . '} ';
+        $sql .= ' where prioritasno=\'%s\'';
+        $res = db_query(db_rewrite_sql($sql), array ($prioritasno));
+        if ($res) {
+            $data = db_fetch_object($res);
+			if ($data) {
+				$uraian = $data->uraian;
+				$title = $data->uraian;
+			}
+		}
+		
+	} 
+	
+	drupal_set_title($title);
+	drupal_set_html_head('<style>label{display: block; width: 200px; float: left;}</style>');
+    
+	$form['formdata']['prioritasno']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $prioritasno, 
+	); 
+
+	//URUSAN
+	$sql = 'select kodeu, urusansingkat from {urusan} order by kodeu';
+	$res_u = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	if ($res_u) {
+		while ($datau = db_fetch_object($res_u)) {	
+			$weight += 1;
+
+			$rows[] = array (
+							'id' => $weight,
+							'pilih' => 0,
+							'pilihlama' => 0,
+							'level' => 'u',
+							'kodepro' => $datau->kodeu,
+							'program' => $datau->urusansingkat,
+							//'weight' => $weight,
+						);
+
+			//$sql = 'select kodepro,program from {program} where kodeu=\'%s\' order by program';	
+			//$sql = 'select p.kodepro,p.program from {program} p inner join {kegiatanskpd} k on p.kodepro=k.kodepro where p.kodeu=\'%s\' order by p.program';	
+			$sql = 'select kodepro,program from {program} where kodepro in (select kodepro from kegiatanskpd) and  kodeu=\'%s\' order by program';	
+			$res = db_query(db_rewrite_sql($sql), array ($datau->kodeu));
+			if ($res) {
+				//drupal_set_message('res ok');
+				while ($data = db_fetch_object($res)) {	
+					$weight += 1;
+					
+					$sql = 'select prioritasno from {prioritasprogram' . $prov . '}';
+					//$sql = 'select prioritasno from {prioritasprogram} where kodepro=\'%s\'';	
+					$sql .= ' where kodepro=\'%s\'';	
+					$respp = db_query(db_rewrite_sql($sql), array ($data->kodepro));
+					$pilih = 0;
+					if ($respp) { 
+						if ($datapp = db_fetch_object($respp)) 
+							if ($datapp->prioritasno == $prioritasno)
+								$pilih = 1;
+							else
+								$pilih = 9;
+					}
+						
+					if ($pilih<=1) {
+						$rows[] = array (
+										'id' => $weight,
+										'pilih' => $pilih,
+										'pilihlama' => $pilih,
+										'level' => 'p',
+										'kodepro' => $data->kodepro,
+										'program' => $data->program,
+										//'weight' => $weight,
+									);
+					}
+				}
+			}						
+		
+		}
+	}
+
+
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+        $form['tabledragrows'][$row['id']]['kodepro_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['kodepro'],
+        );
+		$form['tabledragrows'][$row['id']]['pilihlama_' . $row['id']] = array(
+			'#type' => 'hidden',
+			'#default_value' => $row['pilihlama'],
+		);
+		$form['tabledragrows'][$row['id']]['level_' . $row['id']] = array(
+			'#type' => 'hidden',
+			'#default_value' => $row['level'],
+		);
+		
+		if ($row['level']=='p') {
+			$form['tabledragrows'][$row['id']]['pilih_' . $row['id']] = array(
+				'#type' => 'checkbox',
+				'#default_value' => $row['pilih'],
+			);
+			$form['tabledragrows'][$row['id']]['program_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => $row['program'],
+				'#size' => 90,
+			);
+
+		} else {
+			$form['tabledragrows'][$row['id']]['pilih_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '',
+			);
+			$form['tabledragrows'][$row['id']]['program_' . $row['id']] = array(
+				'#type' => 'markup',
+				'#value' => '<p><b>' . $row['program'] . '</b></p>',
+				'#size' => 90,
+			);
+		}
+		
+        // the weight form element.
+		/*
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+		*/
+    }
+ 
+	$form['maxno']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $weight, 
+	); 
+	$form['prov']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $prov, 
+	); 
+ 
+	if ($prov=='') {
+		$form['formdata']['submit'] = array(
+			'#type' => 'submit',
+			'#suffix' => "&nbsp;<a href='/prioritas' class='btn_blue' style='color: white'>Tutup</a>",
+			'#value' => 'Simpan',
+			//'#weight' => 7,
+		);
+		$form['submit'] = array(
+			'#type' => 'submit',
+			'#suffix' => "&nbsp;<a href='/prioritas' class='btn_blue' style='color: white'>Tutup</a>",
+			'#value' => 'Simpan',
+			//'#weight' => 7,
+		);
+	} else {
+		$form['formdata']['submit'] = array(
+			'#type' => 'submit',
+			'#suffix' => "&nbsp;<a href='/prioritas/prov' class='btn_blue' style='color: white'>Tutup</a>",
+			'#value' => 'Simpan',
+			//'#weight' => 7,
+		);
+		$form['submit'] = array(
+			'#type' => 'submit',
+			'#suffix' => "&nbsp;<a href='/prioritas/prov' class='btn_blue' style='color: white'>Tutup</a>",
+			'#value' => 'Simpan',
+			//'#weight' => 7,
+		);
+	}
+	return $form;
+}
+
+/**
+ * Implements hook_validate() for the matriks_form() form.
+ */
+function matriks_form_validate($form, &$form_state) {
+
+} 
+/**
+ * Implements hook_submit() for the matriks_form() form.
+ */
+function matriks_form_submit($form, &$form_state) {
+    
+	$prioritasno = $form_state['values']['prioritasno'];
+	$maxno = $form_state['values']['maxno'];
+	$prov = $form_state['values']['prov'];
+
+	$sql = 'insert into {prioritasprogram' . $prov . '} ';
+	$sql .=  '(prioritasno, kodepro) values (\'%s\', \'%s\')';   
+
+	$sqldel = 'delete from {prioritasprogram' . $prov . '} ';
+	$sqldel .= ' where prioritasno=\'%s\' and kodepro=\'%s\'';
+	
+	
+	for ($x = 1; $x <= $maxno; $x++) 
+	{
+		 
+		//Read
+		$level = $form_state['values']['level_' . $x];
+		//drupal_set_message($level);
+		
+		if ($level=='p') {
+			$kodepro = $form_state['values']['kodepro_' . $x];
+			$pilih = $form_state['values']['pilih_' . $x];
+			$pilihlama = $form_state['values']['pilihlama_' . $x];
+
+			if ($pilih) {
+				
+				if ($pilihlama != $pilih) {
+					//drupal_set_message($kodero);
+					//drupal_set_message($prioritasno);
+					
+					$res = db_query(db_rewrite_sql($sql), array($prioritasno, $kodepro));	
+
+					//$sql = sprintf('insert into {prioritasprogram} (prioritasno, kodepro) values (\'%s\', \'%s\')', $prioritasno, $kodepro);
+					//drupal_set_message($sql);
+					//$res = db_query($sql);
+					
+				}
+				
+			} else {
+				if ($pilihlama) {
+
+					//$sql = 'delete from {prioritasprogram} where prioritasno=\'%s\' and kodepro=\'%s\'';
+					$res = db_query(db_rewrite_sql($sqldel), array($prioritasno, $kodepro));
+					
+				}
+				
+			}
+		}
+	}
+	
+	
+	if ($res)
+		drupal_set_message('Penyimpanan data berhasil dilakukan');
+	else
+		drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+	
+	if ($prov=='')
+		drupal_goto('/prioritas');    
+	else
+		drupal_goto('/prioritas/prov');    
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function matriks_theme() {
+    return array(
+        'matriks_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_matriks_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['iddetil_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['pilih_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['program_' . $id]);
+				
+                //Add the weight field to the row
+                //$this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	//$header = array (
+	//				array('data' => '',  'width'=> '5px'),
+	//				array('data' => 'Program',  'width'=> '90px'),
+	//				array('data' => 'Weight'),
+	//			); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

@@ -1,0 +1,372 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function verifi_menu() {
+    $items['userskpd'] = array(
+        'title' => 'Penugasan Verifikator',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('verifi_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function verifi_form() {
+	//drupal_add_css('files/css/kegiatancam.css');
+
+	$username=arg(1);
+
+ 	if(isSuperUser()){
+		// A submit element
+		$form['submitatas'] = array(
+        '#type' => 'submit',
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+		);
+	}
+	
+	
+	drupal_set_title('Penugasan Verifikator RKA Perubahan ' . $username);
+    $sql = 'select kodeuk, namasingkat from {unitkerja} order by namasingkat';// . $where;
+	
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	$weight = 1;
+	$rows= array();
+	
+	//PPKD
+	$kodeuk_pendapatan = 'XX';
+	$num_verifikator = 0;
+	$ok = false;
+	$str_user = '';
+	$fsql = sprintf('select username from {userskpd} where kodeuk=\'%s\'', $kodeuk_pendapatan);
+	$result = db_query($fsql);
+	while ($data_detil = db_fetch_object($result)) {
+		$str_user .= $data_detil->username . '; ';
+		$num_verifikator ++;
+		if ($data_detil->username == $username) $ok = true;		
+	}
+	
+	if ($num_verifikator==0)
+		$str_user = '<font color="red">0: belum ada</font>';
+	else if ($num_verifikator>=3)
+		$str_user = '<font color="blue">' . $num_verifikator . ': ' . $str_user . '</font>';
+	else
+		$str_user = $num_verifikator . ': ' . $str_user;
+	
+	$num_keg = 0;
+	$rows[] = array (
+					'id' => $weight,
+					'kodeuk' => $kodeuk_pendapatan,
+					'namauk' => 'PENDAPATAN',
+					'userlist' => $str_user,
+					'kegiatan' => $num_keg . ' rekening',
+					'ok' => $ok,
+					'e_ok' => $ok,
+					'weight' => $weight,
+				);	
+	
+	//PPKD
+	$weight++;
+	$kodeuk_ppkd = '00';
+	$num_verifikator = 0;
+	$ok = false;
+	$str_user = '';
+	$fsql = sprintf('select username from {userskpd} where kodeuk=\'%s\'', $kodeuk_ppkd);
+	$result = db_query($fsql);
+	while ($data_detil = db_fetch_object($result)) {
+		$str_user .= $data_detil->username . '; ';
+		$num_verifikator ++;
+		if ($data_detil->username == $username) $ok = true;		
+	}
+	
+	if ($num_verifikator==0)
+		$str_user = '<font color="red">0: belum ada</font>';
+	else if ($num_verifikator>=3)
+		$str_user = '<font color="blue">' . $num_verifikator . ': ' . $str_user . '</font>';
+	else
+		$str_user = $num_verifikator . ': ' . $str_user;
+
+	$num_keg = 0;
+	$fsql = "select count(kr.kodekeg) jumlah from {kegiatanrevisiperubahan} kr inner join {kegiatanrevisi} k on kr.kodekeg=k.kodekeg where k.kodeuk='81' AND k.isppkd=1";
+	
+	$result = db_query($fsql);
+	if ($data_detil = db_fetch_object($result)) {
+		$num_keg = $data_detil->jumlah;
+	}	
+	$rows[] = array (
+					'id' => $weight,
+					'kodeuk' => $kodeuk_ppkd,
+					'namauk' => 'PPKD',
+					'userlist' => $str_user,
+					'kegiatan' => $num_keg . ' kegiatan',
+					'ok' => $ok,
+					'e_ok' => $ok,
+					'weight' => $weight,
+				);	
+				
+	if ($res) {
+		while ($data = db_fetch_object($res)) {
+			
+			$weight += 1;
+			
+			/*
+			$fsql = sprintf('select kodeuk from {userskpd} where username=\'%s\' and kodeuk=\'%s\'', $username, $data->kodeuk);
+
+			//drupal_set_message($sql);
+			$result = db_query($fsql);
+			if ($result) {
+				if ($datau = db_fetch_object($result)) 
+					$ok = true;
+				else
+					$ok = false;
+			}
+			*/
+
+			$num_verifikator = 0;
+			$ok = false;
+			$str_user = '';
+			$fsql = sprintf('select username from {userskpd} where kodeuk=\'%s\'', $data->kodeuk);
+			$result = db_query($fsql);
+			while ($data_detil = db_fetch_object($result)) {
+				$str_user .= $data_detil->username . '; ';
+				$num_verifikator ++;
+				if ($data_detil->username == $username) $ok = true;		
+			}
+			
+			if ($num_verifikator==0)
+				$str_user = '<font color="red">0: belum ada</font>';
+			else if ($num_verifikator>=3)
+				$str_user = '<font color="blue">' . $num_verifikator . ': ' . $str_user . '</font>';
+			else
+				$str_user = $num_verifikator . ': ' . $str_user;
+
+			$num_keg = 0;
+			$fsql = sprintf('select count(kodekeg) jumlah from {kegiatanrevisiperubahan} where kodeuk=\'%s\'', $data->kodeuk);
+			$result = db_query($fsql);
+			if ($data_detil = db_fetch_object($result)) {
+				$num_keg = $data_detil->jumlah;
+			}
+						
+			//drupal_set_message($data->gaji);
+			//if ($num_keg>0) {
+				$rows[] = array (
+								'id' => $weight,
+								'kodeuk' => $data->kodeuk,
+								'namauk' => $data->namasingkat,
+								'userlist' => $str_user,
+								'kegiatan' => $num_keg . ' kegiatan',
+								'ok' => $ok,
+								'e_ok' => $ok,
+								'weight' => $weight,
+							);
+			//}
+		}
+	}
+	
+	
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+        $form['tabledragrows'][$row['id']]['kodeuk_' . $row['id']] = array(
+            '#type' => 'value',
+            '#value' => $row['kodeuk'],
+        );
+
+        $form['tabledragrows'][$row['id']]['namauk_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['namauk'],
+            '#size' => 150,
+        );
+
+        $form['tabledragrows'][$row['id']]['userlist_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['userlist'],
+            '#size' => 90,
+        );
+		
+        $form['tabledragrows'][$row['id']]['kegiatan_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['kegiatan'],
+            '#size' => 20,
+        );
+
+		$form['tabledragrows'][$row['id']]['e_ok_' . $row['id']] = array(
+            '#type' => 'value',
+            '#value' => $row['e_ok'],
+        );
+
+		$form['tabledragrows'][$row['id']]['ok_' . $row['id']] = array(
+            '#type' => 'checkbox',
+            '#default_value' => $row['ok'],
+            '#size' => 12,
+        );
+		
+		
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+	$form['maxno']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		'#default_value'=> $weight, 
+	); 
+	$form['username'] = array(
+            '#type' => 'hidden',
+            '#default_value' => $username,
+            '#size' => 10,
+    );
+ 
+ 	if(isSuperUser()){
+		// A submit element
+		$form['submit'] = array(
+        '#type' => 'submit',
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+		);
+	}
+    
+    
+	
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the verifi_form() form.
+ */
+function verifi_form_validate($form, &$form_state) {
+
+} 
+
+/**
+ * Implements hook_submit() for the verifi_form() form.
+ */
+function verifi_form_submit($form, &$form_state) {
+    
+ 
+	$maxno = $form_state['values']['maxno'];
+	$username = $form_state['values']['username'];
+	drupal_set_message($username);
+
+	
+	for ($x = 1; $x <= $maxno; $x++) 
+	{
+		
+		//Read
+		$kodeuk = $form_state['values']['kodeuk_' . $x];
+		$ok = $form_state['values']['ok_' . $x];
+		$e_ok = $form_state['values']['e_ok_' . $x];
+		
+		if ($e_ok=='') $e_ok = 0;
+		
+		//drupal_set_message($kodeuk);
+		//drupal_set_message($ok);
+		//drupal_set_message($e_ok);
+		
+		
+		//drupal_set_message($kodeuk);
+		if ($e_ok) {
+			if(!$ok){
+				$sql = 'delete from {userskpd} where kodeuk=\'%s\' and username=\'%s\'';
+				$res = db_query(db_rewrite_sql($sql), array($kodeuk, $username));
+			}
+			
+		} else {
+			if($ok){
+				$sql = 'insert into {userskpd} (username,kodeuk) values(\'%s\',\'%s\')';
+				$res = db_query(db_rewrite_sql($sql), array($username, $kodeuk));
+			}
+		}
+
+	}
+	
+	
+	if ($res) {
+		drupal_set_message('Penyimpanan data berhasil dilakukan');
+		drupal_goto('apbd/manageuser'); 
+	} else
+		drupal_set_message('Penyimpanan data gagal dilakukan');
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function verifi_theme() {
+    return array(
+        'verifi_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_verifi_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['ok_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['namauk_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['userlist_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['kegiatan_' . $id]);
+				
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (	
+		array('data' => '', 'width' => '25px', 'align'=>'center','valign'=>'top'),
+		array('data' => 'SKPD', 'width' => '450px', 'valign'=>'top'),
+		array('data' => 'Verifikator', 'width' => '300px', 'valign'=>'top'),
+		array('data' => 'Perubahan', 'width' => '100px', 'valign'=>'top'),
+		
+		array('data' => 'Weight'),
+	); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}
+

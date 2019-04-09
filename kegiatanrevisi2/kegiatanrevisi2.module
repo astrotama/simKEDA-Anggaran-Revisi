@@ -1,0 +1,454 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function kegiatanrevisi2_menu() {
+    //$h = '<style>label{font-weight: bold; display: block; width: 150px; float: left;}</style>';	
+	//drupal_set_html_head($h);
+    $items['kegiatanrevisi2'] = array(
+        'title' => 'Usulan Revisi - Langkah #3, Pilih kegiatan',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('kegiatanrevisi2_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function kegiatanrevisi2_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	
+	$id = arg(1);	
+	$kodeuk = arg(2);	
+	$jenisrevisi = arg(3);
+	$subjenisrevisi = arg(4);
+
+	$geserblokir = arg(5);
+	$geserrincian = arg(6);
+	$geserobyek = arg(7);
+	
+	$lokasi = arg(8);
+	$sumberdana = arg(9);
+	$kinerja = arg(10);
+	$sasaran = arg(11);
+	$detiluraian = arg(12);
+	$rab = arg(13);
+	$triwulan = arg(14);
+	$lainnya = arg(15);
+
+	//drupal_set_message($kodeuk);
+	
+	if (isset($id) and ($id != '0')) {
+        $sql = 'select id,kodekeg,kodeuk from {kegiatanrevisiperubahan} where id=\'%s\'';
+		$res = db_query(db_rewrite_sql($sql), array ($id));
+		if ($res) {
+			if ($data = db_fetch_object($res)) {
+				$kodekeg = $data->kodekeg;
+				$kodeuk = $data->kodeuk;
+				//drupal_set_message($kodekeg);
+			}
+		}
+	}
+	
+	$form['id']= array(
+		'#type' => 'value', 
+		'#value' => $id, // changed
+	);
+	$form['kodeuk']= array(
+		'#type' => 'value', 
+		'#value' => $kodeuk, // changed
+	);
+	$form['jenisrevisi']= array(
+		'#type' => 'value', 
+		'#value' => $jenisrevisi, // changed
+	);
+	$form['subjenisrevisi']= array(
+		'#type' => 'value', 
+		'#value' => $subjenisrevisi, // changed
+	);
+	$form['geserrincian']= array(
+		'#type' => 'value', 
+		'#value' => $geserrincian, // changed
+	);
+	$form['geserblokir']= array(
+		'#type' => 'value', 
+		'#value' => $geserblokir, // changed
+	);
+	$form['geserobyek']= array(
+		'#type' => 'value', 
+		'#value' => $geserobyek, // changed
+	);	
+	$form['lokasi']= array(
+		'#type' => 'value', 
+		'#value' => $lokasi, // changed
+	);
+	$form['sumberdana']= array(
+		'#type' => 'value', 
+		'#value' => $sumberdana, // changed
+	);
+	$form['kinerja']= array(
+		'#type' => 'hidden', 
+		'#default_value' => $kinerja, // changed
+	);
+	$form['sasaran']= array(
+		'#type' => 'value', 
+		'#value' => $sasaran, // changed
+	);
+	$form['detiluraian']= array(
+		'#type' => 'value', 
+		'#value' => $detiluraian, // changed
+	);
+	$form['rab']= array(
+		'#type' => 'value', 
+		'#value' => $rab, // changed
+	);
+	$form['triwulan']= array(
+		'#type' => 'hidden', 
+		'#default_value' => $triwulan, // changed
+	);
+	$form['lainnya']= array(
+		'#type' => 'value', 
+		'#value' => $lainnya, // changed
+	);
+
+	$form['formdata']['nk']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		//'#description'  => 'id', 
+		//'#maxlength'    => 60, 
+		//'#size'         => 20, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> '', 
+	); 
+
+	$tahun = variable_get('apbdtahun', 0);
+	
+	//DAFTAR KEGIATAN
+	$weight = 0;
+	$rows= array();
+	
+	//EXISTING
+	if ($kodekeg !='') {
+		$sql = sprintf("select kodekeg,kegiatan,total,sumberdana1,inaktif from {kegiatanskpd} where kodekeg='%s'", db_escape_string($kodekeg));
+		//$sql = sprintf("select kodekeg,kegiatan,totalp total,sumberdana1,inaktif from {kegiatanperubahan} where kodekeg='%s'", db_escape_string($kodekeg));
+		//drupal_set_message($sql);
+		$resdetil = db_query($sql);
+		if ($resdetil) {
+			if ($data = db_fetch_object($resdetil)) {
+				$weight += 1;
+				$rows[] = array (
+								'id' => $weight,
+								'space' => '',
+								'pilih' => true,
+								'kodekeg' => $data->kodekeg,
+								'kegiatan' => $data->kegiatan,
+								'anggaran' => apbd_fn($data->total),
+								'sumberdana1' => $data->sumberdana1,
+								'status' => $status,
+								'weight' => $weight,
+							);
+			
+			}
+		}
+	}
+	
+	if (($jenisrevisi=='3') and ($subjenisrevisi=='1'))  {
+		//$sqldak = " and sumberdana1 in ('DAK', 'BANPROV')";
+		$sqldak = " and (sumberdana1 in ('DAK', 'BANPROV', 'BOS', 'DBH CHT') or isppkd=1) ";
+	
+		//$where = sprintf(" and (adminok=1708 or kodeuk='%s')", db_escape_string($kodeuk));
+		$where = sprintf(" and kodeuk='%s'", db_escape_string($kodeuk));
+		$sql = 'select kodekeg,kegiatan,total,sumberdana1,inaktif from {kegiatanskpd} where true ' . $where  . $qlike . $sqldak  . ' order by jenis,kegiatan';
+		//$sql = 'select kodekeg,kegiatan,totalp total,sumberdana1,inaktif from {kegiatanperubahan} where isppkd=0 ' . $where  . $qlike . $sqldak  . ' order by jenis,kegiatan';
+	
+	} else {
+		//$where = sprintf(" and kodeuk='%s'", db_escape_string($kodeuk));
+		//$sql = 'select kodekeg,kegiatan,total,sumberdana1,inaktif from {kegiatanskpd} where kodekeg not in (select kodekeg from {kegiatanrevisiperubahan}) and isppkd=0 ' . $where  . $qlike  . ' order by jenis,kegiatan';
+
+		$where = sprintf(" and kodeuk='%s'", db_escape_string($kodeuk));
+		$sql = 'select kodekeg,kegiatan,total,sumberdana1,inaktif from {kegiatanskpd} where true ' . $where  . $qlike  . ' order by jenis,kegiatan';
+		//$sql = 'select kodekeg,kegiatan,totalp total,sumberdana1,inaktif from {kegiatanperubahan} where isppkd=0 ' . $where  . $qlike  . ' order by jenis,kegiatan';
+		
+	}
+	//drupal_set_message($sql);
+	$resdetil = db_query($sql);
+	
+	if ($resdetil) {
+		//drupal_set_message('res ok');
+		while ($data = db_fetch_object($resdetil)) {
+			$weight += 1;
+			
+			$rows[] = array (
+							'id' => $weight,
+							'space' => '',
+							'pilih' => false,
+							'kodekeg' => $data->kodekeg,
+							'kegiatan' => $data->kegiatan,
+							'anggaran' => apbd_fn($data->total),
+							'sumberdana1' => $data->sumberdana1,
+							'status' => $status,
+							'weight' => $weight,
+						);
+
+		}
+	}	
+
+    foreach ($rows as $row) {
+
+		$kegiatan = l($row['kegiatan'], 'apbd/kegiatanrevisi/edit4/' . $id . '/' . $kodeuk . '/' . $jenisrevisi . '/' . $subjenisrevisi . '/' . $geserblokir . '/' . $geserrincian . '/' . $geserobyek . '/' . $lokasi . '/' . $sumberdana . '/' . $kinerja . '/' . $sasaran . '/' . $detiluraian . '/' . $rab . '/' . $triwulan . '/' . $lainnya . '/' . $row['kodekeg'], array('html' =>TRUE));
+		
+		/*
+        $form['tabledragrows'][$row['id']]['pilih_' . $row['id']] = array(
+            '#type' => 'checkbox',
+            '#default_value' => $row['pilih'],
+            '#size' => 10,
+        );
+		*/
+		
+        $form['tabledragrows'][$row['id']]['kodekeg_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['kodekeg'],
+            '#size' => 10,
+        );
+
+		$form['tabledragrows'][$row['id']]['kegiatan_' . $row['id']] = array(
+			'#type' => 'markup',
+			'#value' => $kegiatan,
+			'#size' => 100,
+		);
+
+		$form['tabledragrows'][$row['id']]['anggaran_' . $row['id']] = array(
+			'#type' => 'markup',
+			'#value' => '<p align="right">' . $row['anggaran'] . '</p>',
+			'#size' => 20,
+		);
+		
+		/*
+		$form['tabledragrows'][$row['id']]['total_' . $row['id']] = array(
+			'#type' => 'markup',
+			'#value' => $row['total'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+			'#size' => 15,
+		);
+		*/
+		
+        $form['tabledragrows'][$row['id']]['sumberdana1_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['sumberdana1'],
+            '#size' => 10,
+        );
+        $form['tabledragrows'][$row['id']]['status_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#value' => $row['status'],
+            '#size' => 10,
+        );
+		
+        // the weight form element.
+		
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }	
+ 	$form['maxdetil']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $weight, 
+	);
+	
+	/*
+	$form['formdata']['kembali'] = array (
+		'#type' => 'submit',
+		'#value' => '< Kembali',
+		//'#weight' => 6,
+	);
+	$form['kembali'] = array (
+		'#type' => 'submit',
+		'#value' => '< Kembali',
+		//'#weight' => 6,
+	);
+
+	$form['formdata']['simpan'] = array(
+	'#type' => 'submit',
+	'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisi' class='btn_green' style='color: white'>Batal</a>",
+	'#value' => 'Lanjut >',
+	);
+	$form['simpan'] = array(
+	'#type' => 'submit',
+	'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisi' class='btn_green' style='color: white'>Batal</a>",
+	'#value' => 'Lanjut >',
+	);
+	*/
+	
+	return $form;
+}
+
+/**
+ * Implements hook_validate() for the kegiatanrevisi2_form() form.
+ */
+function kegiatanrevisi2_form_validate($form, &$form_state) {
+	if($form_state['clicked_button']['#value'] != $form_state['values']['kembali']) {
+	
+		$dipilih = 0;
+		$maxdetil = $form_state['values']['maxdetil'];
+		for ($x = 1; $x <= $maxdetil; $x++) 
+		{
+			if ($form_state['values']['pilih_' . $x]) {
+				$dipilih++;
+			}
+		}
+		if ($dipilih==0) form_set_error('', 'Kegiatan yang direvisi belum ditentukan' );
+		if ($dipilih>1) form_set_error('', 'Dalam satu pengajuan revisi hanya berlaku untuk satu kegiatan' );
+	}
+} 
+
+/**
+ * Implements hook_submit() for the kegiatanrevisi2_form() form.
+ */
+function kegiatanrevisi2_form_submit($form, &$form_state) {
+	$id = $form_state['values']['id'];
+	$kodeuk = $form_state['values']['kodeuk'];
+	$jenisrevisi = $form_state['values']['jenisrevisi'];
+	
+	if($form_state['clicked_button']['#value'] == $form_state['values']['kembali']) {
+		$form_state['redirect'] = 'apbd/kegiatanrevisi/edit2/' . $id . '/' . $jenisrevisi . '/' . $kodeuk ;
+		
+	} else {
+		
+		
+		$kodeuk = $form_state['values']['kodeuk'];
+		$tahun = $form_state['values']['tahun'];
+		
+		$maxdetil = $form_state['values']['maxdetil'];
+
+		$jenisrevisi = $form_state['values']['jenisrevisi'];
+		$subjenisrevisi =$form_state['values']['subjenisrevisi'];
+
+		$geserblokir =$form_state['values']['geserblokir'];
+		$geserrincian =$form_state['values']['geserrincian'];
+		$geserobyek =$form_state['values']['geserobyek'];
+		
+		$lokasi = $form_state['values']['lokasi'];
+		$sumberdana = $form_state['values']['sumberdana'];
+		$kinerja = $form_state['values']['kinerja'];
+		$sasaran = $form_state['values']['sasaran'];
+		$detiluraian = $form_state['values']['detiluraian'];
+		$rab = $form_state['values']['rab'];
+		$triwulan = $form_state['values']['triwulan'];
+		$lainnya = $form_state['values']['lainnya'];
+
+		for ($x = 1; $x <= $maxdetil; $x++) 
+		{
+			if ($form_state['values']['pilih_' . $x]) {
+				$kodekeg = $form_state['values']['kodekeg_' . $x];
+			}
+		}
+		
+		/*
+		$id = arg(3);
+
+		$jenisrevisi = arg(4);
+		$subjenisrevisi = arg(5);
+
+		$geserblokir = arg(6);
+		$geserrincian = arg(7);
+		$geserobyek = arg(8);
+		
+		$lokasi = arg(9);
+		$sumberdana = arg(10);
+		$kinerja = arg(11);
+		$sasaran = arg(12);
+		$detiluraian = arg(13);
+		$rab = arg(14);
+		$triwulan = arg(15);
+		$lainnya = arg(16);
+		*/
+		
+		$form_state['redirect'] = 'apbd/kegiatanrevisi/edit4/' . $id . '/' . $kodeuk . '/' . $jenisrevisi . '/' . $subjenisrevisi . '/' . $geserblokir . '/' . $geserrincian . '/' . $geserobyek . '/' . $lokasi . '/' . $sumberdana . '/' . $kinerja . '/' . $sasaran . '/' . $detiluraian . '/' . $rab . '/' . $triwulan . '/' . $lainnya . '/' . $kodekeg ;
+	
+	}
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function kegiatanrevisi2_theme() {
+    return array(
+        'kegiatanrevisi2_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_kegiatanrevisi2_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['iddetil_' . $id]);
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['space_' . $id]);
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['space_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['pilih_' . $id]);
+				
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['kegiatan_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['anggaran_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['sumberdana1_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['status_' . $id]);
+				
+                //Add the weight field to the row
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+				//array('data' => '',  'width'=> '5px'),
+				//array('data' => '',  'width'=> '0px'),
+				array('data' => '',  'width'=> '5px'),
+				array('data' => 'Kegiatan (pilih salah satu)',  'width'=> '150px'),
+				array('data' => 'Anggaran',  'width' => '20px'),
+				array('data' => 'Sumber Dana',  'width' => '250px'),
+				array('data' => 'Status',  'width' => '10px'),
+				array('data' => 'Weight'),
+			); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

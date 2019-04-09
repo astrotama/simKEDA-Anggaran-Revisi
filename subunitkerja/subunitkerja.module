@@ -1,0 +1,375 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function subunitkerja_menu() {
+    $items['subunitkerja'] = array(
+        'title' => 'SubUnitKerja',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('subunitkerja_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function subunitkerja_form() {
+	//drupal_add_css('files/css/kegiatancam.css');
+	$aarg=arg(1);
+	$karg=arg(2);
+	if ($aarg=='4')
+		$title = 'Rekening Pendapatan';
+	else if ($aarg=='5')
+		$title = 'Rekening Belanja';
+	else if ($aarg=='6')
+		$title = 'Rekening Pembiayaan';
+	//Get Uraian Title...............................
+	$where=sprintf(' where kodeuk=\'%s\'',$aarg);
+	$sql = 'select namauk, kodeuk from {unitkerja} '.$where;
+	
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	if ($res) {
+		
+	while ($data = db_fetch_object($res)) {
+		$uraian=$data->namauk;
+		}
+	}
+	//..............................
+	$title = 'SUB UNITKERJA '.$uraian;
+	drupal_set_title($title);
+    if(isset($karg) && $karg!=null){
+		$where=sprintf(' where kodeuk=\'%s\'',$karg);
+		}
+		else $where=sprintf(" where kodesuk like '%s%%'",$aarg);
+    $sql = 'select namasuk, kodesuk from {subunitkerja}'.$where;
+	
+	$res = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	if ($res) {
+		
+		while ($data = db_fetch_object($res)) {
+			$weight += 1;
+			//drupal_set_message($data->gaji);
+			$rows[] = array (
+							'id' => $weight,
+							'kode' => $data->kodesuk,
+							'e_kode' => $data->kodesuk,
+							'uraian' => $data->namasuk,
+							'weight' => $weight,
+						);
+		}
+	}
+	
+	for ($x = 1; $x <= 3; $x++) {
+		$weight += 1;
+
+		$rows[] = array (
+						'id' => $weight,
+						'e_kode' => 'new',
+						'no' => '',
+						'kode' => '',
+						'uraian' => '',
+						'weight' => $weight,
+					);
+	}
+	
+	//...............
+	/*if(isset($aarg) && $aarg!=null){
+		$where=sprintf(" where kodek like '%s%%'",$aarg);
+		}
+	else {$where = '';}*/
+		
+	$sql = 'select namauk,kodeuk from {unitkerja}';//.$where;
+	
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	$ind = 0;
+	$kel= array();
+	if ($res) {
+		
+			while ($data = db_fetch_object($res)) {
+				$kel[$data->kodeuk]=$data->kodeuk.'-'.$data->namauk;
+				$ind++;
+			}
+	}
+	;
+	//filter
+	/*$form['formdata']['kelompok']= array(
+		'#type'         => 'select', 
+		'#title'        => 'Jenis',
+		'#options'	=> $kel,
+		'#width'         => 20, 
+		'#default_value'=> $karg, 
+		//'#weight' => 1,
+	);
+	$form['formdata']['tampil'] = array(
+        '#type' => 'submit',
+		'#value' => 'Tampilkan',
+		//'#weight' => 7,
+    );*/
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+        $form['tabledragrows'][$row['id']]['e_kode_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['e_kode'],
+            '#size' => 10,
+        );
+	
+        $form['tabledragrows'][$row['id']]['kode_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['kode'],
+            '#size' => 5,
+        );
+
+		$form['tabledragrows'][$row['id']]['uraian_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['uraian'],
+            '#size' => 70,
+        );
+		$form['tabledragrows'][$row['id']]['button_' . $row['id']] = array(
+            '#type' => 'submit',
+			'#value' => 'Detil',
+			);
+		if($row['e_kode']!='new')
+		{
+			$ket='<button type="button">Seksi</button>';
+		}
+		else{
+			$ket='';
+		}
+		$form['tabledragrows'][$row['id']]['detil_' . $row['id']] = array(
+            '#type' => 'markup',
+			'#value' => '<a href="/pelakuaktivitas/'.$row['e_kode'].'">'.$ket.'</a>',
+			);
+		
+
+
+        // the weight form element.
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+	$form['maxno']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		'#default_value'=> $weight, 
+	); 
+ 
+ 	$form['submitnewdetil'] = array (
+		'#type' => 'submit',
+		'#value' => 'Tambah',
+		//'#weight' => 6,
+	);
+	$form['submitnewdetil'] = array (
+		'#type' => 'submit',
+		'#value' => 'Tambah',
+		//'#weight' => 6,
+	);
+	
+    // A submit element
+    $form['submit'] = array(
+        '#type' => 'submit',
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+    );
+	/*$form['cetak'] = array(
+        '#type' => 'submit',
+		'#value' => 'Cetak',
+		//'#weight' => 7,
+    );*/
+ 
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the subunitkerja_form() form.
+ */
+function subunitkerja_form_validate($form, &$form_state) {
+
+} 
+
+/**
+ * Implements hook_submit() for the subunitkerja_form() form.
+ */
+function subunitkerja_form_submit($form, &$form_state) {
+    
+
+	$maxno = $form_state['values']['maxno'];
+
+	for ($x = 1; $x <= $maxno; $x++) 
+	{
+		
+		//Read
+		$e_kode = $form_state['values']['e_kode_' . $x];
+		$kode = $form_state['values']['kode_' . $x];
+		$uraian = $form_state['values']['uraian_' . $x];
+		
+
+		if ($kode != '') {
+			
+			//drupal_set_message($bulan);
+			
+			//Simpan detilnya
+			if ($e_kode=='new') {
+				//drupal_set_message($e_no);
+				$kel=arg(2);
+				$sql = 'insert into {subunitkerja} (kodesuk, namasuk,kodeuk) values(\'%s\', \'%s\', \'%s\')';        
+				$res = db_query(db_rewrite_sql($sql), array($kode, $uraian,$kel));	
+				$t=$sql;
+			} else {
+				
+				$sql = 'update {subunitkerja} set kodesuk=\'%s\', namasuk=\'%s\' where kodesuk=\'%s\' ';
+				$res = db_query(db_rewrite_sql($sql), array($kode, $uraian , $e_kode));
+				
+			}
+			
+		} else {
+		//drupal_set_message('no'.$no.'#');
+			$e_no = $form_state['values']['e_no_' . $x];
+			if ($iddetil!=='new') {
+
+				$sql = 'delete from {subunitkerja} where kodesuk=\'%s\'';
+				$res = db_query(db_rewrite_sql($sql), array($e_kode));
+				
+			}
+			
+		}
+		
+	
+
+	}
+	
+//.................................................
+/*for($l=1;$l<=$maxno;$l++)
+	{
+		$e_kode = $form_state['values']['e_kode_' . $l];
+		if ($form_state['clicked_button']['#value'] == $form_state['values']['button_'.$l]) {
+			$form_state['redirect'] = 'modobyek/'.$e_kode;
+			
+		}	
+		
+	}
+*/
+//.........................................
+	
+	if ($form_state['clicked_button']['#value'] == $form_state['values']['submitnewdetil']) {
+		$arg1=arg(1);
+		$arg2=arg(2);
+		drupal_goto('subunitkerja/'.$arg1.'/'.$arg2); 
+		
+	} 
+	else if ($form_state['clicked_button']['#value'] == $form_state['values']['tampil']) {
+		$klmpk= $form_state['values']['kelompok'];
+		$arg1=arg(1);
+		$form_state['redirect'] = 'subunitkerja/'.$arg1.'/'.$klmpk;
+		
+	}
+	else if ($form_state['clicked_button']['#value'] == $form_state['values']['cetak']) {
+		/*$pdfFile = 'Cek cetak.pdf';
+		$html = GenReportFormContent();
+		$header= null;
+		data_ExportPDF('L',$header, 'F4', $html, $pdfFile);*/
+		
+	}else if ($form_state['clicked_button']['#value'] == $form_state['values']['submit']){
+		
+		if ($res)
+			drupal_set_message('Penyimpanan Berhasil');
+		else
+			drupal_set_message('Penyimpanan Gagal');
+		$arg1=arg(1);
+		$arg2=arg(2);
+		drupal_goto('subunitkerja/'.$arg1.'/'.$arg2);   
+	}
+
+	
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function subunitkerja_theme() {
+    return array(
+        'subunitkerja_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_subunitkerja_form($form) {
+    $table_rows = array();
+	
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledrag rows'][$id]['iddetil_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['kode_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['uraian_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['detil_' . $id]);
+				
+                //Add the weight field to the row
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['e_kode_' . $id]);
+				
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+	
+				 array('data' => 'Kode',  'width' => '90px'),
+				 array('data' => 'Uraian',  'width' => '200px'),
+				 
+				 //array('data' => 'Weight'),
+				); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}
+
+
+
+
+	

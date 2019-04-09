@@ -1,0 +1,482 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function apbdpendapatanperubahandetil_menu() {
+    $items['apbdpendapatanperubahandetil'] = array(
+        'title' => 'Rekening Pendapatan Perubahan Detil',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('apbdpendapatanperubahandetil_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function apbdpendapatanperubahandetil_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	
+	$kodeuk=arg(1);
+    $kodero = arg(2);
+	$iddetil=arg(3);
+
+	////drupal_set_message($kodero);
+
+
+	$title = 'Sub Detil Rekening ';
+
+	
+	$allowedit = (batastgl() || (isSuperuser()));	
+
+
+	if ($allowedit==false) {
+		//dispensasirenja
+		//$sqluk = sprintf(' and k.kodeuk=\'%s\' ', apbd_getuseruk());	
+        $sql = sprintf('select dispensasirenja from {unitkerja} where kodeuk=\'%s\'', apbd_getuseruk());
+		$res = db_query($sql);
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {  		
+				$allowedit = $data->dispensasirenja;
+			}
+		}
+	}
+	
+	$jumlah=0;
+	$jumlahsebelum = 0;
+	$jumlahsesudah = 0;	
+
+    if (isset($iddetil))
+    {
+        if (!user_access('kegiatanskpd edit'))
+            drupal_access_denied();
+			
+        $sql = 'select uraianp,totalp from {anggperukdetilperubahan} where iddetil=\'%s\'';
+        $res = db_query(db_rewrite_sql($sql), array ($iddetil));
+        if ($res) {
+            $data = db_fetch_object($res);
+			if ($data) {
+                $totaldetil = $data->totalp;
+				//$uraiandetil = $data->uraian;
+				$title .= $data->uraianp;
+			} else {
+				$iddetil = '';
+			}
+        } else {
+			$iddetil = '';
+		}
+    } else {
+		if (!user_access('kegiatanskpd tambah'))
+			drupal_access_denied();
+		$iddetil = '';
+	}
+
+	drupal_set_title($title);
+	drupal_set_html_head('<style>label{font-weight: bold; display: block; width: 200px; float: left;}</style>');
+    
+	
+    $form['kodeuk']= array( 
+        '#type'         => 'hidden', 
+        '#default_value'=> $kodeuk, 
+    ); 
+    $form['kodero']= array( 
+        '#type'         => 'hidden', 
+        '#default_value'=> $kodero, 
+    ); 
+    $form['iddetil']= array( 
+        '#type'         => 'hidden', 
+        '#default_value'=> $iddetil, 
+    ); 
+	
+	/*
+	$form['uraiandetil']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Uraian', 
+		//'#description'  => 'Rekening belanja', 
+		'#maxlength'    => 100, 
+		'#size'         => 70, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $uraiandetil, 
+	); 
+	*/
+	
+	$form['totaldetil']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Jumlah',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		'#disabled'     => true, 
+		'#description'  => 'Jumlah detil anggaran, jumlahnya akan terisi secara otomatis saat sub detilnya diisi', 
+		//'#maxlength'    => 60, 
+		'#size'         => 30, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $totaldetil, 
+	); 
+
+	$where = sprintf(" where iddetil='%s'", db_escape_string($iddetil));
+    $sql = 'select idsub,uraian,unitjumlah,unitsatuan,volumjumlah,
+			volumsatuan,harga,total from {anggperukdetilsubperubahan}' . $where  . ' order by nourut asc,idsub';
+	
+	//drupal_set_message($sql);
+	$resdetil = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	if ($resdetil) {
+		////drupal_set_message('res ok');
+		while ($data = db_fetch_object($resdetil)) {
+			$weight += 1;
+			////drupal_set_message($data->uraian . ' - ' . $weight);
+
+			$penetapantag = '0';
+			$qdetil = sprintf(" and idsub='%s'", db_escape_string($data->idsub));
+			$sqllalu = 'select idsub,uraian,unitjumlah, 	
+					unitsatuan,volumjumlah,	volumsatuan,harga,total 
+					from {anggperkegdetilsub} ' . $where . $qdetil ;
+			$reslalu = db_query($sqllalu);
+			$penetapan = 'Tidak ada (Uraian baru)';
+			if ($reslalu) {
+				if ($datalalu = db_fetch_object($reslalu)) {
+					$penetapan = $datalalu->uraian . ' (' . $datalalu->unitjumlah . ' ' . $datalalu->unitsatuan . ' x ' . $datalalu->volumjumlah . ' ' . $datalalu->volumsatuan . ' x ' . $datalalu->harga . ' : ' . $datalalu->total . ')';
+					$penetapantag = '1';
+				}
+			}
+			
+			$rows[] = array (
+							'id' => $weight,
+							'idsub' => $data->idsub,
+							'space' => '',
+							'uraian' => $data->uraian,
+							'penetapan' => $penetapan,
+							'penetapantag' => $penetapantag,							
+							'unitjumlah' => $data->unitjumlah,
+							'unitsatuan' => $data->unitsatuan,
+							'volumjumlah' => $data->volumjumlah,
+							'volumsatuan' => $data->volumsatuan,
+							'harga' => $data->harga,
+							'weight' => $weight,
+						);
+			
+		}
+	}
+
+	$penetapantag = '0';
+	$penetapan = 'Tidak ada (Uraian baru)';	
+	for ($x = 1; $x <= 5; $x++) {
+		$weight += 1;
+
+		$rows[] = array (
+						'id' => $weight,
+						'idsub' => 'new',
+						'space' => '',
+						'uraian' => '',
+						'penetapan' => $penetapan,
+						'penetapantag' => $penetapantag,						
+						'unitjumlah' => '1',
+						'unitsatuan' => '',
+						'volumjumlah' => '1',
+						'volumsatuan' => '',
+						'harga' => '',
+						'weight' => $weight,
+					);
+	}
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+        $form['tabledragrows'][$row['id']]['idsub_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['idsub'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['space_' . $row['id']] = array(
+            '#type' => 'markup',
+            '#default_value' => '',
+            '#size' => 10,
+        );
+
+		$form['tabledragrows'][$row['id']]['uraian_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['uraian'],
+			'#description'  => 'Uraian penetapan = ' . $row['penetapan'],			
+            '#size' => 45,
+        );
+
+		$form['tabledragrows'][$row['id']]['penetapantag_' . $row['id']] = array(
+			'#type' => 'value',
+			'#value' => $row['penetapantag'],
+			'#size' => 10,
+		);
+		$form['tabledragrows'][$row['id']]['penetapan_' . $row['id']] = array(
+			'#type' => 'textfield',
+			'#value' => $row['penetapan'],
+			'#size' => 45,
+		);
+		
+        $form['tabledragrows'][$row['id']]['unitjumlah_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['unitjumlah'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 5,
+        );
+        $form['tabledragrows'][$row['id']]['unitsatuan_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['unitsatuan'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['volumjumlah_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['volumjumlah'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 5,
+        );
+        $form['tabledragrows'][$row['id']]['volumsatuan_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['volumsatuan'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['harga_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['harga'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 10,
+        );
+
+        // the weight form element.
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+	$form['maxdetil']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		'#default_value'=> $weight, 
+	); 
+ 
+	if ($allowedit) {
+		$form['submitnewdetil'] = array (
+			'#type' => 'submit',
+			'#value' => 'Tambah',
+			//'#weight' => 6,
+		);
+		
+		//$form['submitdelete'] = array (
+		//	'#type' => 'submit',
+		//	'#value' => 'Hapus Semua',
+		//	//'#weight' => 6,
+		//);
+
+		// A submit element
+		$form['submit'] = array(
+			'#type' => 'submit',
+			'#suffix' => "&nbsp;<a href='/apbdpendapatanperubahan/" . $kodeuk . '/' . $kodero
+			. "' class='btn_blue' style='color: white'>Tutup</a>",
+			'#value' => 'Simpan',
+			//'#weight' => 7,
+		);
+	}
+	
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the apbdpendapatanperubahandetil_form() form.
+ */
+function apbdpendapatanperubahandetil_form_validate($form, &$form_state) {
+	
+	$iddetil = $form_state['values']['iddetil'];
+
+	if ($iddetil=='') {		
+		form_set_error('', 'Detil Rekening belum ditentukan');
+	}
+	
+
+} 
+/**
+ * Implements hook_submit() for the apbdpendapatanperubahandetil_form() form.
+ */
+function apbdpendapatanperubahandetil_form_submit($form, &$form_state) {
+    
+	$kodero = $form_state['values']['kodero'];
+	$kodeuk = $form_state['values']['kodeuk'];
+	
+	$iddetil = $form_state['values']['iddetil'];
+	$uraiandetil = $form_state['values']['uraiandetil'];
+	
+	$maxdetil = $form_state['values']['maxdetil'];
+
+	for ($x = 1; $x <= $maxdetil; $x++) 
+	{
+		
+		//Hitung detilnya dulu
+		$uraian = $form_state['values']['uraian_' . $x];
+		////drupal_set_message($uraian . ' - ' . $form_state['values']['idsub_' . $x] . ' / ' . $form_state['values']['weight_' . $x] );
+		if ($uraian != '') {
+			$idsub = $form_state['values']['idsub_' . $x];
+			$unitjumlah = $form_state['values']['unitjumlah_' . $x];
+			$unitsatuan = $form_state['values']['unitsatuan_' . $x];
+			$volumjumlah = $form_state['values']['volumjumlah_' . $x];
+			$volumsatuan = $form_state['values']['volumsatuan_' . $x]; 
+			$harga = $form_state['values']['harga_' . $x];
+			$weight = $form_state['values']['weight_' . $x];
+
+			$total = $unitjumlah * $volumjumlah * $harga;
+			$totaldetil += $total;
+			
+			////drupal_set_message($uraian . ' - ' . $weight);
+			
+			//Simpan detilnya
+			if ($idsub=='new') {
+				////drupal_set_message('new ' . $kodero);
+				$sql = 'insert into {anggperukdetilsubperubahan} (iddetil, nourut, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total) 
+						values(\'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')';        
+				$res = db_query(db_rewrite_sql($sql), array($iddetil, $weight, $uraian, $unitjumlah, $unitsatuan, $volumjumlah, $volumsatuan, $harga, $total));	
+			} else {
+				
+				$sql = 'update {anggperukdetilsubperubahan} set nourut=\'%s\', uraian=\'%s\', unitjumlah=\'%s\', unitsatuan=\'%s\', volumjumlah=\'%s\', volumsatuan=\'%s\', 
+					   harga=\'%s\', total=\'%s\' where idsub=\'%s\' ';
+				$res = db_query(db_rewrite_sql($sql), array($weight, $uraian, $unitjumlah, $unitsatuan, $volumjumlah, $volumsatuan, $harga, $total, $idsub));
+				
+			}
+			
+		} else {
+			$idsub = $form_state['values']['idsub_' . $x];
+			$penetapantag = $form_state['values']['penetapantag_' . $x];
+			 
+			if ($penetapantag=='0') {
+				$sql = 'delete from {anggperukdetilsubperubahan} WHERE idsub=\'%s\'';
+				$res = db_query(db_rewrite_sql($sql), array($idsub));
+				
+			} else {
+				$unitjumlah = '0';
+				$unitsatuan = '';
+				$volumjumlah = '0';
+				$volumsatuan = ''; 
+				$harga = '0';
+
+				$sql = 'update {anggperukdetilsubperubahan} set nourut=\'%s\', uraian=\'%s\', unitjumlah=\'%s\', unitsatuan=\'%s\', volumjumlah=\'%s\', volumsatuan=\'%s\', 
+					  harga=\'%s\' where idsub=\'%s\' ';
+				$res = db_query(db_rewrite_sql($sql), array($weight, $uraian, $unitjumlah, $unitsatuan, $volumjumlah, $volumsatuan, $harga, $idsub));
+				
+			}
+			
+		}
+
+	}
+	
+	if ($totaldetil<0) $totaldetil=0;
+
+	$sql = 'update {anggperukdetilperubahan}} set totalp=\'%s\' where iddetil=\'%s\'';
+	$res = db_query(db_rewrite_sql($sql), array($totaldetil, $iddetil));
+
+	//UPDATE REKENING
+	$sql = sprintf("select sum(totalp) as jumlahsub from {anggperukdetilperubahan} where kodeuk='%s' and kodero='%s'", $kodeuk, $kodero);
+	$result = db_query($sql);
+	if ($data = db_fetch_object($result)) {		
+		$jumlahsub = $data->jumlahsub;
+		
+		$sql = sprintf("update {anggperukperubahan}} set jumlahp='%s' where kodeuk='%s' and kodero='%s'", db_escape_string($jumlahsub), $kodeuk, $kodero);		
+		$res = db_query($sql);
+		
+	}
+
+
+	
+	if ($form_state['clicked_button']['#value'] == $form_state['values']['submitnewdetil'])   
+		$form_state['redirect'] = 'apbdpendapatanperubahandetil/'  . $kodeuk . '/' . $kodero . '/' . $iddetil  ;
+			
+	else {
+		if ($res)
+			drupal_set_message('Penyimpanan data berhasil dilakukan');
+		else
+			drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+		drupal_goto('apbdpendapatanperubahan/' . $kodeuk . '/' . $kodero);      
+	}
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function apbdpendapatanperubahandetil_theme() {
+    return array(
+        'apbdpendapatanperubahandetil_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_apbdpendapatanperubahandetil_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['idsub_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['space_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['uraian_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['unitjumlah_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['unitsatuan_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['volumjumlah_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['volumsatuan_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['harga_' . $id]);
+				
+                //Add the weight field to the row
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row, 'class' => 'draggable');
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+				array('data' => '',  'width'=> '5px'),
+				 array('data' => 'Uraian',  'width'=> '30px'),
+				 array('data' => 'Unit',  'width' => '10px'),
+				 array('data' => '',  'width' => '30px'),
+				 array('data' => 'Volume',  'width' => '10px'),
+				 array('data' => '',  'width' => '30px'),
+				 array('data' => 'Harga',  'width' => '20px'),
+				 array('data' => 'Weight'),
+				); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

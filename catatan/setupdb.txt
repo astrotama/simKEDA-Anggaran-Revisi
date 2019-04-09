@@ -1,0 +1,13 @@
+Import table
+
+1. anggperda
+2. anggperdetil
+3. anggperkeg
+4. anggperkegdetil *
+5. anggperkegtdetilsub *
+6. anggperuk
+7. anggperukdetil
+8. anggperukdetilsub
+9. kegiatanskpd
+
+copy dari 2019 

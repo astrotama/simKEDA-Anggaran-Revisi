@@ -1,0 +1,523 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function kasbppkd_menu() {
+    $items['kasbppkd'] = array(
+        'title' => 'Anggaran Kas Belanja PPKD',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('kasbppkd_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function kasbppkd_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	//drupal_add_js('files/js/kegiatancam.js');
+	
+	$kodeuk='81';
+
+
+	$title = 'Anggaran Kas Belanja PPKD';
+	drupal_set_html_head('<style>label{font-weight: bold; display: block; width: 200px; float: left;}</style>');
+	
+	if (isset($kodeuk)) {
+
+		$sql = 'select left(kodero,3) kodej, sum(jumlah) anggaran from {anggperuk} where {kodeuk}=\'%s\' and left(kodero,2)>\'%s\' group by left(kodero,3)';
+        $res = db_query(db_rewrite_sql($sql), array ($kodeuk, '41'));
+        if ($res) {
+			while ($data = db_fetch_object($res)) {
+				
+				$anggaran += $data->anggaran;
+				
+				switch ($data->kodej) {
+					case "421":
+						$bagihasil = $data->anggaran;
+						break;
+						
+					case "422":
+						$dau = $data->anggaran;
+						break;
+
+					case "423": 
+						$dak = $data->anggaran;
+						break;
+					
+					case "431":
+						$hibah = $data->anggaran;
+						break;
+					
+					case "432":
+						$darurat = $data->anggaran;
+						break;
+
+					case "433":
+						$bagihasilp = $data->anggaran;
+						break;
+
+					case "434":
+						$dpok = $data->anggaran;
+						break;
+				}
+			}
+		}
+		
+	} 
+	
+	drupal_set_title($title);
+	
+	$form['formdata']['kodeuk']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $kodeuk, 
+	); 
+
+	$form['formdata']['anggaran']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Anggaran',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran, jumlahnya akan terisi secara otomatis saat detilnya diisi', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($anggaran), 
+	); 
+	$form['formdata']['e_anggaran']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $anggaran, 
+	); 
+	$form['formdata']['bagihasil']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Bagi Hasil',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran bagihasil', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($bagihasil), 
+	); 
+	$form['formdata']['e_bagihasil']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $bagihasil, 
+	); 
+	$form['formdata']['dau']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'DAU',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran barang jasa', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($dau), 
+	); 
+	$form['formdata']['e_dau']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $dau, 
+	); 
+	$form['formdata']['dak']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'DAK',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran dak', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($dak), 
+	); 
+	$form['formdata']['e_dak']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $dak, 
+	); 
+	$form['formdata']['hibah']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Hibah',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran dak', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($hibah), 
+	); 
+	$form['formdata']['e_hibah']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $hibah, 
+	); 
+
+	$form['formdata']['darurat']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Dana Darurat',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran dak', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($darurat), 
+	); 
+	$form['formdata']['e_darurat']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $darurat, 
+	); 
+	$form['formdata']['bagihasilp']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Bagi Hasil Provinsi',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran dak', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($bagihasilp), 
+	); 
+	$form['formdata']['e_bagihasilp']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $bagihasilp, 
+	); 
+
+	$form['formdata']['dpok']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'DPOK',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran dak', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($dpok), 
+	); 
+	$form['formdata']['e_dpok']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $dpok, 
+	); 
+	
+	$weight = 0;
+	$bulan = 0;
+	$rows= array();
+
+	$where = sprintf(" where kodeuk='%s'", db_escape_string($kodeuk));
+    $sql = 'select kodeuk, bulan, bagihasil, dau, dak, hibah, darurat, bagihasilp, dpok from {anggkaspendapatan} ' . $where  . ' order by bulan';
+	//($sql);
+	$pres = db_query($sql);
+	while ($data = db_fetch_object($pres)) {
+		$bulan++;
+		$weight++;
+		$rows[] = array (
+						'id' => $weight,
+						'tag' => 'old',
+						'bulan' => $bulan,
+						'bagihasil' => $data->bagihasil,
+						'dau' => $data->dau,
+						'dak' => $data->dak,
+						'hibah' => $data->hibah,
+						'darurat' => $data->darurat,
+						'bagihasilp' => $data->bagihasilp,
+						'dpok' => $data->dpok,
+						'weight' => $weight,
+					);
+		
+	}
+
+	if ($bulan==0) {
+		for ($bulan = 1; $bulan <= 12; $bulan++) {
+			$weight += 1;
+			
+			$rows[] = array (
+							'id' => $weight,
+							'tag' => 'new',
+							'bulan' => $bulan,
+							'bagihasil' => 0,
+							'dau' => 0,
+							'dak' => 0,
+							'hibah' => 0,
+							'darurat' => 0,
+							'bagihasilp' => 0,
+							'dpok' => 0,
+							'weight' => $weight,
+						);
+			
+		}
+	}
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+
+        $form['tabledragrows'][$row['id']]['tag_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['tag'],
+            '#size' => 10,
+        );
+
+		$form['tabledragrows'][$row['id']]['bulan_' . $row['id']] = array(
+			//#type' => 'textfield',
+			'#type' => 'markup',
+			'#value' => $row['bulan'],
+			'#size' => 5,
+		);
+
+        $form['tabledragrows'][$row['id']]['bagihasil_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['bagihasil'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 15,
+        );
+        $form['tabledragrows'][$row['id']]['dau_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['dau'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 15,
+        );
+        $form['tabledragrows'][$row['id']]['dak_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['dak'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 15,
+        );
+        $form['tabledragrows'][$row['id']]['hibah_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['hibah'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 15,
+        );
+        $form['tabledragrows'][$row['id']]['darurat_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['darurat'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 15,
+        );
+        $form['tabledragrows'][$row['id']]['bagihasilp_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['bagihasilp'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 15,
+        );
+        $form['tabledragrows'][$row['id']]['dpok_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['dpok'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 15,
+        );
+
+
+        // the weight form element.
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+	
+	$form['formdata']['submit'] = array(
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/pendapatan' class='btn_blue' style='color: white'>Tutup</a>",
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+	);
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/pendapatan' class='btn_blue' style='color: white'>Tutup</a>",
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+	);
+
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the kasbppkd_form() form.
+ */
+function kasbppkd_form_validate($form, &$form_state) {
+	
+	$e_anggaran = $form_state['values']['e_anggaran'];
+	$e_bagihasil += $form_state['values']['e_bagihasil'];
+	$e_dau += $form_state['values']['e_dau'];
+	$e_dak += $form_state['values']['e_dak'];
+	$e_hibah += $form_state['values']['e_hibah'];
+	$e_darurat += $form_state['values']['e_darurat'];
+	$e_bagihasilp += $form_state['values']['e_bagihasilp'];
+	$e_dpok += $form_state['values']['e_dpok'];
+
+	$bagihasil = 0;
+	$dau = 0;
+	$dak = 0;
+	$hibah = 0;
+	$darurat = 0;
+	$bagihasilp = 0;
+	$dpok = 0;
+
+	$t_bagihasil = 0;
+	$t_dau = 0;
+	$t_dak = 0;
+	$t_hibah = 0;
+	$t_darurat = 0;
+	$t_bagihasilp = 0;
+	$t_dpok = 0;
+	
+	for ($x = 1; $x <= 12; $x++) {
+		
+		$bagihasil = $form_state['values']['bagihasil_' . $x];
+		$dau = $form_state['values']['dau_' . $x];
+		$dak = $form_state['values']['dak_' . $x];
+		$hibah = $form_state['values']['hibah_' . $x];
+		$darurat = $form_state['values']['darurat_' . $x];
+		$bagihasilp = $form_state['values']['bagihasilp_' . $x];
+		$dpok = $form_state['values']['dpok_' . $x];
+
+		$t_bagihasil += $bagihasil;
+		$t_dau += $dau;
+		$t_dak += $dak;
+		$t_hibah += $hibah;
+		$t_darurat += $darurat;
+		$t_bagihasilp += $bagihasilp;
+		$t_dpok += $dpok;
+
+		if ($x<=3) 
+			$tw1 += $bagihasil + $dau + $dak + $hibah + $bagihasilp + $dpok + $darurat;
+		else if ($x<=6) 
+			$tw2 += $bagihasil + $dau + $dak + $hibah + $bagihasilp + $dpok + $darurat;
+		else if ($x<=9) 	
+			$tw3 += $bagihasil + $dau + $dak + $hibah + $bagihasilp + $dpok + $darurat;
+		else
+			$tw4 += $bagihasil + $dau + $dak + $hibah + $bagihasilp + $dpok + $darurat;
+			
+	}	
+	
+	//Cek 1000
+	$seribu = 1000;
+	if (($tw1 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #1 (' . apbd_fn($tw1) . '), tidak bulat per seribu');
+	if (($tw2 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #2 (' . apbd_fn($tw2) . '), tidak bulat per seribu');
+	if (($tw3 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #3 (' . apbd_fn($tw3) . '), tidak bulat per seribu');
+	if (($tw4 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #4 (' . apbd_fn($tw4) . '), tidak bulat per seribu');
+	
+	//Cek pad
+	if ($t_bagihasil > $e_bagihasil) form_set_error('', 'Jumlah isian anggaran kas Dana Perimbangan Bagi Hasil (' . apbd_fn($t_bagihasil) . ') lebih besar daripada anggaran pendapatan bagi hasil (' . apbd_fn($e_bagihasil) . ')');
+	if ($t_dau > $e_dau) form_set_error('', 'Jumlah isian anggaran kas Dana Perimbangan DAU (' . apbd_fn($t_dau) . ') lebih besar daripada anggaran pendapatan DAU (' . apbd_fn($e_dau) . ')');
+	if ($t_dak > $e_dak) form_set_error('', 'Jumlah isian anggaran kas Dana Perimbangan DAK (' . apbd_fn($t_dak) . ') lebih besar daripada anggaran pendapatan DAK (' . apbd_fn($e_dak) . ')');
+	if ($t_hibah > $e_hibah) form_set_error('', 'Jumlah isian anggaran kas Hibah (' . apbd_fn($t_hibah) . ') lebih besar daripada anggaran hibah (' . apbd_fn($e_hibah) . ')');
+	if ($t_darurat > $e_darurat) form_set_error('', 'Jumlah isian anggaran kas dana darurat (' . apbd_fn($t_darurat) . ') lebih besar daripada anggaran darurat (' . apbd_fn($e_darurat) . ')');
+	if ($t_bagihasilp > $e_bagihasilp) form_set_error('', 'Jumlah isian anggaran kas Bagi Hasil Provinsi (' . apbd_fn($t_bagihasilp) . ') lebih besar daripada anggaran Bagi Hasil Provinsi (' . apbd_fn($e_bagihasilp) . ')');
+	if ($t_dpok > $e_dpok) form_set_error('', 'Jumlah isian anggaran kas DPOK (' . apbd_fn($t_dpok) . ') lebih besar daripada anggaran DPOK (' . apbd_fn($e_dpok) . ')');
+	
+} 
+
+/**
+ * Implements hook_submit() for the kasbppkd_form() form.
+ */
+function kasbppkd_form_submit($form, &$form_state) {
+
+	$kodeuk = $form_state['values']['kodeuk'];
+	$tw1 =0;
+	$tw2 =0;
+	$tw3 =0;
+	$tw4 =0;
+
+	for ($x = 1; $x <= 12; $x++) {
+		
+		$tag = $form_state['values']['tag_' . $x];
+
+		$bagihasil = $form_state['values']['bagihasil_' . $x];
+		$dau = $form_state['values']['dau_' . $x];
+		$dak = $form_state['values']['dak_' . $x];
+		$hibah = $form_state['values']['hibah_' . $x];
+		$darurat = $form_state['values']['darurat_' . $x];
+		$bagihasilp = $form_state['values']['bagihasilp_' . $x];
+		$dpok = $form_state['values']['dpok_' . $x];
+
+		if ($x<=3) 
+			$tw1 += $bagihasil + $dau + $dak + $hibah + $bagihasilp + $dpok + $darurat;
+		else if ($x<=6) 
+			$tw2 += $bagihasil + $dau + $dak + $hibah + $bagihasilp + $dpok + $darurat;
+		else if ($x<=9) 	
+			$tw3 += $bagihasil + $dau + $dak + $hibah + $bagihasilp + $dpok + $darurat;
+		else
+			$tw4 += $bagihasil + $dau + $dak + $hibah + $bagihasilp + $dpok + $darurat;
+		
+		//Simpan detilnya
+		if ($tag == 'new') {
+
+			$sql = "insert into {anggkaspendapatan} (kodeuk,bulan,bagihasil,dau,dak,hibah,darurat,bagihasilp,dpok) values('%s', '%s', '%s','%s', '%s', '%s', '%s', '%s', '%s')";
+			$res = db_query(db_rewrite_sql($sql), array($kodeuk, $x, $bagihasil, $dau, $dak, $hibah, $darurat, $bagihasilp, $dpok));
+
+		} 	else {
+			$sql = sprintf("update {anggkaspendapatan} set bagihasil='%s',dau='%s',dak='%s',hibah='%s', darurat='%s', bagihasilp='%s',dpok='%s' where kodeuk='%s' and bulan='%s'", $bagihasil, $dau, $dak, $hibah, $darurat, $bagihasilp,$dpok, $kodeuk, $x);
+			$res = db_query($sql);
+			
+		}	
+	}	
+
+	if ($res)
+		drupal_set_message('Penyimpanan data berhasil dilakukan');
+	else
+		drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+	
+	//drupal_set_message($sql);
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function kasbppkd_theme() {
+    return array(
+        'kasbppkd_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_kasbppkd_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['iddetil_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['space_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['bulan_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['bagihasil_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['dau_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['dak_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['hibah_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['darurat_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['bagihasilp_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['dpok_' . $id]);
+				
+                //Add the weight field to the row
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+				array('data' => '',  'width'=> '0px'),
+				array('data' => 'Bulan',  'width'=> '10px'),
+				array('data' => 'Bagi Hasil',  'width' => '10px'),
+				array('data' => 'DAU',  'width' => '10px'),
+				array('data' => 'DAK',  'width' => '10px'),
+				array('data' => 'Hibah',  'width' => '10px'),
+				array('data' => 'Darurat',  'width' => '10px'),
+				array('data' => 'Bagi Hasil Prov',  'width' => '10px'),
+				array('data' => 'DPOK',  'width' => '10px'),
+				array('data' => 'Weight'),
+				); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

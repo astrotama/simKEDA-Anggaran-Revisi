@@ -1,0 +1,63 @@
+//REVISI
+
+//ANGGPERUK
+delete from anggperukperubahan;
+insert into anggperukperubahan (tahun, kodero, kodeuk, uraian, jumlah, jumlahsesudah, jumlahsebelum, jumlahp, periode, ketrekening, anggaran) 
+select tahun, kodero, kodeuk, uraian, jumlah, jumlahsesudah, jumlahsebelum, jumlah jumlahp, 1 periode, ketrekening, jumlah anggaran from anggperuk
+
+delete from anggperukdetilperubahan;
+insert into anggperukdetilperubahan (iddetil, tahun, kodero, kodeuk, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, uraianp, unitjumlahp, unitsatuanp, volumjumlahp, volumsatuanp, hargap, totalp, periode)
+select iddetil, tahun, kodero, kodeuk, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, uraian uraianp, unitjumlah unitjumlahp, unitsatuan unitsatuanp, volumjumlah volumjumlahp, volumsatuan volumsatuanp, harga hargap, total totalp, 1 periode from anggperukdetil;
+
+delete from anggperukdetilsubperubahan;
+insert into anggperukdetilsubperubahan (idsub, iddetil, nourut, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total)
+select idsub, iddetil, nourut, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total from 
+anggperukdetilsub;
+
+//ANGGPERKEG
+delete from kegiatanrevisi;
+insert into kegiatanrevisi (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, anggaran, bintang)
+select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, anggaran, bintang from kegiatanskpd
+
+delete from anggperkegrevisi; 
+insert into anggperkegrevisi (kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, anggaran, bintang, bintangjenis)
+select kodero, kodekeg, uraian, jumlah, jumlahsesudah, jumlahsebelum, anggaran, bintang, bintangjenis from anggperkeg;
+
+delete from anggperkegdetilrevisi;
+INSERT INTO anggperkegdetilrevisi (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang, bintangjenis)
+SELECT iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang, bintangjenis FROM anggperkegdetil;
+
+delete from anggperkegdetilsubrevisi;
+insert into anggperkegdetilsubrevisi (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang)
+select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang from anggperkegdetilsub;
+
+//ANGGPERDA
+delete from anggperdaperubahan;
+insert into anggperdaperubahan (tahun, kodero, kodeuk, uraian, jumlah, jumlahsesudah, jumlahsebelum, jumlahp, periode, ketrekening, anggaran) 
+select tahun, kodero, kodeuk, uraian, jumlah, jumlahsesudah, jumlahsebelum, jumlah jumlahp, 1 periode, ketrekening, jumlah anggaran from anggperda;
+
+delete from anggperdadetilperubahan;
+insert into anggperdadetilperubahan (iddetil, tahun, kodero, kodeuk, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, uraianp, unitjumlahp, unitsatuanp, volumjumlahp, volumsatuanp, hargap, totalp, periode)
+select iddetil, tahun, kodero, kodeuk, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, uraian uraianp, unitjumlah unitjumlahp, unitsatuan unitsatuanp, volumjumlah volumjumlahp, volumsatuan volumsatuanp, harga hargap, total totalp, 1 periode from anggperdadetil;
+
+
+
+//PERUBAHAN
+
+//KEGIATAN
+delete from kegiatanperubahan;
+insert into kegiatanperubahan (kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, totalp, tw1p, tw2p, tw3p, tw4p, periode, anggaran, bintang) select kodekeg, nomorkeg, jenis, tahun, kodepro, kodeuk, kegiatan, lokasi, totalsebelum, totalsesudah, total, plafon, targetsesudah, kodesuk, sumberdana1, sumberdana2, sumberdana1rp, sumberdana2rp, programsasaran, programtarget, masukansasaran, masukantarget, keluaransasaran, keluarantarget, hasilsasaran, hasiltarget, waktupelaksanaan, latarbelakang, kelompoksasaran, tw1, tw2, tw3, tw4, adminok, inaktif, isgaji, isppkd, plafonlama, dispensasi, edit, total totalp, tw1 tw1p, tw2 tw2p, tw3 tw3p, tw4 tw4p, 1 periode, anggaran, bintang from kegiatanskpd;
+
+//ANGGPERKEG
+delete from anggperkegperubahan;
+insert into anggperkegperubahan (kodero, kodekeg, uraian, jumlah, jumlahp, jumlahsesudah, jumlahsebelum, anggaran, bintang, bintangjenis, periode)
+select kodero, kodekeg, uraian, jumlah, jumlah as jumlahp, jumlahsesudah, jumlahsebelum, anggaran, bintang, bintangjenis, 1 as periode from anggperkeg;
+
+delete from anggperkegdetilrevisi;
+INSERT INTO anggperkegdetilrevisi (iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang, bintangjenis)
+SELECT iddetil, kodero, kodekeg, pengelompokan, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang, bintangjenis FROM anggperkegdetil;
+
+delete from anggperkegdetilsubrevisi;
+insert into anggperkegdetilsubrevisi (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang)
+select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut, anggaran, bintang from anggperkegdetilsub;
+

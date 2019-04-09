@@ -1,0 +1,514 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function apbdutils_menu() {
+    $items['apbdutils'] = array(
+        'title' => 'Utilitas',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('apbdutils_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function apbdutils_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	
+	$form['uraian']= array(
+		'#type'         => 'markup', 
+		'#value'=> 'Utilitas', 
+	); 	
+
+	$form['formdata']['ss'] = array (
+		'#type' => 'item',
+		'#value' => "<div style='clear:both;'></div>",
+	);		
+	
+	$form['simpan'] = array(
+	'#type' => 'submit',
+	'#value' => 'Run',
+	);
+	
+	return $form;
+}
+
+function apbdutils_form_submit($form, &$form_state) {
+//run_arief();
+
+
+run_perubahan();
+run_fixing_perubahan();
+run_fixing_perubahan1();
+run_fixing_perubahan2();
+
+
+//fixingkodekegiatan();
+
+//batch_kegiatan_dinolkan();
+
+//batch_fixing_latar_belakang();
+}
+
+
+function run_perubahan()  {
+
+$sql = "delete from kegiatanverifikator";
+$res_rev = db_query($sql);
+
+$sql = "insert into kegiatanverifikator select * from kegiatanrevisi";
+$res_rev = db_query($sql);
+
+$sql = "update kegiatanverifikator set kodeuk='00' where kodeuk='81' and isppkd=1";
+$res_rev = db_query($sql);
+
+//read all kegiatan
+$sql = "select * from kegiatanrevisi";
+$res_rev = db_query($sql);
+while ($data_rev = db_fetch_object($res_rev)) {
+	
+	//read keg perubahan terakhir
+	$sql = 'select * from kegiatanperubahan3 where kodekeg=\'%s\'' ;
+	$res_keg = db_query(db_rewrite_sql($sql), array ($data_rev->kodekeg));
+	if ($data_keg = db_fetch_object($res_keg)) {
+		
+		$geserbaru = 0;
+		
+		//NAMA
+		if ($data_rev->kegiatan == $data_keg->kegiatan)
+			$kegiatan = 0;
+		else 
+			$kegiatan = 1;
+
+		//PLAFON
+		if ($data_rev->total == $data_keg->total)
+			$geserplafon = 0;
+		else 
+			$geserplafon = 1;
+		
+		//membandingkan tolok ukur dan kinerja
+		
+		if (($data_rev->programsasaran == $data_keg->programsasaran) and 
+			($data_rev->programtarget == $data_keg->programtarget) and 
+			($data_rev->masukansasaran == $data_keg->masukansasaran) and 
+			($data_rev->masukantarget == $data_keg->masukantarget) and 
+			($data_rev->hasilsasaran == $data_keg->hasilsasaran) and 
+			($data_rev->hasiltarget == $data_keg->hasiltarget) and 
+			($data_rev->keluaransasaran == $data_keg->keluaransasaran) and 
+			($data_rev->keluarantarget == $data_keg->keluarantarget))
+			$kinerja = 0;
+		else
+			$kinerja = 1;
+
+		if (($data_rev->tw1 == $data_keg->tw1p) and 
+			($data_rev->tw2 == $data_keg->tw2p) and 
+			($data_rev->tw3 == $data_keg->tw3p) and 
+			($data_rev->tw4 == $data_keg->tw4p))
+			$triwulan = 0;
+		else
+			$triwulan = 1;
+		
+		//drupal_set_message($data_rev->lokasi . ' || ' . $data_keg->lokasi);
+		if ($data_rev->lokasi == $data_keg->lokasi)
+			$lokasi = 0;
+		else
+			$lokasi = 1;
+		
+		if ($data_rev->kelompoksasaran == $data_keg->kelompoksasaran)
+			$sasaran = 0;
+		else
+			$sasaran = 1;
+		
+	} else 
+		$geserbaru = 1;
+	
+	if ($geserbaru==0) {
+		//read angg per jenis
+		$geserjenis = 0;
+		$sql = 'select left(kodero,3) kodej,sum(jumlah) anggaran from anggperkegrevisi where kodekeg=\'%s\' group by left(kodero,3)' ;
+		$res_rev_rek = db_query(db_rewrite_sql($sql), array ($data_rev->kodekeg));
+		while (($data_rev_rek = db_fetch_object($res_rev_rek)) and ($geserjenis == 0)) {
+			//read keg perubahan terakhir
+			
+			//drupal_set_message($data_rev_rek->kodej . ' : ' . $data_rev_rek->anggaran);
+			
+			$sql = "select sum(jumlahp) anggaran from {anggperkegperubahan3} where kodekeg='" . $data_rev->kodekeg . "' and left(kodero,3)='" . $data_rev_rek->kodej . "'" ;
+			//$res_rev_keg = db_query(db_rewrite_sql($sql), array ($data_rev_rek->kodekeg, $data_rev_rek->kodej));
+			//drupal_set_message($sql);
+			$res_rev_keg = db_query($sql);
+			if ($res_rev_keg) {
+				if ($data_rev_keg = db_fetch_object($res_rev_keg))  {
+					
+					//drupal_set_message($data_rev_rek->anggaran . ' || ' . $data_rev_keg->anggaran);
+					
+					if ($data_rev_rek->anggaran==$data_rev_keg->anggaran) 
+						$geserjenis = 0;
+					else
+						$geserjenis = 1;
+				}				
+			}
+		}
+		 
+		//read angg per obyek
+		$geserobyek = 0;
+		$sql = 'select left(kodero,5) kodeo,sum(jumlah) anggaran from anggperkegrevisi where kodekeg=\'%s\' group by left(kodero,5)' ;
+		$res_rev_rek = db_query(db_rewrite_sql($sql), array ($data_rev->kodekeg));
+		while (($data_rev_rek = db_fetch_object($res_rev_rek)) and ($geserobyek == 0)) {
+			//read keg perubahan terakhir
+			$sql = "select sum(jumlahp) anggaran from {anggperkegperubahan3} where kodekeg='" . $data_rev->kodekeg . "' and left(kodero,5)='" . $data_rev_rek->kodeo . "'" ;
+			//$res_rev_keg = db_query(db_rewrite_sql($sql), array ($data_rev_rek->kodekeg, $data_rev_rek->kodeo));
+			$res_rev_keg = db_query($sql);
+			if ($res_rev_keg) {
+				if ($data_rev_keg = db_fetch_object($res_rev_keg))  {
+					//drupal_set_message($data_rev_rek->anggaran . ' || ' . $data_rev_keg->anggaran);
+					if ($data_rev_rek->anggaran==$data_rev_keg->anggaran) 
+						$geserobyek = 0;
+					else
+						$geserobyek = 1;
+				}				
+			}			
+		}
+
+		//read angg per rekening
+		$geserrincian = 0;
+		$sql = 'select kodero,sum(jumlah) anggaran from anggperkegrevisi where kodekeg=\'%s\' group by kodero' ;
+		$res_rev_rek = db_query(db_rewrite_sql($sql), array ($data_rev->kodekeg));
+		while (($data_rev_rek = db_fetch_object($res_rev_rek)) and ($geserrincian == 0)) {
+			//read keg perubahan terakhir
+			//$sql = 'select sum(jumlah) anggaran from {anggperkegperubahan3} where kodekeg=\'%s\' and kodero=\'%s\'' ;
+			$sql = "select jumlahp anggaran from {anggperkegperubahan3} where kodekeg='" . $data_rev->kodekeg . "' and kodero='" . $data_rev_rek->kodero . "'" ;
+			//$res_rev_keg = db_query(db_rewrite_sql($sql), array ($data_rev_rek->kodekeg, $data_rev_rek->kodero));
+			$res_rev_keg = db_query($sql);
+			if ($res_rev_keg) {
+				if ($data_rev_keg = db_fetch_object($res_rev_keg))  {
+					//drupal_set_message($data_rev_rek->anggaran . ' || ' . $data_rev_keg->anggaran);
+					if ($data_rev_rek->anggaran==$data_rev_keg->anggaran) 
+						$geserrincian = 0;
+					else
+						$geserrincian = 1;
+				}				
+			}			
+		}
+		
+		$detiluraian = 0;
+		$adaperubahan = (($kegiatan + $kinerja + $triwulan + $lokasi + $sasaran + $geserjenis + $geserobyek + $geserrincian) > 0);
+		
+		if ($adaperubahan==false) {
+			$detiluraian = cek_detiluraian($data_rev->kodekeg);
+			
+			$adaperubahan = $detiluraian;
+		}
+	
+	} else
+		$adaperubahan = true;
+	
+	if ($adaperubahan == false) {
+		$sql = sprintf("delete from {kegiatanrevisiperubahan} where kodekeg='%s'",
+						db_escape_string($data_rev->kodekeg));		
+		$resx = db_query($sql);
+		
+	} else {
+
+		$sql = 'select kodekeg from kegiatanrevisiperubahan where kodekeg=\'%s\'' ;
+		$resx_keg = db_query(db_rewrite_sql($sql), array ($data_rev->kodekeg));
+		if ($datax_keg = db_fetch_object($resx_keg)) 
+			$newrev = false;
+		else
+			$newrev = true;
+		
+		$jenisrevisi = 9; 
+		$subjenisrevisi = 9;
+		
+		 
+		if ($newrev) {
+			$sql =  sprintf("insert into {kegiatanrevisiperubahan} (jenisrevisi, subjenisrevisi, tahun, kodeuk, kodekeg, geserjenis, geserrincian, geserobyek, lokasi, kinerja, sasaran, detiluraian, triwulan, geserbaru, geserplafon) values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $jenisrevisi, $subjenisrevisi, $data_rev->tahun, $data_rev->kodeuk, $data_rev->kodekeg, $geserjenis, $geserrincian, $geserobyek, $lokasi, db_escape_string($kinerja), db_escape_string($sasaran), db_escape_string($detiluraian), db_escape_string($triwulan), $geserbaru, $geserplafon);	
+			
+			$resx_keg = db_query($sql);
+			
+		} else { 
+			$sql = sprintf("update {kegiatanrevisiperubahan} set geserjenis='%s', geserrincian='%s', geserobyek='%s', lokasi='%s', kinerja='%s', sasaran='%s', detiluraian='%s', triwulan='%s', geserbaru='%s', geserplafon='%s'  where kodekeg='%s'", db_escape_string($geserjenis), db_escape_string($geserrincian), db_escape_string($geserobyek), db_escape_string($lokasi),db_escape_string($kinerja), db_escape_string($sasaran),db_escape_string($detiluraian), db_escape_string($triwulan), $geserbaru, $geserplafon, db_escape_string($data_rev->kodekeg));
+			
+			$resx_keg = db_query($sql);
+			
+		}
+	}
+		
+}	
+}
+
+function cek_detiluraian($kodekeg) {
+$sql = "select * from {anggperkegdetilrevisi} where kodekeg='" . $kodekeg . "' order by kodero, iddetil";		
+$res_rev = db_query($sql);
+$detiluraian = 0;
+while (($data_rev = db_fetch_object($res_rev)) and ($detiluraian == 0)) {
+	
+	$sql = 'select * from anggperkegdetilperubahan where kodekeg=\'%s\' and kodero=\'%s\' and iddetil=\'%s\'' ;
+	$res_keg = db_query(db_rewrite_sql($sql), array ($data_rev->kodekeg, $data_rev->kodero, $data_rev->iddetil));
+	if ($data_keg = db_fetch_object($res_keg)) {
+		
+		if (($data_keg->uraian==$data_rev->uraian) 
+			and ($data_keg->unitjumlah==$data_rev->unitjumlah)
+			and ($data_keg->unitsatuan	==$data_rev->unitsatuan)
+			and ($data_keg->volumjumlah==$data_rev->volumjumlah)
+			and ($data_keg->volumsatuan==$data_rev->volumsatuan)
+			and ($data_keg->harga==$data_rev->harga))
+			
+			$detiluraian = 0;		
+			
+		else
+			$detiluraian = 1;
+		
+		
+	} else
+		$detiluraian = 1;
+	
+	
+}
+
+if ($detiluraian==0) {
+	$sql = "select * from {anggperkegdetilsubrevisi} where iddetil in (select iddetil from {anggperkegdetilrevisi} where kodekeg='" . $kodekeg . "') order by idsub";		
+	drupal_set_message($sql);
+	$res_rev = db_query($sql);
+	while (($data_rev = db_fetch_object($res_rev)) and ($detiluraian == 0)) {
+		
+		drupal_set_message($data_rev->uraian);
+		
+		$sql = 'select * from anggperkegdetilsubperubahan where idsub=\'%s\'' ;
+		$res_keg = db_query(db_rewrite_sql($sql), array ($data_rev->idsub));
+		if ($data_keg = db_fetch_object($res_keg)) {
+			
+			drupal_set_message('x ' . $data_rev->uraian);
+			
+			if (($data_keg->uraian==$data_rev->uraian) 
+				and ($data_keg->unitjumlah==$data_rev->unitjumlah)
+				and ($data_keg->unitsatuan	==$data_rev->unitsatuan)
+				and ($data_keg->volumjumlah==$data_rev->volumjumlah)
+				and ($data_keg->volumsatuan==$data_rev->volumsatuan)
+				and ($data_keg->harga==$data_rev->harga))
+				
+				$detiluraian = 0;		
+				
+			else
+				$detiluraian = 1;
+			
+			
+		} else
+			$detiluraian = 1;
+		
+		
+	}	
+}
+
+return $detiluraian;	
+}
+
+function clean_up_sub_detil() {
+	
+$sql = "select * from {anggperkegdetilsubperubahan3} order by idsub, iddetil";		
+$res = db_query($sql);
+$num = 0;
+
+while ($data = db_fetch_object($res))  {
+
+	$sql = 'select count(idsub) jml from {anggperkegdetilsubrevisi} where idsub=\'%s\'' ;
+	$res_cek = db_query(db_rewrite_sql($sql), array ($data->idsub));
+	$x = 1;
+	if ($res_cek) {
+		if ($data_cek = db_fetch_object($res_cek)) {
+			$x  = $data_cek->jml;
+		}
+	}
+		
+	if ($x>1) {
+		$num++;
+		//drupal_set_message ($data->idsub . ' | ' . $data->uraian . ' | ' . $data->total);
+		
+		$sql = 'delete from {anggperkegdetilsubrevisi} where idsub=\'%s\'' ;
+		$res_exe = db_query(db_rewrite_sql($sql), array ($data->idsub));
+		if ($res_exe) {
+
+			//drupal_set_message ('del ' . $data->idsub . ' OK');
+			
+			$sql = 'insert into {anggperkegdetilsubrevisi} (idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut) select idsub, iddetil, uraian, unitjumlah, unitsatuan, volumjumlah, volumsatuan, harga, total, nourut from {anggperkegdetilsubperubahan3} where idsub=' . $data->idsub ;
+			//drupal_set_message ($sql);
+			$res_ins = db_query($sql);
+			if ($res_ins) {
+				//drupal_set_message ('ins ' . $data->idsub . ' OK');
+			}
+		}
+
+	}
+}
+
+//drupal_set_message ($num);
+return $detiluraian;	
+}
+
+function run_arief()  {
+
+$sql = "select k.kodekeg from {kegiatanverifikator} k inner join {userskpd} us on k.kodeuk=us.kodeuk where us.username='arief'";
+$res_rev = db_query($sql);
+while ($data_rev = db_fetch_object($res_rev)) {
+	
+	$sql =  sprintf("insert into {kegiatanverifikasi} (kodekeg, username, persetujuan) values('%s', '%s', '%s')", $data_rev->kodekeg, 'arief', '1');	
+	
+	$resx_keg = db_query($sql);	
+	
+	
+}	
+}
+
+function run_fixing_perubahan()  {
+
+$sql = "select kodekeg, kegiatan, total, totalp, latarbelakang, tw1p, tw2p, tw3p, tw4p 
+		from {kegiatanperubahan} where kodekeg in (select kodekeg from {kegiatanrevisiperubahan})";
+$res_rev = db_query($sql);
+while ($data_rev = db_fetch_object($res_rev)) {
+	
+	//fixing latarbelakang
+	if ($data_rev->latarbelakang=='') {
+		drupal_set_message ($data_rev->kegiatan . ' - Update latar belakang');
+		
+		if ($data_rev->total==0) {
+			$sql = "update {kegiatanperubahan} set latarbelakang='Adanya Dana Transfer' where kodekeg='" . $data_rev->kodekeg . "'";		
+			$resx_keg = db_query($sql);
+		} else {
+			$sql = "update {kegiatanperubahan} set latarbelakang='Menyesuaikan kebutuhan belanja' where kodekeg='" . $data_rev->kodekeg . "'";		
+			$resx_keg = db_query($sql);
+		}
+		
+		if ($resx_keg) drupal_set_message ($data_rev->kegiatan . ' - Update latar belakang OK');
+		
+	}
+	
+	if ($data_rev->tw1p+$data_rev->tw2p+$data_rev->tw3p+$data_rev->tw4p != $data_rev->totalp) {
+		drupal_set_message ($data_rev->kegiatan . ' - Update triwulan');
+		
+		$sql = "update {kegiatanperubahan} set tw3p=totalp-(tw1p+tw2p+tw4p) where kodekeg='" . $data_rev->kodekeg . "'";		
+		$resx_keg = db_query($sql);
+		
+		if ($resx_keg) drupal_set_message ($data_rev->kegiatan . ' - Update triwulan OK');
+	}
+	
+}	
+}
+
+function run_fixing_perubahan1()  {
+
+$sql = "select kodekeg, kegiatan, total, totalp, latarbelakang, tw1p, tw2p, tw3p, tw4p 
+		from {kegiatanperubahan} where tw3p<0";
+$res_rev = db_query($sql);
+while ($data_rev = db_fetch_object($res_rev)) {
+	
+
+	drupal_set_message ($data_rev->kegiatan . ' - Update triwulan');
+	
+	$sql = "update {kegiatanperubahan} set tw4p=0,tw3p=totalp-(tw1p+tw2p) where kodekeg='" . $data_rev->kodekeg . "'";		
+	$resx_keg = db_query($sql);
+	
+	if ($resx_keg) drupal_set_message ($data_rev->kegiatan . ' - Update triwulan OK');
+	
+	
+}	
+}
+
+function run_fixing_perubahan2()  {
+
+$sql = "select kodekeg, kegiatan, total, totalp, latarbelakang, tw1p, tw2p, tw3p, tw4p 
+		from {kegiatanperubahan} where tw3p<0";
+$res_rev = db_query($sql);
+while ($data_rev = db_fetch_object($res_rev)) {
+	
+
+	drupal_set_message ($data_rev->kegiatan . ' - Update triwulan');
+	
+	$sql = "update {kegiatanperubahan} set tw4p=0,tw1p=0,tw2p=0,tw3p=totalp where kodekeg='" . $data_rev->kodekeg . "'";		
+	$resx_keg = db_query($sql);
+	
+	if ($resx_keg) drupal_set_message ($data_rev->kegiatan . ' - Update triwulan OK');
+	
+	
+}	
+}
+
+function fixingkodekegiatan() {
+	//RESET
+	$str = '1.1. Reset temporary code';
+	$sql = 'delete from cekkode';
+	drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+	
+	//RESET
+	$str = '1.2. Populate temporary code - Step 1';
+	$sql = 'insert into cekkode (kodeuk,kodepro,nomorkeg,x) select kodeuk,kodepro,nomorkeg,count(kodekeg) from {kegiatanrevisi} group by kodeuk,kodepro,nomorkeg';
+	drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+	
+	$str = '1.3. Populate temporary code - Step 2';
+	$sql = 'delete from cekkode where x=1';
+	drupal_set_message($sql);
+	$res = db_query($sql);
+	if ($res) $str .= ' ok';
+	drupal_set_message($str);
+
+	//FIXIGG KODE
+	$str = '1.4. Fixing code';
+	$sql = 'select kodeuk,kodepro,nomorkeg from {cekkode}'; 	
+	$res = db_query($sql); 
+	while ($data = db_fetch_object($res)) {
+		
+		$str_keg = '1.4.1. Fixing kode kegiatan';
+		$sql = "select kodekeg,kegiatan,total,kodeuk,kodepro,nomorkeg,total from {kegiatanrevisi} where kodeuk='" . $data->kodeuk . "' and kodepro='" . $data->kodepro . "' and nomorkeg='" . $data->nomorkeg . "'"; 
+		$reskeg = db_query($sql); 
+		while ($datakeg = db_fetch_object($reskeg)) {
+			
+			$totalp = $datakeg->total;
+			$total = 0;
+			
+			//CEK DI PENETAPAN
+			$sql = "select kodekeg,total,kodeuk,kodepro,nomorkeg,total from {kegiatanskpd} where inaktif=0 and kodekeg='" . $data->kodekeg . "'"; 
+			$respen = db_query($sql); 
+			if ($datapen = db_fetch_object($respen)) {
+				$total = $datapen->total;
+			}
+			
+			//KEGIATAN BARU
+			if ($total==0) {
+				
+				drupal_set_message($datakeg->kegiatan . ': ' . $datakeg->nomorkeg . '->' . substr($datakeg->kodekeg,-3));
+				$sql = "update {kegiatanrevisi} set nomorkeg='" . substr($datakeg->kodekeg,-3) . "' where kodekeg='" . $datakeg->kodekeg . "'"; 
+				
+				$resexe = db_query($sql); 
+				drupal_set_message('ok');
+				
+			} else {
+				drupal_set_message($datakeg->kegiatan . ': tetap');
+			}
+			
+		}
+		
+	}	
+	
+	//cek ulang
+	$sql = 'select kodeuk,kodepro,nomorkeg,count(kodekeg) x from {kegiatanrevisi} group by kodeuk,kodepro,nomorkeg';
+	$res = db_query($sql);
+	while ($data = db_fetch_object($res)) {
+		if ($data->x>1) {
+			drupal_set_message($data->kodeuk . '.' . $data->kodepro . '.' . $data->nomorkeg);
+		}
+	}
+	
+	if ($res) $str .= ' selesai';
+	drupal_set_message($str);
+	
+}

@@ -1,0 +1,569 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function kaspad_menu() {
+    $items['kaspad'] = array(
+        'title' => 'Anggaran Kas Pendapatan SKPD',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('kaspad_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function kaspad_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	//drupal_add_js('files/js/kegiatancam.js');
+	
+	$kodeuk = arg(1);
+	$otomatis = arg(2);
+
+
+	$title = 'Anggaran Kas Pendapatan ';
+	drupal_set_html_head('<style>label{font-weight: bold; display: block; width: 200px; float: left;}</style>');
+	
+	$pajak = 0;
+	$retribusi = 0;
+	$hpkd = 0;
+	$padlain = 0;
+	
+	if (isset($kodeuk)) {
+        $sql = 'select namasingkat,kodedinas from {unitkerja} where {kodeuk}=\'%s\'';
+        $res = db_query(db_rewrite_sql($sql), array ($kodeuk));
+        if ($res) {
+            $data = db_fetch_object($res);
+			if ($data) {
+				$title .= $data->namasingkat;
+				$kodedinas = $data->kodedinas;
+			}
+		}
+
+		$sql = 'select left(kodero,3) kodej, sum(jumlah) anggaran from {anggperuk} where {kodeuk}=\'%s\' and left(kodero,2)=\'%s\' group by left(kodero,3)';
+        $res = db_query(db_rewrite_sql($sql), array ($kodeuk, '41'));
+        if ($res) {
+			while ($data = db_fetch_object($res)) {
+				
+				$anggaran += $data->anggaran;
+				
+				switch ($data->kodej) {
+					case "411":
+						$pajak = $data->anggaran;
+						break;
+						
+					case "412":
+						$retribusi = $data->anggaran;
+						break;
+
+					case "413":
+						$hpkd = $data->anggaran;
+						break;
+					
+					case "414":
+						$padlain = $data->anggaran;
+						break;
+				}
+			}
+		}
+		
+	} 
+	
+	drupal_set_title($title);
+	
+	$form['formdata']['kodeuk']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $kodeuk, 
+	); 
+	$form['formdata']['otomatis']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $otomatis, 
+	); 
+
+	$form['formdata']['anggaran']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Anggaran',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran, jumlahnya akan terisi secara otomatis saat detilnya diisi', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($anggaran), 
+	); 
+	$form['formdata']['e_anggaran']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $anggaran, 
+	); 
+	$form['formdata']['pajak']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Pajak Daerah',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran pajak', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($pajak), 
+	); 
+	$form['formdata']['e_pajak']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $pajak, 
+	); 
+	$form['formdata']['retribusi']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Retribusi Daerah',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran barang jasa', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($retribusi), 
+	); 
+	$form['formdata']['e_retribusi']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $retribusi, 
+	); 
+	$form['formdata']['hpkd']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Hasil Pengelolaan KD',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran hpkd', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($hpkd), 
+	); 
+	$form['formdata']['e_hpkd']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $hpkd, 
+	); 
+	$form['formdata']['padlain']= array(
+		'#type'         => 'textfield', 
+		'#title'        => 'Lain-Lain PAD',
+		'#attributes'	=> array('style' => 'text-align: right'),
+		//'#description'  => 'Jumlah anggaran hpkd', 
+		'#size'         => 30, 
+		'#default_value'=> apbd_fn($padlain), 
+	); 
+	$form['formdata']['e_padlain']= array(
+		'#type'         => 'hidden', 
+		'#default_value'=> $padlain, 
+	); 
+
+	$weight = 0;
+	$bulan = 0;
+	$rows= array();
+
+	if (isset($otomatis)) {
+		$o_pajak = round(($pajak/1000) / 12) * 1000;
+		$o_retribusi = round(($retribusi/1000) / 12) * 1000;
+		$o_hpkd = round(($hpkd/1000) / 12) * 1000;
+		$o_padlain = round(($padlain/1000) / 12) * 1000;
+
+		for ($bulan = 1; $bulan <= 11; $bulan++) {
+			$weight += 1;
+			
+			$rows[] = array (
+							'id' => $weight,
+							'tag' => 'new',
+							'bulan' => $bulan,
+							'pajak' => $o_pajak,
+							'retribusi' => $o_retribusi,
+							'hpkd' => $o_hpkd,
+							'padlain' => $o_padlain,
+							'weight' => $weight,
+						);
+			
+		}
+		$bulan = 12;
+		$weight += 1;
+		$rows[] = array (
+						'id' => $weight,
+						'tag' => 'new',
+						'bulan' => $bulan,
+						'pajak' => $pajak - (11 * $o_pajak),
+						'retribusi' => $retribusi - (11 * $o_retribusi),
+						'hpkd' => $hpkd - (11 * $o_hpkd),
+						'padlain' => $padlain - (11 * $o_padlain),
+						'weight' => $weight,
+					);
+		
+			
+	} else {
+		$where = sprintf(" where kodeuk='%s'", db_escape_string($kodeuk));
+		$sql = 'select kodeuk, bulan, pajak, retribusi, hpkd, padlain from {anggkaspendapatan} ' . $where  . ' order by bulan';
+		//($sql);
+		$pres = db_query($sql);
+		while ($data = db_fetch_object($pres)) {
+			$bulan++;
+			$weight++;
+			$rows[] = array (
+							'id' => $weight,
+							'tag' => 'old',
+							'bulan' => $bulan,
+							'pajak' => $data->pajak,
+							'retribusi' => $data->retribusi,
+							'hpkd' => $data->hpkd,
+							'padlain' => $data->padlain,
+							'weight' => $weight,
+						);
+			
+		}
+
+		if ($bulan==0) {
+			for ($bulan = 1; $bulan <= 12; $bulan++) {
+				$weight += 1;
+				
+				$rows[] = array (
+								'id' => $weight,
+								'tag' => 'new',
+								'bulan' => $bulan,
+								'pajak' => 0,
+								'retribusi' => 0,
+								'hpkd' => 0,
+								'padlain' => 0,
+								'weight' => $weight,
+							);
+				
+			}
+		}
+	}
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+
+        $form['tabledragrows'][$row['id']]['tag_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['tag'],
+            '#size' => 10,
+        );
+
+		$form['tabledragrows'][$row['id']]['bulan_' . $row['id']] = array(
+			//#type' => 'textfield',
+			'#type' => 'markup',
+			'#value' => $row['bulan'],
+			'#size' => 5,
+		);
+
+        $form['tabledragrows'][$row['id']]['pajak_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['pajak'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 20,
+        );
+        $form['tabledragrows'][$row['id']]['retribusi_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['retribusi'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 20,
+        );
+        $form['tabledragrows'][$row['id']]['hpkd_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['hpkd'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 20,
+        );
+        $form['tabledragrows'][$row['id']]['padlain_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['padlain'],
+			'#attributes'	=> array('style' => 'text-align: right'),
+            '#size' => 20,
+        );
+
+
+        // the weight form element.
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+ 	if (($kodedinas != '') and (isSuperuser())) {
+		//PREV
+		$sql = 'select distinct u.kodeuk from {unitkerja} u inner join {anggperuk} a on u.kodeuk=a.kodeuk where u.kodedinas<\'%s\' order by u.kodedinas desc limit 1';
+		$res = db_query(db_rewrite_sql($sql), array ($kodedinas));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {
+				$prevkode=$data->kodeuk;
+
+				$form['prevkode']= array(
+					'#type'         => 'hidden', 
+					'#default_value'=> $prevkode, 
+					//'#weight' => 1,
+				);				
+				
+				
+				$form['formdata']['submitprev'] = array (
+					'#type' => 'submit',
+					'#value' => '<<',
+					//'#weight' => 2,
+				); 
+
+				$form['submitprev'] = array (
+					'#type' => 'submit',
+					'#value' => '<<',
+					//'#weight' => 2,
+				); 
+				
+			}
+		}	
+		
+		//NEXT
+		$sql = 'select distinct u.kodeuk from {unitkerja} u inner join {anggperuk} a on u.kodeuk=a.kodeuk where u.kodedinas>\'%s\' order by kodeuk limit 1';
+		$res = db_query(db_rewrite_sql($sql), array ($kodedinas));
+		if ($res) {
+			$data = db_fetch_object($res);
+			if ($data) {
+				$nextkode=$data->kodeuk;
+
+				$form['nextkode']= array(
+					'#type'         => 'hidden', 
+					'#default_value'=> $nextkode, 
+					//'#weight' => 3,
+				);				
+
+				$form['formdata']['submitnext'] = array (
+					'#type' => 'submit',
+					'#value' => '>>',
+					//'#weight' => 4,
+				);
+
+				$form['submitnext'] = array (
+					'#type' => 'submit',
+					'#value' => '>>',
+					//'#weight' => 4,
+				);
+				
+			}
+		}		
+	}
+	
+	$form['formdata']['submitoto'] = array(
+		'#type' => 'submit',
+		'#value' => 'Otomatis',
+		//'#weight' => 7,
+	);
+	$form['formdata']['submit'] = array(
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/pendapatan' class='btn_blue' style='color: white'>Tutup</a>",
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+	);
+	$form['submitoto'] = array(
+		'#type' => 'submit',
+		'#value' => 'Otomatis',
+		//'#weight' => 7,
+	);
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/unitkerja' class='btn_blue' style='color: white'>Tutup</a>",
+		'#value' => 'Simpan',
+		//'#weight' => 7,
+	);
+
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the kaspad_form() form.
+ */
+function kaspad_form_validate($form, &$form_state) {
+	
+	$e_anggaran = $form_state['values']['e_anggaran'];
+	$e_pajak += $form_state['values']['e_pajak'];
+	$e_retribusi += $form_state['values']['e_retribusi'];
+	$e_hpkd += $form_state['values']['e_hpkd'];
+	$e_padlain += $form_state['values']['e_padlain'];
+
+	$pajak = 0;
+	$retribusi = 0;
+	$hpkd = 0;
+	$padlain = 0;
+
+	$t_pajak = 0;
+	$t_retribusi = 0;
+	$t_hpkd = 0;
+	$t_padlain = 0;
+	
+	for ($x = 1; $x <= 12; $x++) {
+		
+		$pajak = $form_state['values']['pajak_' . $x];
+		$retribusi = $form_state['values']['retribusi_' . $x];
+		$hpkd = $form_state['values']['hpkd_' . $x];
+		$padlain = $form_state['values']['padlain_' . $x];
+
+		$t_pajak += $pajak;
+		$t_retribusi += $retribusi;
+		$t_hpkd += $hpkd;
+		$t_padlain += $padlain;
+
+		if ($x<=3) 
+			$tw1 += $pajak + $retribusi + $hpkd + $padlain;
+		else if ($x<=6) 
+			$tw2 += $pajak + $retribusi + $hpkd + $padlain;
+		else if ($x<=9) 	
+			$tw3 += $pajak + $retribusi + $hpkd + $padlain;
+		else
+			$tw4 += $pajak + $retribusi + $hpkd + $padlain;
+			
+	}	
+	
+	//Cek 1000
+	$seribu = 1000;
+	if (($tw1 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #1 (' . apbd_fn($tw1) . '), tidak bulat per seribu');
+	if (($tw2 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #2 (' . apbd_fn($tw2) . '), tidak bulat per seribu');
+	if (($tw3 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #3 (' . apbd_fn($tw3) . '), tidak bulat per seribu');
+	if (($tw4 % $seribu)>0) form_set_error('', 'Jumlah isian Tri Wulan #4 (' . apbd_fn($tw4) . '), tidak bulat per seribu');
+	
+	//Cek pad
+	if ($t_pajak > $e_pajak) form_set_error('', 'Jumlah isian anggaran kas pajak daerah (' . apbd_fn($t_pajak) . ') lebih besar daripada anggaran pendapatan pajak daerah (' . apbd_fn($e_pajak) . ')');
+	if ($t_retribusi > $e_retribusi) form_set_error('', 'Jumlah isian anggaran kas retribusi daerah (' . apbd_fn($t_retribusi) . ') lebih besar daripada anggaran pendapatan retribusi daerah (' . apbd_fn($e_retribusi) . ')');
+	if ($t_hpkd > $e_hpkd) form_set_error('', 'Jumlah isian anggaran kas hasil pengelolaan kekayaan daerah yg dipisahkan (HPKD) (' . apbd_fn($t_hpkd) . ') lebih besar daripada anggaran pendapatan HPKD (' . apbd_fn($e_hpkd) . ')');
+	if ($t_padlain > $e_padlain) form_set_error('', 'Jumlah isian anggaran kas PAD lainnya (' . apbd_fn($t_padlain) . ') lebih besar daripada anggaran PAD Lainya (' . apbd_fn($e_padlain) . ')');
+	
+} 
+
+/**
+ * Implements hook_submit() for the kaspad_form() form.
+ */
+function kaspad_form_submit($form, &$form_state) {
+
+	$kodeuk = $form_state['values']['kodeuk'];
+    if($form_state['clicked_button']['#value'] == $form_state['values']['submitnext']) {
+		$nextkode = $form_state['values']['nextkode'];
+        $form_state['redirect'] = 'kaspad/' .  $nextkode ;
+		//drupal_set_message('Next');
+
+	} else if($form_state['clicked_button']['#value'] == $form_state['values']['submitprev']) {
+		$prevkode = $form_state['values']['prevkode'];
+        $form_state['redirect'] = 'kaspad/' . $prevkode ;
+		//drupal_set_message('Next');
+		
+	} else if($form_state['clicked_button']['#value'] == $form_state['values']['submitoto']) {
+		$form_state['redirect'] = 'kaspad/' . $kodeuk . '/oto';
+	
+	} else {
+		
+		$otomatis = $form_state['values']['otomatis'];
+		if ($otomatis=='oto') {
+			$sql = sprintf("delete from {anggkaspendapatan} where kodeuk='%s'", $kodeuk);
+			$res = db_query($sql);
+		}
+
+		$tw1 =0;
+		$tw2 =0;
+		$tw3 =0;
+		$tw4 =0;
+		
+		for ($x = 1; $x <= 12; $x++) {
+			
+			$tag = $form_state['values']['tag_' . $x];
+
+			$pajak = $form_state['values']['pajak_' . $x];
+			$retribusi = $form_state['values']['retribusi_' . $x];
+			$hpkd = $form_state['values']['hpkd_' . $x];
+			$padlain = $form_state['values']['padlain_' . $x];
+
+			if ($x<=3) 
+				$tw1 += $pajak + $retribusi + $hpkd + $padlain;
+			else if ($x<=6) 
+				$tw2 += $pajak + $retribusi + $hpkd + $padlain;
+			else if ($x<=9) 	
+				$tw3 += $pajak + $retribusi + $hpkd + $padlain;
+			else
+				$tw4 += $pajak + $retribusi + $hpkd + $padlain;
+							
+			//Simpan detilnya
+			if ($tag == 'new') {
+
+				$sql = "insert into {anggkaspendapatan} (kodeuk,bulan,pajak,retribusi,hpkd,padlain) values('%s', '%s', '%s','%s', '%s', '%s')";
+				$res = db_query(db_rewrite_sql($sql), array($kodeuk, $x, $pajak,$retribusi,$hpkd,$padlain));
+
+			} 	else {
+				$sql = sprintf("update {anggkaspendapatan} set pajak='%s',retribusi='%s',hpkd='%s',padlain='%s' where kodeuk='%s' and bulan='%s'", $pajak, $retribusi, $hpkd, $padlain, $kodeuk, $x);
+				$res = db_query($sql);
+				
+			}	
+		}	
+
+		if ($res)
+			drupal_set_message('Penyimpanan data berhasil dilakukan');
+		else
+			drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+		
+		//$form_state['redirect'] = 'apbd/pendapatan';
+	}	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function kaspad_theme() {
+    return array(
+        'kaspad_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_kaspad_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledragrows'][$id]['iddetil_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['space_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['bulan_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['pajak_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['retribusi_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['hpkd_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['padlain_' . $id]);
+				
+                //Add the weight field to the row
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+				array('data' => '',  'width'=> '0px'),
+				array('data' => 'Bulan',  'width'=> '10px'),
+				array('data' => 'Pajak',  'width' => '10px'),
+				array('data' => 'Retribusi',  'width' => '10px'),
+				array('data' => 'HPKD',  'width' => '10px'),
+				array('data' => 'Lain-Lain PAD',  'width' => '10px'),
+				array('data' => 'Weight'),
+				); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

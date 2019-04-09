@@ -1,0 +1,256 @@
+<?php
+ 
+/**
+ * For more informaiton about the different API controls available see:
+ * http://api.drupal.org/api/drupal/developer--topics--forms_api_reference.html/6
+ */
+ 
+function bidang_menu() {
+    $items['bidang'] = array(
+        'title' => 'Bidang Prioritas',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('bidang_form'),
+        'access callback' => TRUE,
+    );
+    return $items;
+}
+ 
+/**
+ * This is form containing every form element type available.
+ */
+function bidang_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+	
+
+	$title = 'Bidang Prioritas';
+
+    $sql = 'select kodebid,namabid,namasingkat from {bidang} order by kodebid';
+	
+	//drupal_set_message($sql);
+	$res = db_query($sql);
+	$weight = 0;
+	$rows= array();
+	if ($res) {
+		//drupal_set_message('res ok');
+		while ($data = db_fetch_object($res)) {
+			$weight += 1;
+
+			$rows[] = array (
+							'id' => $weight,
+							'e_kodebid' => $data->kodebid,
+							'kodebid' => $data->kodebid,
+							'namabid' => $data->namabid,
+							'namasingkat' => $data->namasingkat,
+							'weight' => $weight,
+						);
+		}
+	}
+	
+	for ($x = 1; $x <= 3; $x++) {
+		$weight += 1;
+
+		$rows[] = array (
+						'id' => $weight,
+						'e_kodebid' => 'new',
+						'kodebid' => '',
+						'namabid' => '',
+						'namasingkat' => '',
+						'weight' => $weight,
+					);
+	}
+	
+    // Tabledrag element
+    foreach ($rows as $row) {
+        $form['tabledragrows'][$row['id']]['e_kodebid_' . $row['id']] = array(
+            '#type' => 'hidden',
+            '#default_value' => $row['e_kodebid'],
+            '#size' => 10,
+        );
+
+        $form['tabledragrows'][$row['id']]['kodebid_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['kodebid'],
+            '#size' => 5,
+        );
+
+		$form['tabledragrows'][$row['id']]['namabid_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['namabid'],
+            '#size' => 90,
+        );
+		$form['tabledragrows'][$row['id']]['namasingkat_' . $row['id']] = array(
+            '#type' => 'textfield',
+            '#default_value' => $row['namasingkat'],
+            '#size' => 15,
+        );
+
+
+        // the weight form element.
+        $form['tabledragrows'][$row['id']]['weight_' . $row['id']] = array(
+            '#type' => 'weight',
+            '#delta' => 50,
+            '#default_value' => $row['weight'],
+            '#attributes' => array('class' => 'weight'),
+        );
+    }
+ 
+	$form['maxno']= array(
+		'#type'         => 'hidden', 
+		'#title'        => 'kodero', 
+		'#default_value'=> $weight, 
+	); 
+ 
+ 	$form['submitnewdetil'] = array (
+		'#type' => 'submit',
+		'#value' => 'Tambah',
+		//'#weight' => 6,
+	);
+	
+    // A submit element
+    $form['submit'] = array(
+        '#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/matriksprioritas' class='btn_blue' style='color: white'>Tutup</a>",
+        '#value' => 'Simpan',
+		//'#weight' => 7,
+    );
+ 
+    return $form;
+}
+
+/**
+ * Implements hook_validate() for the bidang_form() form.
+ */
+function bidang_form_validate($form, &$form_state) {
+
+} 
+
+/**
+ * Implements hook_submit() for the bidang_form() form.
+ */
+function bidang_form_submit($form, &$form_state) {
+    
+
+	$maxno = $form_state['values']['maxno'];
+
+	for ($x = 1; $x <= $maxno; $x++) 
+	{
+		
+		//Read
+		$e_kodebid = $form_state['values']['e_kodebid_' . $x];
+		$kodebid = $form_state['values']['kodebid_' . $x];
+		$namabid = $form_state['values']['namabid_' . $x];
+		$namasingkat = $form_state['values']['namasingkat_' . $x];
+
+		if ($kodebid != '') {
+			
+			//drupal_set_message($namasingkat);
+			
+			//Simpan detilnya
+			if ($e_kodebid=='new') {
+				//drupal_set_message('new ' . $kodero);
+				$sql = 'insert into {bidang} (kodebid, namabid, namasingkat) values(\'%s\', \'%s\', \'%s\')';        
+				$res = db_query(db_rewrite_sql($sql), array($kodebid, $namabid, $namasingkat));	
+			} else {
+				
+				$sql = 'update {bidang} set kodebid=\'%s\', namabid=\'%s\', namasingkat=\'%s\' where kodebid=\'%s\' ';
+				$res = db_query(db_rewrite_sql($sql), array($kodebid, $namabid, $namasingkat, $e_kodebid));
+				
+			}
+			
+		} else {
+			$e_kodebid = $form_state['values']['e_kodebid_' . $x];
+			if ($iddetil!=='new') {
+
+				$sql = 'delete from {bidang} where kodebid=\'%s\'';
+				$res = db_query(db_rewrite_sql($sql), array($e_kodebid));
+				
+			}
+			
+		}
+
+	}
+	
+	
+	if ($form_state['clicked_button']['#value'] == $form_state['values']['submitnewdetil']) {
+		$form_state['redirect'] = 'bidang/';
+		
+	} else {
+		
+		if ($res)
+			drupal_set_message('Penyimpanan data berhasil dilakukan');
+		else
+			drupal_set_message('Penyimpanan data tidak berhasil dilakukan');
+		drupal_goto('/matriksprioritas');    
+	}
+
+	
+	
+}
+ 
+/**
+ * Implementation of hook_theme().
+ */
+function bidang_theme() {
+    return array(
+        'bidang_form' => array(
+            'arguments' => array(
+                'form' => NULL
+            ),
+        ),
+    );
+}
+ 
+/**
+ * Theme for form_element_form. Used to create the tabledrag element and then
+ * render the rest of the form.
+ */
+function theme_bidang_form($form) {
+    $table_rows = array();
+ 
+    if (is_array($form['tabledragrows'])) {
+        //loop through each "row" in the table array
+        foreach ($form['tabledragrows'] as $id => $row) {
+            //we are only interested in numeric keys
+            if (intval($id)) {
+                $this_row = array();
+				
+				//$this_row[] = drupal_render($form['tabledrag rows'][$id]['iddetil_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['kodebid_' . $id]);
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['namabid_' . $id]);
+				$this_row[] = drupal_render($form['tabledragrows'][$id]['namasingkat_' . $id]);
+				
+                //Add the weight field to the row
+                $this_row[] = drupal_render($form['tabledragrows'][$id]['weight_' . $id]);
+ 
+                //Add the row to the array of rows
+                $table_rows[] = array('data' => $this_row);
+            }
+        }
+    }
+ 
+    //Make sure the header count matches the column count
+    //$header = array(
+     //   "Person",
+    //    "Email",
+    //    "Weight"
+    //);
+	$header = array (
+				 array('data' => 'Kode',  'width'=> '10px'),
+				 array('data' => 'Bidang',  'width' => '90px'),
+				 array('data' => 'Singkatan',  'width' => '90px'),
+				 array('data' => 'Weight'),
+				); 
+ 
+    $form['tabledragrows'] = array(
+        '#value' => theme('table', $header, $table_rows, array('id' => 'id'))
+    );
+ 
+    $output = drupal_render($form);
+ 
+    // Call add_tabledrag to add and setup the JavaScript
+    // The key thing here is the first param - the table ID
+    // and the 4th param, the class of the form item which holds the weight
+    drupal_add_tabledrag('id', 'order', 'sibling', 'weight');
+ 
+    return $output;
+}

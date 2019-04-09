@@ -1,0 +1,2754 @@
+<?php
+
+function apbdverifikasi_menu() {
+  // $items = array();
+  $items['apbdverifikasi'] = array(
+    'title' => 'Verifikasi RKA Perubahan',
+    'page callback' => 'drupal_get_form',
+	'access arguments' => array ('laporan viewer'),
+    'page arguments' => array('apbdverifikasi_persetujuan_form'),
+    'access callback' => TRUE,
+  );
+  $items['apbdverifikasi/persetujuan'] = array(
+    'title' => 'Verifikasi',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+  $items['apbdverifikasi/permohonan'] = array(
+    'title' => 'Permohonan Perubahan',
+    'page callback' => 'drupal_get_form',
+	'access arguments' => array ('laporan viewer'),
+    'page arguments' => array('apbdverifikasi_permohonan_form'),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+  /*
+  $items['apbdverifikasi/rka'] = array(
+    'title' => 'RKA Perubahan',
+    'page callback' => 'drupal_get_form',
+	'access arguments' => array ('laporan viewer'),
+    'page arguments' => array('apbdverifikasi_rka_form'),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  */
+
+  $items['apbdverifikasi/matriks'] = array(
+    'title' => 'Matriks Perubahan',
+    'page callback' => 'drupal_get_form',
+	'access arguments' => array ('laporan viewer'),
+    'page arguments' => array('apbdverifikasi_matriks_form'),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  
+  return $items;
+}
+
+function apbdverifikasi_persetujuan_form() {
+	drupal_add_css('files/css/kegiatancam.css');
+
+	$kodekeg = arg(1);
+	if ($kodekeg=='') { 
+		$kodekeg = $_SESSION['kodekeg_verifikasi'];
+	}
+	$_SESSION['kodekeg_verifikasi'] = $kodekeg;
+	
+	$form['kodekeg']= array(
+		'#type'         		=> 'hidden', 
+		'#default_value'		=> $kodekeg, 
+	); 	
+
+	global $user;
+	$username =  $user->name;
+	$form['username']= array(
+		'#type'         		=> 'hidden', 
+		'#default_value'		=> $username, 
+	); 	
+	
+	$ada = false;
+	$fsql = sprintf('select jawaban from {kegiatanverifikasi} where kodekeg=\'%s\' and username=\'%s\'', $kodekeg, $username);
+	$res = db_query($fsql);
+	if ($res) {
+		if ($data = db_fetch_object($res)) {
+			$ada = true;
+			$jawaban = $data->jawaban;
+		}
+	} 	
+	$form['ada']= array(
+		'#type'         		=> 'hidden', 
+		'#default_value'		=> $ada, 
+	); 	
+	
+	$form['jawaban']= array( 
+		'#type'         => 'textfield', 
+		'#title'        => 'Catatan Verifikator', 
+		//'#description'  => 'sasaran', 
+		'#maxlength'    => 255, 
+		'#size'         => 120, 
+		//'#required'     => !$disabled, 
+		//'#disabled'     => $disabled, 
+		'#default_value'=> $jawaban, 
+		//'weight' => 0,
+	); 
+	
+	
+		
+	
+	
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => 'Verifikasi',
+		//'weight' => 2,
+	);
+	$form['linex']= array(
+		'#type'         => 'markup', 
+		'#value'		=> '<p><img src="/files/line_long.png"  style="float:center"></p>', 
+		//'weight' => 1,
+	);
+
+	/*
+	$form['submittolak'] = array (
+		'#type' => 'submit',
+		'#value' => 'Tolak',
+		//'weight' => 3,
+	);				
+	$form['submitreset'] = array (
+		'#type' => 'submit',
+		'#value' => 'Reset',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisi' class='btn_green' style='color: white'>Tutup</a>",
+		//'weight' => 3,
+	);		
+	*/	
+
+	$html = GenReportFormHeaderX($kodekeg, 'rpka');
+	$html .= GenReportFormContentX($kodekeg);
+	//$html .= GenReportFormFooter($kodekeg, 'rpka');
+	$form['uraian2']= array(
+		'#type'         => 'markup', 
+		'#value'		=> $html, 
+	); 		
+
+	
+	return $form;
+}
+
+function apbdverifikasi_persetujuan_form_submit($form, &$form_state) {
+	//global $user;
+	//$username =  $user->name;
+
+	$kodekeg = $form_state['values']['kodekeg'];
+	$jawaban = $form_state['values']['jawaban'];
+	$ada = $form_state['values']['ada'];
+	$username = $form_state['values']['username'];
+	
+	//drupal_set_message($kodekeg);
+	//drupal_set_message($jawaban);
+
+	/*
+	//CEK FIRST
+	$ada = false;
+	//$sql = 'select kodekeg from {kegiatanverifikasi} where kodekeg=\'%s\' and username=\'%s\'';
+	//$fsql = sprintf($sql, db_escape_string($kodekeg, $username));
+	
+	$fsql = sprintf('select username from {kegiatanverifikasi} where kodekeg=\'%s\' and username=\'%s\'', $kodekeg, $username);
+	drupal_set_message($fsql);
+	$res = db_query($fsql);
+	if ($res) {
+		if ($data = db_fetch_object($res)) {
+			$ada = true;
+			drupal_set_message('ada');
+		}
+	} else
+		drupal_set_message('false');	
+	*/
+
+	if ($form_state['clicked_button']['#value'] == $form_state['values']['submit']) 	//APV
+		$persetujuan = 1;
+		
+	else if ($form_state['clicked_button']['#value'] == $form_state['values']['submittolak']) 	//REJECT
+		$persetujuan = 0;
+	
+	else
+		$persetujuan = -1;
+	
+	if ($persetujuan >= 0) {
+		if ($ada == false) {
+			$sql = 'insert into {kegiatanverifikasi} (kodekeg, username, jawaban, persetujuan) values(\'%s\',\'%s\',\'%s\',\'%s\')';
+			$res = db_query(db_rewrite_sql($sql), array($kodekeg, $username, $jawaban, $persetujuan));
+		
+		} else {
+			$sql = 'update {kegiatanverifikasi} set jawaban=\'%s\', persetujuan=\'%s\' where kodekeg=\'%s\' and username=\'%s\'';
+			$res = db_query(db_rewrite_sql($sql), array($jawaban, $persetujuan, $kodekeg, $username));
+			
+		}
+		
+	} else {
+		$sql = 'delete from {kegiatanverifikasi} where kodekeg=\'%s\' and username=\'%s\'';
+		$res = db_query(db_rewrite_sql($sql), array($kodekeg, $username));
+	}	
+	if ($res) 
+		drupal_goto('/apbd/kegiatanrevisi');
+	else
+		drupal_set_message('Penyimpanan gagal');
+	
+}
+function apbdverifikasi_permohonan_form() {
+
+	$kodekeg = $_SESSION['kodekeg_verifikasi'];
+			
+	$form['submitcetakpermohonan'] = array (
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan' class='btn_green' style='color: white'>Tutup</a>",
+		'#value' => 'Cetak'
+	);		
+	
+	$html = GenSuratPermohonanPerubahan($kodekeg);
+	$form['uraian1']= array(
+		'#type'         => 'markup', 
+		'#value'		=> $html, 
+	); 	
+
+	
+	return $form;
+}
+
+function apbdverifikasi_permohonan_form_submit($form, &$form_state) {
+	//$kodekeg = $form_state['values']['kodekeg'];
+	$kodekeg = $_SESSION['kodekeg_verifikasi'];
+	$sql = 'select id from {kegiatanrevisiperubahan} where kodekeg=\'%s\'';
+	$fsql = sprintf($sql, db_escape_string($kodekeg));
+	$res = db_query($fsql);
+	if ($res) {
+		if ($data = db_fetch_object($res)) {
+			$id_x = $data->id;
+		}
+	}		
+	$uri = 'apbd/kegiatanskpd/printusulan/' . $id_x . '/10/rpka/pdf/sp';
+	
+	drupal_goto($uri);
+	
+}
+
+function apbdverifikasi_rka_form() {
+	//drupal_add_css('files/css/kegiatancam.css');
+
+	$form['submitcetakrka'] = array (
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan' class='btn_green' style='color: white'>Tutup</a>",
+		'#value' => 'Cetak'
+	);		
+	
+	$kodekeg = $_SESSION['kodekeg_verifikasi'];
+
+	//$html = GenReportFormHeaderX($kodekeg, 'rpka');
+	//$html .= GenReportFormContentX($kodekeg);
+	$html .= GenReportFormRekening($kodekeg);
+	$form['uraian2']= array(
+		'#type'         => 'markup', 
+		'#value'		=> $html, 
+	); 		
+
+	return $form;
+}
+
+function apbdverifikasi_rka_form_submit($form, &$form_state) {
+	//$kodekeg = $form_state['values']['kodekeg'];
+	$kodekeg = $_SESSION['kodekeg_verifikasi'];
+	$uri = 'apbd/kegiatanskpd/printusulan/' . $kodekeg . '/10/rpka/pdf';
+	
+	drupal_goto($uri);
+	
+}
+function apbdverifikasi_matriks_form() {
+
+	$form['submitcetakmatriks'] = array (
+		'#type' => 'submit',
+		'#suffix' => "&nbsp;<a href='/apbd/kegiatanrevisiperubahan' class='btn_green' style='color: white'>Tutup</a>",
+		'#value' => 'Cetak'
+	);		
+
+	$kodekeg = $_SESSION['kodekeg_verifikasi'];
+	$html = GenMatriksPermohonanPerubahan($kodekeg);
+
+	$form['uraian3']= array(
+		'#type'         => 'markup', 
+		'#value'		=> $html, 
+	); 	
+	
+	
+	return $form;
+}
+
+function apbdverifikasi_matriks_form_submit($form, &$form_state) {
+	//$kodekeg = $form_state['values']['kodekeg'];
+	$kodekeg = $_SESSION['kodekeg_verifikasi'];
+	$sql = 'select id from {kegiatanrevisiperubahan} where kodekeg=\'%s\'';
+	$fsql = sprintf($sql, db_escape_string($kodekeg));
+	$res = db_query($fsql);
+	if ($res) {
+		if ($data = db_fetch_object($res)) {
+			$id_x = $data->id;
+		}
+	}		
+	$uri = 'apbd/kegiatanskpd/printusulan/' . $id_x . '/10/rpka/pdf/mp';
+	
+	drupal_goto($uri);
+	
+}
+function GenReportFormHeaderX_Error($kodekeg, $tipedok) {
+	
+
+	$where = ' where k.kodekeg=\'%s\'';
+	$pquery = sprintf('select k.kodekeg, k.lokasi, k.programsasaran, k.programtarget, k.masukansasaran, k.masukantarget, k.keluaransasaran, k.keluarantarget, 
+				k.hasilsasaran,  k.hasiltarget, k.total, k.plafon, k.totalsebelum, k.totalsesudah, k.waktupelaksanaan, 
+				k.sumberdana1, k.sumberdana2, k.sumberdana1rp, k.sumberdana2rp, k.latarbelakang, k.kelompoksasaran
+				from {kegiatanskpd} k ' . $where, db_escape_string($kodekeg));
+	$pres = db_query($pquery);
+	if ($data = db_fetch_object($pres)) {
+		$lokasi_pen = str_replace('||',', ', $data->lokasi);
+		$programsasaran_pen = $data->programsasaran;
+		$programtarget_pen = $data->programtarget;
+		$masukansasaran_pen = $data->masukansasaran;
+		$masukantarget_pen = $data->masukantarget;
+		$keluaransasaran_pen = $data->keluaransasaran;
+		$keluarantarget_pen = $data->keluarantarget;
+		$hasilsasaran_pen = $data->hasilsasaran;
+		$hasiltarget_pen = $data->hasiltarget;
+		$total_pen = $data->total;
+		$plafon_pen = $data->plafon;
+		$waktupelaksanaan_pen = $data->waktupelaksanaan;
+		$sumberdana1_pen = $data->sumberdana1;
+		$sumberdana2_pen = $data->sumberdana2;
+		$sumberdana1rp_pen = $data->sumberdana1rp;
+		$sumberdana2rp_pen = $data->sumberdana2rp;
+		$latarbelakang_pen = $data->latarbelakang;
+		$kelompoksasaran_pen = $data->kelompoksasaran;		
+	}
+
+	$pquery = sprintf('select k.kodekeg, k.nomorkeg, k.tahun, k.kodepro, k.kodeuk, k.kodesuk, 
+				k.kegiatan, k.jenis, k.lokasi, k.programsasaran, k.programtarget, k.masukansasaran, k.masukantarget,
+				k.keluaransasaran, k.keluarantarget, k.hasilsasaran,  k.hasiltarget, k.total, k.plafon, 
+				k.totalsebelum, k.totalsesudah, k.waktupelaksanaan, k.sumberdana1, k.sumberdana2, 
+				k.sumberdana1rp, k.sumberdana2rp, k.latarbelakang, k.kelompoksasaran, p.program,
+				p.kodepro, p.kodeu, u.urusan, u.kodef, u.fungsi, k.tw1, k.tw2, k.tw3, k.tw4 from {kegiatanperubahan} k left join {program} p 
+				on (k.kodepro = p.kodepro) left join {urusan} u on p.kodeu=u.kodeu' . $where, db_escape_string($kodekeg));
+	////drupal_set_message($pquery);
+	$pres = db_query($pquery);
+	if ($data = db_fetch_object($pres)) {
+		$kegiatan = $kodedinas . '.' . $data->kodeu . '.' . $data->kodepro . '.' . $data->nomorkeg . ' - ' .  $data->kegiatan;		
+	}
+	
+	$where = ' where k.kodekeg=\'%s\'';
+	$pquery = sprintf('select k.kodekeg, k.nomorkeg, k.tahun, k.kodepro, k.kodeuk, k.kodesuk, k.kegiatan, k.lokasi, k.jenis, 
+				k.programsasaran, k.programtarget, k.masukansasaran, k.masukantarget, k.keluaransasaran, k.keluarantarget, 
+				k.hasilsasaran,  k.hasiltarget, k.total, k.plafon, k.totalsebelum, k.totalsesudah, k.waktupelaksanaan, 
+				k.sumberdana1, k.sumberdana2, k.sumberdana1rp, k.sumberdana2rp, k.latarbelakang, k.kelompoksasaran, p.program,
+				p.kodepro, p.kodeu, u.urusan, u.fungsi, u.kodef, uk.kodedinas, uk.namauk from {kegiatanrevisi} k left join {program} p on (k.kodepro = p.kodepro) 
+				left join {urusan} u on p.kodeu=u.kodeu left join {unitkerja} uk on k.kodeuk=uk.kodeuk ' . $where, db_escape_string($kodekeg));
+	////drupal_set_message($pquery);
+	$pres = db_query($pquery);
+	if ($data = db_fetch_object($pres)) {
+
+		$nomorkeg = $data->kodedinas . '.' . $data->kodepro . '.' . $data->nomorkeg;
+	
+		$fungsi = $data->kodef . ' - ' . $data->fungsi;
+		$urusan = $data->kodeu . ' - ' . $data->urusan;
+		$program = $data->kodepro . ' - ' . $data->program;
+		$skpd = $data->kodedinas . ' - ' . $data->namauk;
+		$kegiatan = $data->kodedinas . '.' . $data->kodepro . '.' . $data->nomorkeg . ' - ' .  $data->kegiatan;
+
+		$tahun = $data->tahun;
+		$jenis = $data->jenis;
+		
+		$tahunsebelum = $tahun-1;
+		$tahunsesudah = $tahun+1;
+		 
+		$lokasi = str_replace('||',', ', $data->lokasi);
+		$programsasaran = $data->programsasaran;
+		$programtarget = $data->programtarget;
+		$masukansasaran = $data->masukansasaran;
+		$masukantarget = $data->masukantarget;
+		$keluaransasaran = $data->keluaransasaran;
+		$keluarantarget = $data->keluarantarget;
+		$hasilsasaran = $data->hasilsasaran;
+		$hasiltarget = $data->hasiltarget;
+		$total = $data->total;
+		$plafon = $data->plafon;
+		$waktupelaksanaan = $data->waktupelaksanaan;
+		$sumberdana1 = $data->sumberdana1;
+		$sumberdana2 = $data->sumberdana2;
+		$sumberdana1rp = $data->sumberdana1rp;
+		$sumberdana2rp = $data->sumberdana2rp;
+		$latarbelakang = $data->latarbelakang;
+		$kelompoksasaran = $data->kelompoksasaran;
+		
+	}	
+ 
+	$kabupaten = variable_get('apbdwilayah', '');//'KABUPATEN JEPARA'; //setup
+	$rows= array();
+	//$rowsjudul[] = array (array ('data'=>'RENCANA KERJA DAN ANGGARAN SATUAN KERJA PERANGKAT DAERAH', 'width'=>'875px', 'colspan'=>'7', 'style' =>'border: 0px solid white;font-weight:900;font-size:1.3em;text-align:center;'));
+  
+	/*
+	$rowskegiatan[]= array ( 
+						 array('data' => 'PEMERINTAH KABUPATEN JEPARA',  'width'=> '250px', 'colspan'=>'3', 'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+						 array('data' => 'RENCANA KERJA DAN ANGGARAN SATUAN KERJA PERANGKAT DAERAH', 'width' => '500px', 'colspan'=>'3', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+						 array('data' => $tahun, 'width' => '125',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+						 );
+	*/  
+ 
+	$rowskegiatan[]= array (
+
+						 array('data' => 'Fungsi',  'width'=> '150px', 'style' => 'border-top: 2px solid black; border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'border-top: 2px solid black; text-align:right;'),
+						 array('data' => $fungsi, 'width' => '710', 'colspan'=>'11',  'style' => 'border-top: 2px solid black; border-right: 1px solid black; text-align:left;'),
+
+						 );
+	$rowskegiatan[]= array (
+						 array('data' => 'Urusan Pemerintahan',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => $urusan, 'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );
+	$rowskegiatan[]= array (
+						 array('data' => 'Organisasi',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':',  'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => $skpd,  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );
+	if ($jenis==2)					 
+		$rowskegiatan[]= array (
+							 array('data' => 'Program',   'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+							 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+							 array('data' => $program,   'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+	$rowskegiatan[]= array (
+						 array('data' => 'Kegiatan',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => $kegiatan,  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+	if ($jenis==2)
+		$rowskegiatan[]= array (
+							 array('data' => 'Lokasi',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+							 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+							 array('data' => $lokasi,  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+	$rowskegiatan[]= array (
+						 array('data' => 'Anggaran Penetapan',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => 'Rp ' . apbd_fn($total_pen) . ',00',  'width' => '160', 'colspan'=>'2',  'style' => 'border-bottom: 1px solid black;text-align:right;'),
+						 array('data' => '',  'width' => '550', 'colspan'=>'9',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+	$rowskegiatan[]= array (
+						 array('data' => '',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => '', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => apbd_terbilang($total_pen),  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+	$rowskegiatan[]= array (
+						 array('data' => 'Anggaran Perubahan',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => 'Rp ' . apbd_fn($total) . ',00',  'width' => '160', 'colspan'=>'2',  'style' => 'border-bottom: 1px solid black;text-align:right;'),
+						 array('data' => '',  'width' => '550', 'colspan'=>'9',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+	$rowskegiatan[]= array (
+						 array('data' => '',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => '', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => apbd_terbilang($total),  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+
+	$rowskegiatan[]= array (
+						 array('data' => 'Sumber Dana',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => $sumberdana1,  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+
+
+	//TUK
+	if ($jenis==2) {
+		$rowskegiatan[]= array (
+							 array('data' => 'Indikator',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:left;'),
+							 array('data' => 'Tolok Ukur Kinerja', 'width' => '350px', 'colspan'=>'9',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:center;'),
+							 array('data' => 'Target Kinerja', 'width' => '350', 'colspan'=>'2',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:center;'),
+							 );	
+		$rowskegiatan[]= array (
+							 array('data' => '',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => 'Sebelum Perubahan', 'width' => '175px', 'colspan'=>'8',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => 'Setelah Perubahan', 'width' => '175px',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => 'Sebelum Perubahan', 'width' => '175px',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => 'Setelah Perubahan', 'width' => '175px',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 );	
+
+		 $rowskegiatan[]= array (
+							 array('data' => 'Capaian Program',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;'),
+							 array('data' => $programsasaran_pen, 'width' => '175px', 'colspan'=>'8',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $programsasaran, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $programtarget_pen, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $programtarget, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+		$rowskegiatan[]= array (
+							 array('data' => 'Masukan',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => $masukansasaran_pen, 'width' => '175px', 'colspan'=>'8',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $masukansasaran, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $masukantarget_pen, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $masukantarget, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+		$rowskegiatan[]= array (
+							 array('data' => 'Keluaran',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;'),
+							 array('data' => $keluaransasaran_pen, 'width' => '175px', 'colspan'=>'8',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $keluaransasaran, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $keluarantarget_pen, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $keluarantarget, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+		$rowskegiatan[]= array (
+							 array('data' => 'Hasil',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => $hasilsasaran_pen, 'width' => '175px', 'colspan'=>'8',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $hasilsasaran, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $hasiltarget_pen, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $hasiltarget, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+
+		//Kelompok Sasaran Kegiatan
+		$rowskegiatan[]= array (
+							 array('data' => 'Kelompok Sasaran',   'width'=> '150px', 'style' => 'border-left: 1px solid black;  border-top: 1px solid black; text-align:left;'),
+							 array('data' => ':',  'width' => '15px', 'style' => ' border-top: 1px solid black; text-align:right;'),
+							 array('data' => $kelompoksasaran,   'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black;  border-top: 1px solid black; text-align:left;'),
+							 );							 
+		//latar BELAKANG
+		$rowskegiatan[]= array (
+							 array('data' => 'Latar Belakang Perubahan',   'width'=> '150px', 'style' => 'border-left: 1px solid black;  border-top: 1px solid black; text-align:left;'),
+							 array('data' => ':',  'width' => '15px', 'style' => ' border-top: 1px solid black; text-align:right;'),
+							 array('data' => $latarbelakang,   'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black;  border-top: 1px solid black; text-align:left;'),
+							 );							 
+		 
+	}
+	if ($jenis==2)
+		$rowskegiatan[]= array (
+							 array('data' => 'Rincian Perubahan Rencana Kerja dan Anggaran Belanja Langsung per Program dan Kegiatan Satuan Kerja Perangkat Daerah',   'width' => '875', 'colspan'=>'13',  'style' => 'border-left: 1px solid black;  border-right: 1px solid black;  border-top: 1px solid black; text-align:center;'),
+							 );							 
+	else
+		$rowskegiatan[]= array (
+							 array('data' => 'Rincian Perubahan Rencana Kerja dan Anggaran Belanja Tidak Langsung Satuan Kerja Perangkat Daerah',   'width' => '875', 'colspan'=>'13',  'style' => 'border-left: 1px solid black;  border-right: 1px solid black;  border-top: 1px solid black; text-align:center;'),
+							 );							 
+	
+	$opttbl = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0');
+	$headerkosong = array();
+
+	//$output = theme_box('', apbd_theme_table($headerkosong, $rowsjudul, $opttbl));
+	$output = theme_box('', apbd_theme_table($headerkosong, $rowskegiatan, $opttbl));
+	
+	$output .= $toutput;
+	
+	return $output;
+	
+}
+
+
+function GenReportFormRekening_Error($kodekeg) {
+	$revisi = variable_get('apbdrevisi', 0);
+	
+	if ($revisi==1) {
+		$rows[] = array (
+			array('data' => 'No', 'width' => '10px', 'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:right;'),
+			
+			array('data' => 'Kode', 'width'=> '50px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:left;'),
+			array('data' => 'Uraian', 'width'=> '180px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:left;'),
+			array('data' => 'Penetapan', 'width'=>'90px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:right;'),
+			array('data' => 'Realisasi', 'width'=>'90px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:right;'),
+			array('data' => 'Perubahan', 'width'=>'90px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:right;'),
+			array('data' => 'Keterangan', 'width'=>'90px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:left;border-right: 1px solid black;'),
+		);
+	} else {
+		$strrevisi = 'Revisi #' . strval($revisi-1);
+		$rows[] = array (
+
+			array('data' => 'No', 'width' => '10px', 'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:right;'),
+			
+			array('data' => 'Kode', 'width'=> '50px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:left;'),
+			array('data' => 'Uraian', 'width'=> '180px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:left;'),
+			array('data' => 'Penetapan', 'width'=>'90px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:right;'),
+			array('data' => $strrevisi, 'width'=>'90px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:right;'),
+			array('data' => 'Realisasi', 'width'=>'90px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:right;'),
+			array('data' => 'Perubahan', 'width'=>'90px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:right;'),
+			array('data' => 'Keterangan', 'width'=>'90px',  'style' => 'border-top: 2px solid black;border-bottom: 1px solid black; border-left: 1px solid black; vertical-align:top; text-align:left;border-right: 1px solid black;'),
+			
+		);
+	}
+	
+	$qlike = sprintf(" and akg.kodekeg='%s'", db_escape_string($kodekeg));
+    $where = ' where true' . $qlike ;
+
+    $sql = 'select akg.kodekeg, akg.kodero, akg.uraian, ro.uraian uraianrek, akg.jumlahsebelum, akg.jumlah, akg.jumlahsesudah from {anggperkegrevisi} akg inner join {rincianobyek} ro on akg.kodero=ro.kodero ' . $where . ' order by akg.kodero';
+    $fsql = sprintf($sql, addslashes($nama));
+
+	$result = db_query($fsql);
+    if ($result) {
+        while ($data = db_fetch_object($result)) {
+			$uraian = $data->uraian;
+			
+			//REALISASI
+			$realisasi = 0;
+			$sql_r = sprintf("select realisasi from {lrakegrek} where kodekeg='%s' and kodero='%s'", db_escape_string($data->kodekeg), db_escape_string($data->kodero));
+			$res_r = db_query($sql_r);
+			if ($res_r) {
+
+				if ($data_r = db_fetch_object($res_r)) {
+					$realisasi = $data_r->realisasi;
+				}
+			} 			
+			$no++;
+			
+			$penetapan = 0;
+			
+			//icon rea
+			$tagrekening = '';
+			if ($data->jumlah < $realisasi) {
+				$tagrekening .= "<p><font color='red'>*) Usulan anggaran dibawah jumlah yg telah di-SPJ-kan</font></p>";
+				
+			} 
+			
+			if ($revisi>1) {
+				
+				//REVISI RESEBELUMNYA
+				$revlalu = 0;
+				$sqlpen = sprintf("select jumlah,jumlahp from {anggperkegperubahan} where kodekeg='%s' and kodero='%s'", 
+							$data->kodekeg, $data->kodero);
+				$respen = db_query($sqlpen);
+				if ($respen) {
+					if ($datapen = db_fetch_object($respen)) {
+						$penetapan = $datapen->jumlah;
+						$revlalu = $datapen->jumlahp;
+					}
+				}				
+				
+				$t_penetapan += $penetapan;
+				$t_revlalu += $revlalu;
+				$t_realisasi += $realisasi;
+				$t_jumlah += $data->jumlah;
+				
+				$rows[] = array (
+					array('data' => $no, 'width'=> '10px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					
+					array('data' => $data->kodero, 'width'=> '50px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					array('data' => $uraian, 'width'=> '180px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					array('data' => apbd_fn($penetapan), 'width'=> '90px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+					array('data' => apbd_fn($revlalu), 'width'=> '90px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+					array('data' => apbd_fn($realisasi), 'width'=> '90px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+					array('data' => apbd_fn($data->jumlah), 'width'=> '90px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+					array('data' => $tagrekening, 'width'=> '90px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),
+				);
+
+			} else { 
+
+				//PENETAPAN
+				$sqlpen = sprintf("select jumlah from {anggperkeg} where kodekeg='%s' and kodero='%s'", $data->kodekeg, $data->kodero);
+				$respen = db_query($sqlpen);
+				if ($respen) {
+					if ($datapen = db_fetch_object($respen)) {
+						$penetapan = $datapen->jumlah;
+					}
+				}
+
+				$t_penetapan += $penetapan;
+				$t_realisasi += $realisasi;
+				$t_jumlah += $data->jumlah;
+				
+				$rows[] = array (
+
+					array('data' => $no, 'width'=> '10px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					
+					array('data' => $data->kodero, 'width'=> '50px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					array('data' => $uraian, 'width'=> '180px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					array('data' => apbd_fn($penetapan), 'width'=> '90px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+					array('data' => apbd_fn($realisasi), 'width'=> '90px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+					array('data' => apbd_fn($data->jumlah), 'width'=> '90px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+					array('data' => $tagrekening, 'width'=> '90px', 'style' => 'border-bottom: 1px darkgray;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),					
+				);
+			}
+        }
+    } else {
+        $rows[] = array (
+            array('data' => 'Akses/data error, hubungi administrator', 'colspan'=>'6')
+        );
+    }
+
+	if ($revisi>1) {
+		$rows[] = array (
+			array('data' => '', 'width'=> '10px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+			
+			array('data' => '', 'width'=> '50px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black; vertical-align:top; text-align:left;'),
+			array('data' => 'TOTAL', 'width'=> '180px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black; vertical-align:top; text-align:left;'),
+			array('data' => apbd_fn($t_penetapan), 'width'=> '90px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+			array('data' => apbd_fn($t_revlalu), 'width'=> '90px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+			array('data' => apbd_fn($t_realisasi), 'width'=> '90px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+			array('data' => apbd_fn($t_jumlah), 'width'=> '90px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+			array('data' => '', 'width'=> '90px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),
+		);	
+	} else {
+
+		$rows[] = array (
+			array('data' => '', 'width'=> '10px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+			
+			array('data' => '', 'width'=> '50px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black; vertical-align:top; text-align:left;'),
+			array('data' => 'TOTAL', 'width'=> '180px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black; vertical-align:top; text-align:left;'),
+			array('data' => apbd_fn($t_penetapan), 'width'=> '90px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+			array('data' => apbd_fn($t_realisasi), 'width'=> '90px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+			array('data' => apbd_fn($t_jumlah), 'width'=> '90px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+			array('data' => '', 'width'=> '90px', 'style' => 'border-top: 2px solid black; border-bottom: 2px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),
+		);		
+	}
+	$opttb0 = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0`');
+	$headerkosong = array();
+	
+	$output = theme_box('', apbd_theme_table($headerkosong, $rows, $opttb0));
+	
+	//$output = theme_box('', theme_table($header, $rows));	
+	
+	return $output;
+}
+
+function GenReportFormContentX_Error($kodekeg) {
+
+
+	$jumrincian = 0;
+	$sql = 'select count(iddetil) jumrincian from {anggperkegdetilrevisi} where kodekeg=\'%s\'';
+	$fsql = sprintf($sql, db_escape_string($kodekeg));
+	$res = db_query($fsql);
+	if ($res) {
+		if ($data = db_fetch_object($res)) {
+			$jumrincian = $data->jumrincian;
+		}
+	}
+	
+	$sql = 'select count(idsub) jumrincian from {anggperkegdetilsub} s inner join {anggperkegdetilrevisi} d
+			on s.iddetil=d.iddetil where d.kodekeg=\'%s\'';
+	$fsql = sprintf($sql, db_escape_string($kodekeg));
+	$res = db_query($fsql);
+	if ($res) {
+		if ($data = db_fetch_object($res)) {
+			$jumrincian += $data->jumrincian;
+		}
+	}
+	
+	//if ($jumrincian > 350) {
+		set_time_limit(0);
+		ini_set('memory_limit', '640M');
+	//}
+	
+	$total = 0;
+	$totalpen = 0;
+
+
+	$headersrek[] = array (
+						 array('data' => 'KODE',  'width'=> '60px', 'rowspan'=>'2','style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 
+						 array('data' => 'URAIAN',  'width' => '230x','rowspan'=>'2','colspan'=>'2', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'SEBELUM PERUBAHAN', 'width' => '240px','colspan'=>'4','style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'SETELAH PERUBAHAN', 'width' => '240px','colspan'=>'4','style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'BERTAMBAH /BERKURANG',  'width' => '105px','colspan'=>'2', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 );
+	$headersrek[] = array (
+
+						 array('data' => 'Satuan', 'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'Volume', 'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => '@Harga',  'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'Jumlah',  'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+
+						 array('data' => 'Satuan', 'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'Volume', 'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => '@Harga',  'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'Jumlah',  'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+
+						 array('data' => 'Rupiah', 'width' => '70px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => '%', 'width' => '35px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 );
+						 
+	 //JENIS
+	$where = ' where k.kodekeg=\'%s\'';
+	$sql = 'select mid(k.kodero,1,3) kodej,j.uraian,sum(jumlah) jumlahx from {anggperkegrevisi} k  left join {jenis} j on mid(k.kodero,1,3)=j.kodej ' . $where;
+	$fsql = sprintf($sql, db_escape_string($kodekeg));
+	$fsql .= ' group by mid(k.kodero,1,3),j.uraian order by mid(k.kodero,1,3)';
+	
+	////drupal_set_message( $fsql);
+	$resultjenis = db_query($fsql);
+	if ($resultjenis) {
+		while ($datajenis = db_fetch_object($resultjenis)) {
+		
+			$sql = 'select sum(jumlah) jumlahx from {anggperkeg} where kodekeg=\'%s\' and mid(kodero,1,3)=\'%s\'';
+			$fsqlpen = sprintf($sql, db_escape_string($kodekeg), db_escape_string($datajenis->kodej));
+			$resultjenispen = db_query($fsqlpen);
+			
+			//drupal_set_message($fsqlpen);
+			
+			$penjenis = 0;
+			if ($resultjenispen) {
+				if ($datajenispen = db_fetch_object($resultjenispen)) {
+					$penjenis = $datajenispen->jumlahx;
+				}
+			}
+			
+			
+			$persen = apbd_hitungpersen($penjenis, $datajenis->jumlahx);
+			$rowsrek[] = array (
+								 array('data' => $datajenis->kodej,  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+								 array('data' => $datajenis->uraian,  'width' => '230x','colspan'=>'2',  'style' => ' border-right: 1px solid black; text-align:left;font-size:small;'),
+								 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => apbd_fn($penjenis),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+								 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => apbd_fn($datajenis->jumlahx),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+								 array('data' => apbd_fn($datajenis->jumlahx - $penjenis),  'width' => '70px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+								 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+								 );
+			$total += $datajenis->jumlahx;
+			$totalpen += $penjenis;
+
+			//OBYEK
+			$sql = 'select mid(k.kodero,1,5) kodeo,o.uraian,sum(jumlah) jumlahx from {anggperkegrevisi} k  left join {obyek} o on mid(k.kodero,1,5)=o.kodeo 
+				   where kodekeg=\'%s\' and mid(k.kodero,1,3)=\'%s\'';
+			$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($datajenis->kodej));
+			$fsql .= ' group by mid(k.kodero,1,5),o.uraian order by mid(k.kodero,1,5)';
+			
+			////drupal_set_message( $fsql);
+			$resultobyek = db_query($fsql);
+			if ($resultobyek) {
+				while ($dataobyek = db_fetch_object($resultobyek)) {
+
+					//OBYEK
+					$sql = 'select sum(jumlah) jumlahx from {anggperkeg} where kodekeg=\'%s\' and mid(kodero,1,5)=\'%s\'';
+					$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($dataobyek->kodeo));
+					$resultobyekpen = db_query($fsql);
+					
+					$penobyek = 0;
+					if ($resultobyekpen) {
+						if ($dataobyekpen = db_fetch_object($resultobyekpen)) {
+							$penobyek = $dataobyekpen->jumlahx;
+						}
+					}
+				
+					$persen = apbd_hitungpersen($penobyek, $dataobyek->jumlahx);
+					$rowsrek[] = array (
+										 array('data' => apbd_format_rek_obyek($dataobyek->kodeo),  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+										 array('data' => strtoupper($dataobyek->uraian),  'width' => '230x', 'colspan'=>'2', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;'),
+										 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => apbd_fn($penobyek),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1px solid black;text-align:right;font-size:small;font-weight:bold;'),
+
+										 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => apbd_fn($dataobyek->jumlahx),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+										 array('data' => apbd_fn($dataobyek->jumlahx-$penobyek),  'width' => '70px', 'style' => 'border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+										 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+								 );		
+								 
+					//REKENING
+					$sql = 'select kodero,uraian,jumlah from {anggperkegrevisi} k where kodekeg=\'%s\' and mid(k.kodero,1,5)=\'%s\'';
+					$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($dataobyek->kodeo));
+					
+					////drupal_set_message( $fsql);
+					$fsql .= ' order by k.kodero';
+					$result = db_query($fsql);
+					if ($result) {
+						while ($data = db_fetch_object($result)) {
+						
+						
+						$sql = 'select kodero,uraian,jumlah from {anggperkeg} where kodekeg=\'%s\' and kodero=\'%s\'';
+						$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($data->kodero));
+						$resultpen = db_query($fsql);
+						
+						$penrekening = 0;
+						if ($resultpen) {
+							if ($datapen = db_fetch_object($resultpen)) {
+								$penrekening = $datapen->jumlah;
+							}
+						}
+						
+						$persen = apbd_hitungpersen($penrekening, $data->jumlah);
+						$rowsrek[] = array (
+											 array('data' => apbd_format_rek_rincianobyek($data->kodero),  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+											 array('data' => $data->uraian,  'width' => '230x', 'colspan'=>'2', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;'),
+											 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => apbd_fn($datapen->jumlah),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+											 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => apbd_fn($data->jumlah),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+											 array('data' => apbd_fn($data->jumlah - $penrekening),  'width' => '70px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+											 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+											 
+										);
+										
+							//DETIL
+							$sql = 'select iddetil,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan,harga,total, pengelompokan from {anggperkegdetilrevisi} where kodekeg=\'%s\' and kodero=\'%s\' order by nourut asc,iddetil';
+							$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($data->kodero));
+							////drupal_set_message($fsql);
+
+							$resultdetil = db_query($fsql);
+							
+							if ($resultdetil) {
+								while ($datadetil = db_fetch_object($resultdetil)) {
+									
+									if ($penrekening > 0) {
+									$sql = 'select iddetil,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan,harga,total, pengelompokan from {anggperkegdetil} where kodekeg=\'%s\' and kodero=\'%s\' and iddetil=\'%s\'';
+									$fsql = sprintf($sql, $kodekeg, $data->kodero, db_escape_string($datadetil->iddetil));
+									
+									//drupal_set_message($fsql);
+									$datadetilpenuraian = '';
+									$datadetilpentotal = 0;
+									$resultdetilpen = db_query($fsql);
+									if ($datadetilpen = db_fetch_object($resultdetilpen)) {
+										$datadetilpenuraian = $datadetilpen->uraian;
+										$datadetilpentotal = $datadetilpen->total;
+									}
+									} else {
+										$unitjumlahpen = '';
+										$volumjumlahpen = '';
+										$hargasatuanpen = '';
+
+										$datadetilpenuraian = '';
+										$datadetilpentotal = 0;
+										
+									}	
+									
+									if ($datadetil->pengelompokan) {
+										$unitjumlah = '';
+										$volumjumlah = '';
+										$hargasatuan = '';
+										$bullet = '#';
+
+										$unitjumlahpen = '';
+										$volumjumlahpen = '';
+										$hargasatuanpen = '';
+										
+									} else {
+										$unitjumlah = $datadetil->unitjumlah . ' ' . $datadetil->unitsatuan;
+										$volumjumlah = $datadetil->volumjumlah . ' ' . $datadetil->volumsatuan;
+										$hargasatuan = apbd_fn($datadetil->harga);
+										$bullet = '-';
+										
+										if ($penrekening > 0) {
+										$unitjumlahpen = $datadetilpen->unitjumlah . ' ' . $datadetilpen->unitsatuan;
+										$volumjumlahpen = $datadetilpen->volumjumlah . ' ' . $datadetilpen->volumsatuan;
+										$hargasatuanpen = apbd_fn($datadetilpen->harga);
+										//$bullet = '•';
+										}
+										
+									}
+									
+									
+									$persen = apbd_hitungpersen($datadetilpentotal, $datadetil->total);
+									if ($datadetil->uraian == $datadetilpenuraian) {
+										$rowsrek[] = array (
+															 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+			 												 array('data' => $bullet,  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+															 array('data' => $datadetil->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;'),
+															 array('data' => $unitjumlahpen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $volumjumlahpen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $hargasatuanpen,  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn($datadetilpentotal),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+
+															 array('data' => $unitjumlah, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $volumjumlah, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $hargasatuan,  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn($datadetil->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 
+															 array('data' => apbd_fn($datadetil->total - $datadetilpentotal),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 );
+									} else {
+										
+										//***
+										if (($datadetilpenuraian) !='' and ($datadetilpentotal>0)) {
+											$rowsrek[] = array (
+																 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+																 array('data' => $bullet,  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+																 array('data' => $datadetilpenuraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;'),
+																 array('data' => $unitjumlahpen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+																 array('data' => $volumjumlahpen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+																 array('data' => $hargasatuanpen,  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 array('data' => apbd_fn($datadetilpentotal),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 array('data' => apbd_fn1(0),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 
+																 array('data' => apbd_fn(-$datadetilpentotal),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 array('data' => apbd_fn1(-100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 );
+											//####
+											if ($datadetil->pengelompokan) {
+												//SUB DETIL
+												$sql = 'select idsub,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan, harga,total from {anggperkegdetilsub} where iddetil=\'%s\' order by nourut asc,idsub';
+												$fsql = sprintf($sql, db_escape_string($datadetil->iddetil));
+												////drupal_set_message($fsql);
+												
+												//$no = 0;
+												$resultsub = db_query($fsql);
+												if ($resultsub) {
+													while ($datasub = db_fetch_object($resultsub)) {
+														//$no += 1;
+														$rowsrek[] = array (
+																 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+																 array('data' => '',  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+																 array('data' => '- ' . $datasub->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => $datasub->unitjumlah . ' ' . $datasub->unitsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => $datasub->volumjumlah . ' ' . $datasub->volumsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn($datasub->harga),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn($datasub->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+																 array('data' => apbd_fn(-$datasub->total),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn1(-100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																);	
+													}
+												}
+											}
+											//###
+											
+										}
+										
+										if (($datadetil->uraian) !='' and ($datadetil->total>0)) {
+										$rowsrek[] = array (
+															 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+															 array('data' => $bullet,  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+															 array('data' => $datadetil->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;'),
+															 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn1(0),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+
+															 array('data' => $unitjumlah, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $volumjumlah, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $hargasatuan,  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn($datadetil->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 
+															 array('data' => apbd_fn($datadetil->total),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn1(100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 );
+										}
+															 
+									}
+									if ($datadetil->pengelompokan) {
+										//SUB DETIL
+										$sql = 'select idsub,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan, harga,total from {anggperkegdetilsubrevisi} where iddetil=\'%s\' order by nourut asc,idsub';
+										$fsql = sprintf($sql, db_escape_string($datadetil->iddetil));
+										////drupal_set_message($fsql);
+										
+										//$no = 0;
+										$resultsub = db_query($fsql);
+										if ($resultsub) {
+											while ($datasub = db_fetch_object($resultsub)) {
+												//$no += 1;
+
+												$datasuburaian_pen = '';
+												$datasubunitjumlah_pen = '';
+												$datasubvolumjumlah_pen = '';
+												$datasubharga_pen = '';
+												$datasubtotal_pen = 0;
+
+												if ($penrekening > 0) {
+												$sql = 'select idsub,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan, harga,total from {anggperkegdetilsub} where iddetil=\'%s\' and idsub=\'%s\'';
+												$fsql = sprintf($sql, db_escape_string($datadetil->iddetil), db_escape_string($datasub->idsub));
+												$resultsubpen = db_query($fsql);
+												if ($resultsubpen) {
+													if ($datasubpen = db_fetch_object($resultsubpen)) {
+														$datasuburaian_pen = $datasubpen->uraian;
+														$datasubunitjumlah_pen = $datasubpen->unitjumlah . ' ' . $datasubpen->unitsatuan;
+														$datasubvolumjumlah_pen = $datasubpen->volumjumlah . ' ' . $datasubpen->volumsatuan;
+														$datasubharga_pen = $datasubpen->harga;
+														$datasubtotal_pen = $datasubpen->total;
+													}
+												}
+												}
+												
+												if ($datasuburaian_pen == $datasub->uraian) {
+													$persen = apbd_hitungpersen($datasubtotal_pen, $datasub->total);
+												
+													$rowsrek[] = array (
+															 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+															 array('data' => '',  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+															 array('data' =>  '- ' . $datasub->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => $datasubunitjumlah_pen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => $datasubvolumjumlah_pen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasubharga_pen),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasubtotal_pen),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+															 array('data' => $datasub->unitjumlah . ' ' . $datasub->unitsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => $datasub->volumjumlah . ' ' . $datasub->volumsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasub->harga),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasub->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+															 array('data' => apbd_fn($datasub->total - $datasubtotal_pen),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 );	
+															 
+												} else {
+													if (($datasuburaian_pen) !='' and ($datasubtotal_pen>0)) {
+
+														$rowsrek[] = array (
+																 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+																 array('data' => '',  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+																 array('data' =>  '- ' . $datasuburaian_pen,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => $datasubunitjumlah_pen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => $datasubvolumjumlah_pen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn($datasubharga_pen),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn($datasubtotal_pen),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+																 array('data' => apbd_fn(-$datasubtotal_pen),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn1(-100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 );	
+													}
+
+													$rowsrek[] = array (
+															 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+															 array('data' => '',  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+															 array('data' =>  '- ' . $datasub->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+															 array('data' => $datasub->unitjumlah . ' ' . $datasub->unitsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => $datasub->volumjumlah . ' ' . $datasub->volumsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasub->harga),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasub->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+															 array('data' => apbd_fn($datasub->total),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn1(100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															);	
+															 
+												}
+												//$$$
+											}
+										}
+										
+										//###
+									}
+								}
+							}												
+						///////					 
+						}
+					}								 
+										 
+				////////
+				}
+			}			
+
+		}
+	}
+	
+	$persen = apbd_hitungpersen($totalpen, $total);
+	$rowsrek[] = array (
+						 array('data' => 'JUMLAH BELANJA',  'width'=> '290px',  'colspan'=>'6',  'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+						 array('data' => apbd_fn($totalpen),  'width' => '240px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+
+						 array('data' => apbd_fn($total),  'width'=> '240px',  'colspan'=>'4',  'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+
+						 array('data' => apbd_fn($total-$totalpen),  'width' => '70px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+						 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+
+						 );
+						 
+	$opttbl = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0');
+
+	$output .= theme_box('', apbd_theme_table($headersrek, $rowsrek, $opttbl));
+	
+	return $output;
+	
+}
+
+function GenSuratPermohonanPerubahan($kodekeg) {
+	
+	
+	$sql = 'select id,jenisrevisi, subjenisrevisi, tahun, kodeuk, kodekeg, geserblokir, geserrincian, geserobyek, geserjenis, geserbaru, geserplafon, lokasi, sumberdana, kinerja, sasaran, detiluraian, rab, triwulan, lainnya, alasan1, alasan2, alasan3, nosurat, tglsurat, dokumen from {kegiatanrevisiperubahan} where kodekeg=\'%s\'';
+	$res = db_query(db_rewrite_sql($sql), array ($kodekeg));
+	if ($data = db_fetch_object($res)) {
+		$jenisrevisi = $data->jenisrevisi; 
+		$subjenisrevisi = $data->subjenisrevisi; 
+		$kodekeg = $data->kodekeg; 
+		$tahun = $data->tahun; 
+		$kodeuk = $data->kodeuk; 
+		$kodekeg = $data->kodekeg; 
+		$geserblokir = $data->geserblokir; 
+		
+		$geserbaru = $data->geserbaru; 
+		$geserplafon = $data->geserplafon; 
+		$geserjenis = $data->geserjenis; 
+		$geserrincian = $data->geserrincian; 
+		$geserobyek = $data->geserobyek; 
+		
+		$lokasi = $data->lokasi; 
+		$sumberdana = $data->sumberdana; 
+		$kinerja = $data->kinerja; 
+		$sasaran = $data->sasaran; 
+		$detiluraian = $data->detiluraian; 
+		$rab = $data->rab; 
+		$triwulan = $data->triwulan; 
+		$lainnya = $data->lainnya; 
+		
+		$alasan1 = $data->alasan1; 
+		$alasan2 = $data->alasan2; 
+		$alasan3 = $data->alasan3; 
+		$nosurat = $data->nosurat; 
+		$tglsurat = $data->tglsurat; 
+		$dokumen = $data->dokumen;
+	}
+	if ($nosurat == '') $nosurat = '<font color="red">Belum diisi</font>';
+	if ($tglsurat == '') $tglsurat = '<font color="red">Belum diisi</font>';
+	
+	$tpenetapan = 1;
+		
+	//cek admin yg baru
+	$tpenetapan = 0;
+	$sql = 'select total from {kegiatanskpd} where kodekeg=\'%s\'';
+	$res = db_query(db_rewrite_sql($sql), array ($kodekeg));
+	if ($data = db_fetch_object($res)) {
+		$tpenetapan = $data->total;
+	}
+		
+
+	$jenisrevisi_str = 'Perubahan Anggaran.';
+	
+	$geserblokir_str = '[ - ]';
+	$geserrincian_str = '[ - ]';
+	$geserobyek_str = '[ - ]';
+	$geserjenis_str = '[ - ]';
+	$geserbaru_str = '[ - ]';
+	$geserplafon_str = '[ - ]';
+	
+	if ($geserblokir =='1') $geserblokir_str = '[ x ]';
+	if ($geserrincian =='1') $geserrincian_str = '[ x ]';
+	if ($geserobyek =='1') $geserobyek_str = '[ x ]';
+	if ($geserjenis =='1') $geserjenis_str = '[ x ]';
+	if ($geserbaru =='1') $geserbaru_str = '[ x ]';
+	if ($geserplafon =='1') $geserplafon_str = '[ x ]';
+
+	$lokasi_str = '[ - ]'; 
+	$sumberdana_str = '[ - ]';
+	$kinerja_str = '[ - ]';
+	$sasaran_str = '[ - ]';
+	$detiluraian_str = '[ - ]';
+	$triwulan_str = '[ - ]';
+	
+	if ($lokasi =='1') $lokasi_str = '[ x ]'; 
+	if ($sumberdana =='1') $sumberdana_str = '[ x ]';
+	if ($kinerja =='1') $kinerja_str = '[ x ]';
+	if ($sasaran =='1') $sasaran_str = '[ x ]';
+	if ($detiluraian =='1') $detiluraian_str = '[ x ]';
+	if ($triwulan =='1') $triwulan_str = '[ x ]';
+
+		
+	$sql = sprintf('select k.nomorkeg, k.kodepro, k.kegiatan, 
+				uk.kodedinas from {kegiatanrevisi} k left join {unitkerja} uk 
+				on k.kodeuk=uk.kodeuk where k.kodekeg=\'%s\'' . $where, db_escape_string($kodekeg));
+	$res = db_query($sql);
+	if ($data = db_fetch_object($res)) {
+		$nomorkeg = $data->kodedinas . '.' . $data->kodepro . '.' . $data->nomorkeg;
+		$namakegiatan = strtoupper($data->kegiatan);
+	}
+
+	$sql = sprintf('select dpano,dpatgl from {kegiatandpa} where kodekeg=\'%s\'' , db_escape_string($kodekeg));
+	$res = db_query($sql);
+	if ($data = db_fetch_object($res)) {
+		$dpano = $data->dpano;
+		$dpatgl = $data->dpatgl;
+	}
+
+
+	$rows[] = array (
+				array('data' => '', 'colspan'=>'5', 'width' => '725px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	
+	$rows[] = array (
+				array('data' => 'Nomor',  'width'=> '50px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => ':',  'width'=> '15px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => $nosurat, 'colspan'=>'3', 'width' => '660px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	$rows[] = array (
+				array('data' => 'Tanggal',  'width'=> '50px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => ':',  'width'=> '15px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => $tglsurat, 'colspan'=>'3', 'width' => '660px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	$rows[] = array (
+				array('data' => '',  'width'=> '50px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => '',  'width'=> '15px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => '', 'colspan'=>'3', 'width' => '660px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	
+
+	$rows[] = array (
+				array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => '',  'width'=> '15px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => '', 'colspan'=>'3', 'width' => '660px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+
+			
+	//ISI SURAT		
+	//1
+	$rows[] = array (
+				array('data' => '1.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'Dasar Hukum :', 'colspan'=>'4', 'width' => '715px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	
+	$rows[] = array (
+				array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'a.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'KUA dan PPAS Perubahan Tahun Anggaran 2019', 'colspan'=>'3', 'width' => '695px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	
+	if ($tpenetapan>0) {
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'b.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'DPA-SKPD Nomor : ' . $dpano . ', Tanggal : ' . $dpatgl . ', Nama Kegiatan : ' . $namakegiatan, 'colspan'=>'3', 'width' => '695px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+	}		
+	
+	//2
+	$rows[] = array (
+				array('data' => '2.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'Alasan/pertimbangan perlunya Revisi Anggaran:', 'colspan'=>'4', 'width' => '715px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	$rows[] = array (
+				array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'a.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => $alasan1, 'colspan'=>'3', 'width' => '695px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	
+	//3
+	$rows[] = array (
+				array('data' => '3.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'Bersama ini diusulkan Perubahan Anggaran :', 'colspan'=>'4', 'width' => '715px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	$rows[] = array (
+				array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'a.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'Perubahan atau pergeseran rekening:', 'colspan'=>'3', 'width' => '695px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'i.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Pergeseran antar Rincian Objek Belanja dalam objek belanja Kegiatan berkenaan ' . $geserrincian_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'ii.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Pergeseran antar Objek Belanja dalam objek belanja Kegiatan berkenaan ' . $geserrincian_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'iii.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Pergeseran antar Jenis Belanja dalam kelompok belanja Kegiatan berkenaan ' . $geserjenis_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'iv.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Penambahan/Pengurangan anggaran dalam Kegiatan berkenaan ' . $geserplafon_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'v.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Kegiatan baru ' . $geserbaru_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+	
+	//ADMIN`	
+	$rows[] = array (
+				array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'b.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'Perubahan atas kesalahan administrasi:', 'colspan'=>'3', 'width' => '695px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'i.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Ralat/kesalahan penulisan lokasi ' . $lokasi_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'ii.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Ralat/kesalahan penulisan sumber dana ' . $sumberdana_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'iii.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Ralat/kesalahan tolok ukur dan/atau target kinerja ' . $kinerja_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);		
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'iv.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Ralat/kesalahan penulisan kelompok sasaran kegiatan ' . $sasaran_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);	
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'v.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Ralat/kesalahan penulisan uraian dalam rincian objek belanja ' . $detiluraian_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);		
+	
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'vi.', 'width' => '25px', 'style' => 'vertical-align:top; text-align:right;'),
+					array('data' => 'Ralat/kesalahan pagu anggaran triwulan ' . $triwulan_str, 'colspan'=>'2', 'width' => '670px', 'style' => 'vertical-align:top; text-align:left;'),
+					);		
+	
+	
+	//3
+	$rows[] = array (
+				array('data' => '4.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'Sebagai bahan pertimbangan, dengan ini dilampirkan data dukung berupa', 'colspan'=>'4', 'width' => '715px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	$rows[] = array (
+				array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'a.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'Matriks Perubahan (semula-menjadi) sebagaimana daftar terlampir;', 'colspan'=>'3', 'width' => '695px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	$rows[] = array (
+				array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'b.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'Surat pernyataan Tanggung Jawab Mutlak (SPTJM);', 'colspan'=>'3', 'width' => '695px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	$rows[] = array (
+				array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'c.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+				array('data' => 'ADK dan Manual RKA-SKPD Perubahan;', 'colspan'=>'3', 'width' => '695px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	if ($dokumen!='')
+		$rows[] = array (
+					array('data' => '',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => 'd.',  'width'=> '20px', 'style' => 'vertical-align:top; text-align:left;'),
+					array('data' => $dokumen, 'colspan'=>'3', 'width' => '695px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+					
+	$rows[] = array (
+				array('data' => '', 'colspan'=>'5', 'width' => '725px', 'style' => 'vertical-align:top; text-align:left;'),
+				);
+	
+
+	$opttb0 = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0`');
+	$headerkosong = array();
+	
+	$output .= theme_box('', apbd_theme_table($headerkosong, $rows, $opttb0));
+	
+	if ($limit >0)
+		$output .= theme ('pager', NULL, $limit, 0);
+	
+	return $output;
+	
+	
+}
+
+
+function GenMatriksPermohonanPerubahan($kodekeg) {
+	
+	$sql = 'select id,jenisrevisi, kodekeg, subjenisrevisi, tahun, kodeuk, kodekeg, geserblokir, geserrincian, geserobyek, geserbaru, geserplafon, lokasi, sumberdana, kinerja, sasaran, detiluraian, rab, triwulan, lainnya, alasan1, alasan2, alasan3, nosurat, tglsurat, dokumen from {kegiatanrevisiperubahan} where kodekeg=\'%s\'';
+	$res = db_query(db_rewrite_sql($sql), array ($kodekeg));
+	if ($data = db_fetch_object($res)) {
+		$id = $data->id; 
+		$jenisrevisi = $data->jenisrevisi; 
+		$subjenisrevisi = $data->subjenisrevisi; 
+		$kodekeg = $data->kodekeg;
+		$tahun = $data->tahun; 
+		$kodeuk = $data->kodeuk; 
+		$kodekeg = $data->kodekeg; 
+		$geserblokir = $data->geserblokir; 
+		$geserrincian = $data->geserrincian; 
+		$geserobyek = $data->geserobyek; 
+		$geserbaru = $data->geserbaru; 
+		$geserplafon = $data->geserplafon; 
+		
+		$lokasi = $data->lokasi; 
+		$sumberdana = $data->sumberdana; 
+		$kinerja = $data->kinerja; 
+		$sasaran = $data->sasaran; 
+		$detiluraian = $data->detiluraian; 
+		$rab = $data->rab; 
+		$triwulan = $data->triwulan; 
+		$lainnya = $data->lainnya; 
+		
+		$alasan1 = $data->alasan1; 
+		$alasan2 = $data->alasan2; 
+		$alasan3 = $data->alasan3; 
+		$nosurat = $data->nosurat; 
+		$tglsurat = $data->tglsurat; 
+		$dokumen = $data->dokumen;
+	}
+
+
+	$pquery = sprintf('select u.namauk, p.kodepro, nomorkeg, lokasi, tw1, tw2, tw3, tw4, kegiatan, sumberdana1, kelompoksasaran, p.kodepro, p.program, k.total, k.nomorkeg  from {kegiatanrevisi} k inner join {program} p on k.kodepro=p.kodepro inner join {unitkerja} u on k.kodeuk=u.kodeuk where kodekeg=\'%s\'', db_escape_string($kodekeg));
+	//drupal_set_message($pquery);
+	$pres = db_query($pquery);
+	if ($data = db_fetch_object($pres)) {
+		$lokasi_per = str_replace('||',', ', $data->lokasi);
+		$sumberdana1_per = $data->sumberdana1;
+		$kelompoksasaran_per = $data->kelompoksasaran;
+		
+		$skpd = $data->namauk;
+		$program = $data->program;
+		$kegiatan = $data->kegiatan;
+		$anggaran = apbd_fn($data->total);
+		
+		$tw1_per = $data->tw1; 
+		$tw2_per = $data->tw2; 
+		$tw3_per = $data->tw3; 
+		$tw4_per = $data->tw4; 
+		
+	}
+	
+	$pquery = sprintf('select lokasi, tw1p, tw2p, tw3p, tw4p, kegiatan, sumberdana1, kelompoksasaran, p.kodepro, p.program, k.total, k.nomorkeg  
+				from {kegiatanperubahan} k inner join {program} p on k.kodepro=p.kodepro where kodekeg=\'%s\'', db_escape_string($kodekeg));
+	////drupal_set_message($pquery);
+	$pres = db_query($pquery);
+	if ($data = db_fetch_object($pres)) {
+		$lokasi_pen = str_replace('||',', ', $data->lokasi);
+		$sumberdana1_pen = $data->sumberdana1;
+		$kelompoksasaran_pen = $data->kelompoksasaran;
+
+		$tw1_pen = $data->tw1p; 
+		$tw2_pen = $data->tw2p; 
+		$tw3_pen = $data->tw3p; 
+		$tw4_pen = $data->tw4p; 
+		
+	}
+	
+	
+	/*
+	$sql = sprintf('select k.nomorkeg, k.kodepro, k.kegiatan, 
+				uk.kodedinas, p.program from {kegiatanskpd} k left join {unitkerja} uk 
+on k.kodeuk=uk.kodeuk left join {program} p on k.kodepro=p.kodepro where k.kodekeg=\'%s\'' . $where, db_escape_string($kodekeg));
+	$res = db_query($sql);
+	if ($data = db_fetch_object($res)) {
+		$program = $data->kodepro . ' - ' . $data->program;
+		$kegiatan = $data->kodedinas . '.' . $data->kodepro . '.' . $data->nomorkeg . ' - ' . $data->kegiatan;
+	}
+	*/
+	
+	
+
+
+	$rows1[] = array (
+				array('data' => 'SKPD',  'width'=> '50px', 'style' => 'text-align:left;'),
+				array('data' => ':',  'width'=> '15px', 'style' => 'text-align:left;'),
+				array('data' => $skpd, 'colspan'=>'3', 'width' => '470px', 'style' => 'text-align:left;'),
+				);
+	$rows1[] = array (
+				array('data' => 'Program',  'width'=> '50px', 'style' => 'text-align:left;'),
+				array('data' => ':',  'width'=> '15px', 'style' => 'text-align:left;'),
+				array('data' => $program, 'colspan'=>'3', 'width' => '470px', 'style' => 'text-align:left;'),
+				);
+	$rows1[] = array (
+				array('data' => 'Kegiatan',  'width'=> '50px', 'style' => 'text-align:left;'),
+				array('data' => ':',  'width'=> '15px', 'style' => 'text-align:left;'),
+				array('data' => $kegiatan, 'colspan'=>'3', 'width' => '470px', 'style' => 'text-align:left;'),
+				);
+	$rows1[] = array (
+				array('data' => 'Anggaran',  'width'=> '50px', 'style' => 'text-align:left;'),
+				array('data' => ':',  'width'=> '15px', 'style' => 'text-align:left;'),
+				array('data' => $anggaran, 'colspan'=>'3', 'width' => '470px', 'style' => 'text-align:left;'),
+				);
+	$rows1[] = array (
+				array('data' => '',  'width'=> '50px', 'style' => 'text-align:left;'),
+				array('data' => '',  'width'=> '15px', 'style' => 'text-align:left;'),
+				array('data' => '', 'colspan'=>'3', 'width' => '470px', 'style' => 'text-align:left;'),
+				);
+	
+	//ISI SURAT		
+	//1
+		
+	$no = 0;	
+	if (($lokasi + $sumberdana + $kinerja + $sasaran + $detiluraian + $triwulan)>0) {
+		$rows2[] = array (
+					array('data' => '- MATRIK PERUBAHAN ADMINISTRASI', 'colspan'=>'5', 'width' => '615px', 'style' => 'vertical-align:top; text-align:left;'),
+					);
+
+		$rows2[] = array (
+					array('data' => 'No.',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					array('data' => 'URAIAN',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					array('data' => 'SEMULA',  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					array('data' => 'MENJADI',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+					array('data' => 'KETERANGAN', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),
+					);		
+		if ($lokasi=='1') {
+			$no++;
+			$rows2[] = array (
+						array('data' => $no . '.',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Ralat/kesalahan penulisan lokasi',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => $lokasi_pen,  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => $lokasi_per,  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),
+						);
+		}
+		if ($sumberdana=='1') {
+			$no++;
+			$rows2[] = array (
+						array('data' => $no . '.',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Ralat/kesalahan sumber dana',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => $sumberdana1_pen,  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => $sumberdana1_per,  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),
+						);
+		}
+		if ($kinerja=='1') {
+			$no++;
+			$rows2[] = array (
+						array('data' => $no . '.',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Ralat/kesalahantolok ukur dan/atau target kinerja',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => 'Terlampir di RKA',  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => 'Terlampir di RKA',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),
+						);
+		}
+		if ($sasaran=='1') {
+			$no++;
+			$rows2[] = array (
+						array('data' => $no . '.',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Ralat/kesalahan penulisan kelompok sasaran kegiatan',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => $kelompoksasaran_pen,  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => $kelompoksasaran_per,  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),
+						);
+		}
+		if ($detiluraian=='1') {
+			$no++;
+			$rows2[] = array (
+						array('data' => $no . '.',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Ralat/kesalahan penulisan uraian dalam rincian objek belanja',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => 'Terlampir di RKA',  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => 'Terlampir di RKA',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:left;'),
+						);
+		}
+		if ($triwulan=='1')  {
+			$no++;
+			$rows2[] = array (
+						array('data' => $no . '.',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Ralat/kesalahan pagu anggaran triwulan',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => '',  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => '',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:right;'),
+						);
+			$rows2[] = array (
+						array('data' => '',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Triwulan #1',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => apbd_fn($tw1_pen),  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => apbd_fn($tw1_per),  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:right;'),
+						);
+			$rows2[] = array (
+						array('data' => '',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Triwulan #2',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => apbd_fn($tw2_pen),  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => apbd_fn($tw2_per),  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:right;'),
+						);
+			$rows2[] = array (
+						array('data' => '',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Triwulan #3',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => apbd_fn($tw3_pen),  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => apbd_fn($tw3_per),  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:right;'), 
+						);
+			$rows2[] = array (
+						array('data' => '',  'width'=> '40px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => 'Triwulan #4',  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+						array('data' => apbd_fn($tw4_pen),  'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => apbd_fn($tw4_per),  'width'=> '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+						array('data' => '', 'width' => '160px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;vertical-align:top; text-align:right;'),
+						);
+						
+		}
+		
+		//CLOSING LINE
+		$rows2[] = array (
+					array('data' => '',  'width'=> '615px', 'colspan'=>'5','style' => 'border-top: 1px solid black;'),
+					);		
+					
+	//
+	} 
+
+		
+	
+	if (($geserjenis + $geserrincian + $geserobyek + $geserplafon + $geserbaru)>0) {
+
+		$rows3[] = array (
+				array('data' => '- MATRIK PERUBAHAN REKENING', 'colspan'=>'5', 'width' => '615px', 'style' => 'text-align:left;'),
+				);
+					
+		$total_pen=0;
+		$total_per=0;
+		$total_rea=0;
+		$rows3[] = array (
+					array('data' => 'Kode',  'width'=> '50px', 'style' => 'border-top: 1px solid black;border-bottom: 1px solid black;border-left: 1px solid black;text-align:center;'),
+					array('data' => 'Uraian',  'width'=> '180px', 'style' => 'border-top: 1px solid black;border-bottom: 1px solid black;border-left: 1px solid black;text-align:center;'),
+					array('data' => 'Semula',  'width' => '90px', 'style' => 'border-top: 1px solid black;border-bottom: 1px solid black;border-left: 1px solid black;text-align:center;'),
+					array('data' => 'Menjadi',  'width'=> '90px', 'style' => 'border-top: 1px solid black;border-bottom: 1px solid black;border-left: 1px solid black;text-align:center;'),
+					array('data' => 'Bertambah/ Berkurang',  'width'=> '90px', 'style' => 'border-top: 1px solid black;border-bottom: 1px solid black;border-left: 1px solid black;text-align:center;'),
+					array('data' => 'Realisasi',  'width'=> '90px', 'style' => 'border-top: 1px solid black;border-bottom: 1px solid black;border-left: 1px solid black;text-align:center;'),
+					array('data' => 'Ket.', 'width' => '90px', 'style' => 'border-top: 1px solid black;border-bottom: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;text-align:center;'),
+					);		
+
+		//$sql = 'select kodero,uraian,jumlah from {anggperkegrevisi}  where kodekeg=\'%s\' order by kodero';
+
+		//$sql = 'select r.kodero,r.uraian,r.jumlah from {anggperkegrevisi}  r left join {anggperkeg} p on r.kodekeg=p.kodekeg and r.kodero=p.kodero where r.kodekeg=\'%s\' and r.jumlah<>p.jumlah order by r.kodero';
+		//$fsql = sprintf($sql, db_escape_string($kodekeg));
+
+		$sql = 'select kodero,uraian,jumlah from {anggperkegrevisi}  where kodekeg=\'%s\' order by kodero';
+		$fsql = sprintf($sql, db_escape_string($kodekeg));
+
+		$res = db_query($fsql);
+		
+		$kosong = true;
+		if ($res) {
+			while ($data = db_fetch_object($res)) {
+
+				$jumlah_pen = 0;
+				$sqlpen = 'select kodero,uraian,jumlahp from {anggperkegperubahan} where kodekeg=\'%s\' and kodero=\'%s\'';
+				$fsql = sprintf($sqlpen, db_escape_string($kodekeg), db_escape_string($data->kodero));
+				$respen = db_query($fsql);
+				if ($datapen = db_fetch_object($respen)) {
+					$jumlah_pen = $datapen->jumlahp;
+				}
+				
+				if ($jumlah_pen != $data->jumlah) {
+					$total_pen += $jumlah_pen;
+					$total_per += $data->jumlah;
+
+					//REALISASI
+					$realisasi = 0;
+					$str_realisasi = '';
+					$sql_r = sprintf("select realisasi from {lrakegrek} where kodekeg='%s' and kodero='%s'", db_escape_string($kodekeg), db_escape_string($data->kodero));
+					$res_r = db_query($sql_r);
+					if ($res_r) {
+
+						if ($data_r = db_fetch_object($res_r)) {
+							$realisasi = $data_r->realisasi;
+						}
+					} 					
+					
+					if (($realisasi>0) and ($realisasi>$data->jumlah)) {
+						
+						$str_realisasi = '<font color="red">Melebihi realisasi</font>';
+					}
+					$total_rea += $realisasi;
+						
+					$rows3[] = array (
+								array('data' => $data->kodero,  'width'=> '50px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;vertical-align:top; text-align:left;'),
+								array('data' => $data->uraian,  'width'=> '180px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black; vertical-align:top; text-align:left;'),
+								array('data' => apbd_fn($jumlah_pen),  'width' => '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+								array('data' => apbd_fn($data->jumlah),  'width'=> '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+								array('data' => apbd_fn($data->jumlah - $jumlah_pen),  'width'=> '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+								array('data' => apbd_fn($realisasi),  'width'=> '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;vertical-align:top; text-align:right;'),
+								array('data' => $str_realisasi, 'width' => '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;vertical-align:top; border-right: 1px solid black;text-align:left;'),
+								);
+				}			
+			}
+			
+			//JIKA KOSONG
+			if ($total_per == 0) {
+				$rows3[] = array (
+							array('data' => '',  'width'=> '50px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;text-align:left;'),
+							array('data' => 'Tidak ada perubahan rekening belanja',  'width'=> '180px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;text-align:left;'),
+							array('data' => '0',  'width' => '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;text-align:right;'),
+							array('data' => '0',  'width'=> '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;text-align:right;'),
+							array('data' => '0',  'width'=> '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;text-align:right;'),
+							array('data' => '0',  'width'=> '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;text-align:right;'),
+							array('data' => '', 'width' => '90px', 'style' => 'border-top: 1px solid darkgray;border-left: 1px solid black;border-right: 1px solid black;text-align:left;'),
+							);					
+			}
+			
+			$rows3[] = array (
+						array('data' => '',  'width'=> '50px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;text-align:left;'),
+						array('data' => 'Total',  'width'=> '180px', 'style' => 'border-top: 1px solid black;text-align:left;'),
+						array('data' => apbd_fn($total_pen),  'width' => '90px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;text-align:right;'),
+						array('data' => apbd_fn($total_per),  'width'=> '90px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;text-align:right;'),
+						array('data' => apbd_fn($total_per - $total_pen),  'width'=> '90px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;text-align:right;'),
+						array('data' => apbd_fn($total_rea),  'width'=> '90px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;text-align:right;'),
+						array('data' => '', 'width' => '90px', 'style' => 'border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;text-align:left;'),
+						);		
+			
+			
+		}							
+		$rows3[] = array (
+					array('data' => '', 'colspan'=>'7', 'width' => '615px', 'style' => 'border-top: 1px solid black;text-align:left;'),
+					);
+	}	
+	
+					
+	
+
+	$opttb0 = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0`');
+	$headerkosong = array();
+	
+	$output = theme_box('', apbd_theme_table($headerkosong, $rows1, $opttb0));
+	$output .= theme_box('', apbd_theme_table($headerkosong, $rows2, $opttb0));
+	$output .= theme_box('', apbd_theme_table($headerkosong, $rows3, $opttb0));
+	
+	if ($limit >0)
+		$output .= theme ('pager', NULL, $limit, 0);
+	
+	return $output;
+	
+	
+}
+
+
+function GenReportFormHeaderX($kodekeg, $tipedok) {
+	
+
+	$where = ' where k.kodekeg=\'%s\'';
+	$pquery = sprintf('select k.kodekeg, k.lokasi, k.programsasaran, k.programtarget, k.masukansasaran, k.masukantarget, k.keluaransasaran, k.keluarantarget, 
+				k.hasilsasaran,  k.hasiltarget, k.total, k.plafon, k.totalsebelum, k.totalsesudah, k.waktupelaksanaan, 
+				k.sumberdana1, k.sumberdana2, k.sumberdana1rp, k.sumberdana2rp, k.latarbelakang, k.kelompoksasaran
+				from {kegiatanskpd} k ' . $where, db_escape_string($kodekeg));
+	$pres = db_query($pquery);
+	if ($data = db_fetch_object($pres)) {
+		$lokasi_pen = str_replace('||',', ', $data->lokasi);
+		$programsasaran_pen = $data->programsasaran;
+		$programtarget_pen = $data->programtarget;
+		$masukansasaran_pen = $data->masukansasaran;
+		//$masukantarget_pen = $data->masukantarget;
+		$masukantarget_pen = 'Rp ' . apbd_fn($data->total);
+		$keluaransasaran_pen = $data->keluaransasaran;
+		$keluarantarget_pen = $data->keluarantarget;
+		$hasilsasaran_pen = $data->hasilsasaran;
+		$hasiltarget_pen = $data->hasiltarget;
+		$total_pen = $data->total;
+		$plafon_pen = $data->plafon;
+		$waktupelaksanaan_pen = $data->waktupelaksanaan;
+		$sumberdana1_pen = $data->sumberdana1;
+		$sumberdana2_pen = $data->sumberdana2;
+		$sumberdana1rp_pen = $data->sumberdana1rp;
+		$sumberdana2rp_pen = $data->sumberdana2rp;
+		$latarbelakang_pen = $data->latarbelakang;
+		$kelompoksasaran_pen = $data->kelompoksasaran;		
+	}
+	
+	/*
+	$pquery = sprintf('select k.kodekeg, k.nomorkeg, k.tahun, k.kodepro, k.kodeuk, k.kodesuk, 
+				k.kegiatan, k.jenis, k.lokasi, k.programsasaran, k.programtarget, k.masukansasaran, k.masukantarget,
+				k.keluaransasaran, k.keluarantarget, k.hasilsasaran,  k.hasiltarget, k.total, k.plafon, 
+				k.totalsebelum, k.totalsesudah, k.waktupelaksanaan, k.sumberdana1, k.sumberdana2, 
+				k.sumberdana1rp, k.sumberdana2rp, k.latarbelakang, k.kelompoksasaran, p.program,
+				p.kodepro, p.kodeu, u.urusan, u.kodef, u.fungsi, k.tw1, k.tw2, k.tw3, k.tw4 from {kegiatanperubahan} k left join {program} p 
+				on (k.kodepro = p.kodepro) left join {urusan} u on p.kodeu=u.kodeu' . $where, db_escape_string($kodekeg));
+	////drupal_set_message($pquery);
+	$pres = db_query($pquery);
+	if ($data = db_fetch_object($pres)) {
+		$kegiatan = $kodedinas . '.' . $data->kodeu . '.' . $data->kodepro . '.' . $data->nomorkeg . ' - ' .  $data->kegiatan;		
+	}
+	*/
+	
+	$where = ' where k.kodekeg=\'%s\'';
+	$pquery = sprintf('select k.kodekeg, k.nomorkeg, k.tahun, k.kodepro, k.kodeuk, k.kodesuk, k.kegiatan, k.lokasi, k.jenis, 
+				k.programsasaran, k.programtarget, k.masukansasaran, k.masukantarget, k.keluaransasaran, k.keluarantarget, 
+				k.hasilsasaran,  k.hasiltarget, k.total, k.plafon, k.totalsebelum, k.totalsesudah, k.waktupelaksanaan, 
+				k.sumberdana1, k.sumberdana2, k.sumberdana1rp, k.sumberdana2rp, k.latarbelakang, k.kelompoksasaran, p.program,
+				p.kodepro, p.kodeu, u.urusan, u.fungsi, u.kodef, uk.kodedinas, uk.namauk from {kegiatanrevisi} k left join {program} p on (k.kodepro = p.kodepro) 
+				left join {urusan} u on p.kodeu=u.kodeu left join {unitkerja} uk on k.kodeuk=uk.kodeuk ' . $where, db_escape_string($kodekeg));
+	////drupal_set_message($pquery);
+	$pres = db_query($pquery);
+	if ($data = db_fetch_object($pres)) {
+
+		$nomorkeg = $data->kodedinas . '.' . $data->kodepro . '.' . $data->nomorkeg;
+	
+		$fungsi = $data->kodef . ' - ' . $data->fungsi;
+		$urusan = $data->kodeu . ' - ' . $data->urusan;
+		$program = $data->kodepro . ' - ' . $data->program;
+		$skpd = $data->kodedinas . ' - ' . $data->namauk;
+		$kegiatan = $data->kodedinas . '.' . $data->kodepro . '.' . $data->nomorkeg . ' - ' .  $data->kegiatan;
+
+		$tahun = $data->tahun;
+		$jenis = $data->jenis;
+		
+		$tahunsebelum = $tahun-1;
+		$tahunsesudah = $tahun+1;
+		 
+		$lokasi = str_replace('||',', ', $data->lokasi);
+		$programsasaran = $data->programsasaran;
+		$programtarget = $data->programtarget;
+		$masukansasaran = $data->masukansasaran;
+		//$masukantarget = $data->masukantarget;
+		$masukantarget = 'Rp ' . apbd_fn($data->total);
+		$keluaransasaran = $data->keluaransasaran;
+		$keluarantarget = $data->keluarantarget;
+		$hasilsasaran = $data->hasilsasaran;
+		$hasiltarget = $data->hasiltarget;
+		$total = $data->total;
+		$plafon = $data->plafon;
+		$waktupelaksanaan = $data->waktupelaksanaan;
+		$sumberdana1 = $data->sumberdana1;
+		$sumberdana2 = $data->sumberdana2;
+		$sumberdana1rp = $data->sumberdana1rp;
+		$sumberdana2rp = $data->sumberdana2rp;
+		$latarbelakang = $data->latarbelakang;
+		$kelompoksasaran = $data->kelompoksasaran;
+		
+	}	
+ 
+	$kabupaten = variable_get('apbdwilayah', '');//'KABUPATEN JEPARA'; //setup
+	$rows= array();
+	//$rowsjudul[] = array (array ('data'=>'RENCANA KERJA DAN ANGGARAN SATUAN KERJA PERANGKAT DAERAH', 'width'=>'875px', 'colspan'=>'7', 'style' =>'border: 0px solid white;font-weight:900;font-size:1.3em;text-align:center;'));
+  
+	/*
+	$rowskegiatan[]= array ( 
+						 array('data' => 'PEMERINTAH KABUPATEN JEPARA',  'width'=> '250px', 'colspan'=>'3', 'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+						 array('data' => 'RENCANA KERJA DAN ANGGARAN SATUAN KERJA PERANGKAT DAERAH', 'width' => '500px', 'colspan'=>'3', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+						 array('data' => $tahun, 'width' => '125',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+						 );
+	*/  
+	if ($jenis==2)  
+		$strjenis = 'B E L A N J A  -  L A N G S U N G';
+	else  
+		$strjenis = 'BELANJA TIDAK LANGSUNG';
+	
+	if ($tipedok=='dpa') {
+		$rowskegiatan[]= array ( 
+							 array('data' => '',  'width'=> '90px', 'style' => 'border-left: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => 'DOKUMEN PELAKSANAAN PERUBAHAN ANGGARAN', 'width' => '360px', 'colspan'=>'9', 'style' => 'border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => '', 'width' => '250px', 'colspan'=>'2', 'style' => 'border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => 'FORMULIR', 'width' => '175',  'style' => 'border-right: 1px solid black; border-top: 2px solid black; font-size:1em; text-align:center;'),
+							 );
+		if ($jenis==2)
+			$rowskegiatan[]= array ( 
+								 array('data' => '',  'width'=> '90px', 'style' => 'border-left: 1px solid black; border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => 'SATUAN KERJA PERANGKAT DAERAH', 'width' => '360px', 'colspan'=>'9', 'style' => 'border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => $strjenis, 'width' => '250px', 'colspan'=>'2', 'style' => 'border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => 'DPPA-SKPD 2.2.1', 'width' => '175',  'style' => 'border-right: 1px solid black; font-size:1em; text-align:center;'),
+								 );
+		else
+			$rowskegiatan[]= array ( 
+								 array('data' => '',  'width'=> '90px', 'style' => 'border-left: 1px solid black; border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => 'SATUAN KERJA PERANGKAT DAERAH', 'width' => '360px', 'colspan'=>'9', 'style' => 'border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => $strjenis, 'width' => '250px', 'colspan'=>'2', 'style' => 'border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => 'DPPA-SKPD 2.1', 'width' => '175',  'style' => 'border-right: 1px solid black; font-size:1em; text-align:center;'),
+								 );
+		$rowskegiatan[]= array ( 
+							 array('data' => '',  'width'=> '90px', 'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => 'PEMERINTAH KABUPATEN JEPARA', 'width' => '360px', 'colspan'=>'9', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => '', 'width' => '250px', 'colspan'=>'2', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;'),
+							 array('data' => 'TAHUN ' . $tahun, 'width' => '175',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; font-size:1em; text-align:center;'),
+							 );
+	} else {
+		$rowskegiatan[]= array ( 
+							 array('data' => '',  'width'=> '90px', 'style' => 'border-left: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => 'RENCANA PERUBAHAN KERJA DAN ANGGARAN', 'width' => '310px', 'colspan'=>'9', 'style' => 'border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => '', 'width' => '300px', 'colspan'=>'2', 'style' => 'border-right: 1px solid black; border-top: 2px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => 'FORMULIR', 'width' => '175',  'style' => 'border-right: 1px solid black; border-top: 2px solid black; font-size:1em; text-align:center;'),
+							 );
+		
+		if ($jenis==2)
+			$rowskegiatan[]= array ( 
+								 array('data' => '',  'width'=> '90px', 'style' => 'border-left: 1px solid black; border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => 'SATUAN KERJA PERANGKAT DAERAH', 'width' => '310px', 'colspan'=>'9', 'style' => 'border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => $strjenis, 'width' => '300px', 'colspan'=>'2', 'style' => 'border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => 'RPKA-SKPD 2.2.1', 'width' => '175',  'style' => 'border-right: 1px solid black; font-size:1em; text-align:center;'),
+								 );
+		else
+			$rowskegiatan[]= array ( 
+								 array('data' => '',  'width'=> '90px', 'style' => 'border-left: 1px solid black; border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => 'SATUAN KERJA PERANGKAT DAERAH', 'width' => '310px', 'colspan'=>'9', 'style' => 'border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => $strjenis, 'width' => '300px', 'colspan'=>'2', 'style' => 'border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+								 array('data' => 'RPKA-SKPD 2.1', 'width' => '175',  'style' => 'border-right: 1px solid black; font-size:1em; text-align:center;'),
+								);
+		$rowskegiatan[]= array ( 
+							 array('data' => '',  'width'=> '90px', 'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => 'PEMERINTAH KABUPATEN JEPARA', 'width' => '310px', 'colspan'=>'9', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => '', 'width' => '300px', 'colspan'=>'2', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; font-size:1.3em; text-align:center;'),
+							 array('data' => 'TAHUN ' . $tahun, 'width' => '175',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; font-size:1em; text-align:center;'),
+							 );		
+	} 
+	$rowskegiatan[]= array (
+						 //array('data' => 'Fungsi',  'width'=> '150px', 'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+						 //array('data' => ':', 'width' => '25px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+						 //array('data' => 'Fungsinnya', 'width' => '700', 'colspan'=>'5',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+
+						 array('data' => 'Fungsi',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => $fungsi, 'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+
+						 );
+	$rowskegiatan[]= array (
+						 array('data' => 'Urusan Pemerintahan',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => $urusan, 'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );
+	$rowskegiatan[]= array (
+						 array('data' => 'Organisasi',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':',  'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => $skpd,  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );
+	if ($jenis==2)					 
+		$rowskegiatan[]= array (
+							 array('data' => 'Program',   'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+							 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+							 array('data' => $program,   'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+	$rowskegiatan[]= array (
+						 array('data' => 'Kegiatan',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => $kegiatan,  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+	if ($jenis==2)
+		$rowskegiatan[]= array (
+							 array('data' => 'Lokasi',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+							 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+							 array('data' => $lokasi,  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+	$rowskegiatan[]= array (
+						 array('data' => 'Anggaran Penetapan',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => 'Rp ' . apbd_fn($total_pen) . ',00',  'width' => '160', 'colspan'=>'2',  'style' => 'border-bottom: 1px solid black;text-align:right;'),
+						 array('data' => '',  'width' => '550', 'colspan'=>'9',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+	$rowskegiatan[]= array (
+						 array('data' => '',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => '', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => apbd_terbilang($total_pen),  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+	$rowskegiatan[]= array (
+						 array('data' => 'Anggaran Perubahan',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => 'Rp ' . apbd_fn($total) . ',00',  'width' => '160', 'colspan'=>'2',  'style' => 'border-bottom: 1px solid black;text-align:right;'),
+						 array('data' => '',  'width' => '550', 'colspan'=>'9',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+	$rowskegiatan[]= array (
+						 array('data' => '',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => '', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => apbd_terbilang($total),  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+
+	$rowskegiatan[]= array (
+						 array('data' => 'Sumber Dana',  'width'=> '150px', 'style' => 'border-left: 1px solid black; text-align:left;'),
+						 array('data' => ':', 'width' => '15px', 'style' => 'text-align:right;'),
+						 array('data' => $sumberdana1,  'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black; text-align:left;'),
+						 );	
+
+
+	//TUK
+	if ($jenis==2) {
+		$rowskegiatan[]= array (
+							 array('data' => 'Indikator',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:left;'),
+							 array('data' => 'Tolok Ukur Kinerja', 'width' => '350px', 'colspan'=>'9',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:center;'),
+							 array('data' => 'Target Kinerja', 'width' => '350', 'colspan'=>'2',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:center;'),
+							 );	
+		$rowskegiatan[]= array (
+							 array('data' => '',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => 'Sebelum Perubahan', 'width' => '175px', 'colspan'=>'8',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => 'Setelah Perubahan', 'width' => '175px',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => 'Sebelum Perubahan', 'width' => '175px',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => 'Setelah Perubahan', 'width' => '175px',  'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 );	
+
+		 $rowskegiatan[]= array (
+							 array('data' => 'Capaian Program',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;'),
+							 array('data' => $programsasaran_pen, 'width' => '175px', 'colspan'=>'8',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $programsasaran, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $programtarget_pen, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $programtarget, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+		$rowskegiatan[]= array (
+							 array('data' => 'Masukan',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => $masukansasaran_pen, 'width' => '175px', 'colspan'=>'8',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $masukansasaran, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $masukantarget_pen, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $masukantarget, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+		$rowskegiatan[]= array (
+							 array('data' => 'Keluaran',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;'),
+							 array('data' => $keluaransasaran_pen, 'width' => '175px', 'colspan'=>'8',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $keluaransasaran, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $keluarantarget_pen, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $keluarantarget, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+		$rowskegiatan[]= array (
+							 array('data' => 'Hasil',  'width'=> '175px', 'colspan'=>'2',  'style' => 'border-left: 1px solid black; border-right: 1px solid black; text-align:left;'),
+							 array('data' => $hasilsasaran_pen, 'width' => '175px', 'colspan'=>'8',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $hasilsasaran, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $hasiltarget_pen, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 array('data' => $hasiltarget, 'width' => '175px',  'style' => 'border-right: 1px solid black; text-align:left;'),
+							 );	
+
+		//Kelompok Sasaran Kegiatan
+		$rowskegiatan[]= array (
+							 array('data' => 'Kelompok Sasaran',   'width'=> '150px', 'style' => 'border-left: 1px solid black;  border-top: 1px solid black; text-align:left;'),
+							 array('data' => ':',  'width' => '15px', 'style' => ' border-top: 1px solid black; text-align:right;'),
+							 array('data' => $kelompoksasaran,   'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black;  border-top: 1px solid black; text-align:left;'),
+							 );							 
+		//latar BELAKANG
+		$rowskegiatan[]= array (
+							 array('data' => 'Latar Belakang Perubahan',   'width'=> '150px', 'style' => 'border-left: 1px solid black;  border-top: 1px solid black; text-align:left;'),
+							 array('data' => ':',  'width' => '15px', 'style' => ' border-top: 1px solid black; text-align:right;'),
+							 array('data' => $latarbelakang,   'width' => '710', 'colspan'=>'11',  'style' => 'border-right: 1px solid black;  border-top: 1px solid black; text-align:left;'),
+							 );							 
+		 
+	}
+	if ($jenis==2)
+		$rowskegiatan[]= array (
+							 array('data' => 'Rincian Perubahan Rencana Kerja dan Anggaran Belanja Langsung per Program dan Kegiatan Satuan Kerja Perangkat Daerah',   'width' => '875', 'colspan'=>'13',  'style' => 'border-left: 1px solid black;  border-right: 1px solid black;  border-top: 1px solid black; text-align:center;'),
+							 );							 
+	else
+		$rowskegiatan[]= array (
+							 array('data' => 'Rincian Perubahan Rencana Kerja dan Anggaran Belanja Tidak Langsung Satuan Kerja Perangkat Daerah',   'width' => '875', 'colspan'=>'13',  'style' => 'border-left: 1px solid black;  border-right: 1px solid black;  border-top: 1px solid black; text-align:center;'),
+							 );							 
+	
+	$opttbl = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0');
+	$headerkosong = array();
+
+	//$output = theme_box('', apbd_theme_table($headerkosong, $rowsjudul, $opttbl));
+	$output = theme_box('', apbd_theme_table($headerkosong, $rowskegiatan, $opttbl));
+	
+	$output .= $toutput;
+	
+	return $output;
+	
+}
+
+function GenReportFormContentX($kodekeg) {
+
+
+	$jumrincian = 0;
+	$sql = 'select count(iddetil) jumrincian from {anggperkegdetilrevisi} where kodekeg=\'%s\'';
+	$fsql = sprintf($sql, db_escape_string($kodekeg));
+	$res = db_query($fsql);
+	if ($res) {
+		if ($data = db_fetch_object($res)) {
+			$jumrincian = $data->jumrincian;
+		}
+	}
+	
+	$sql = 'select count(idsub) jumrincian from {anggperkegdetilsub} s inner join {anggperkegdetilrevisi} d
+			on s.iddetil=d.iddetil where d.kodekeg=\'%s\'';
+	$fsql = sprintf($sql, db_escape_string($kodekeg));
+	$res = db_query($fsql);
+	if ($res) {
+		if ($data = db_fetch_object($res)) {
+			$jumrincian += $data->jumrincian;
+		}
+	}
+	
+	//if ($jumrincian > 350) {
+		set_time_limit(0);
+		ini_set('memory_limit', '640M');
+	//}
+	
+	$total = 0;
+	$totalpen = 0;
+
+
+	$headersrek[] = array (
+						 array('data' => 'KODE',  'width'=> '60px', 'rowspan'=>'2','style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 
+						 array('data' => 'URAIAN',  'width' => '230x','rowspan'=>'2','colspan'=>'2', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'SEBELUM PERUBAHAN', 'width' => '240px','colspan'=>'4','style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'SETELAH PERUBAHAN', 'width' => '240px','colspan'=>'4','style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'BERTAMBAH /BERKURANG',  'width' => '105px','colspan'=>'2', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 2px solid black; text-align:center;font-size:small;'),
+						 );
+	$headersrek[] = array (
+
+						 array('data' => 'Satuan', 'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'Volume', 'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => '@Harga',  'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'Jumlah',  'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+
+						 array('data' => 'Satuan', 'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'Volume', 'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => '@Harga',  'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => 'Jumlah',  'width' => '60px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+
+						 array('data' => 'Rupiah', 'width' => '70px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 array('data' => '%', 'width' => '35px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;font-size:small;'),
+						 );
+						 
+	 //JENIS
+	$where = ' where k.kodekeg=\'%s\'';
+	$sql = 'select mid(k.kodero,1,3) kodej,j.uraian,sum(jumlah) jumlahx from {anggperkegrevisi} k  left join {jenis} j on mid(k.kodero,1,3)=j.kodej ' . $where;
+	$fsql = sprintf($sql, db_escape_string($kodekeg));
+	$fsql .= ' group by mid(k.kodero,1,3),j.uraian order by mid(k.kodero,1,3)';
+	
+	////drupal_set_message( $fsql);
+	$resultjenis = db_query($fsql);
+	if ($resultjenis) {
+		while ($datajenis = db_fetch_object($resultjenis)) {
+		
+			$sql = 'select sum(jumlah) jumlahx from {anggperkeg} where kodekeg=\'%s\' and mid(kodero,1,3)=\'%s\'';
+			$fsqlpen = sprintf($sql, db_escape_string($kodekeg), db_escape_string($datajenis->kodej));
+			$resultjenispen = db_query($fsqlpen);
+			
+			//drupal_set_message($fsqlpen);
+			
+			$penjenis = 0;
+			if ($resultjenispen) {
+				if ($datajenispen = db_fetch_object($resultjenispen)) {
+					$penjenis = $datajenispen->jumlahx;
+				}
+			}
+			
+			
+			$persen = apbd_hitungpersen($penjenis, $datajenis->jumlahx);
+			$rowsrek[] = array (
+								 array('data' => $datajenis->kodej,  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+								 array('data' => $datajenis->uraian,  'width' => '230x','colspan'=>'2',  'style' => ' border-right: 1px solid black; text-align:left;font-size:small;'),
+								 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => apbd_fn($penjenis),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+								 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+								 array('data' => apbd_fn($datajenis->jumlahx),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+								 array('data' => apbd_fn($datajenis->jumlahx - $penjenis),  'width' => '70px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+								 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+								 );
+			$total += $datajenis->jumlahx;
+			$totalpen += $penjenis;
+
+			//OBYEK
+			$sql = 'select mid(k.kodero,1,5) kodeo,o.uraian,sum(jumlah) jumlahx from {anggperkegrevisi} k  left join {obyek} o on mid(k.kodero,1,5)=o.kodeo 
+				   where kodekeg=\'%s\' and mid(k.kodero,1,3)=\'%s\'';
+			$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($datajenis->kodej));
+			$fsql .= ' group by mid(k.kodero,1,5),o.uraian order by mid(k.kodero,1,5)';
+			
+			////drupal_set_message( $fsql);
+			$resultobyek = db_query($fsql);
+			if ($resultobyek) {
+				while ($dataobyek = db_fetch_object($resultobyek)) {
+
+					//OBYEK
+					$sql = 'select sum(jumlah) jumlahx from {anggperkeg} where kodekeg=\'%s\' and mid(kodero,1,5)=\'%s\'';
+					$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($dataobyek->kodeo));
+					$resultobyekpen = db_query($fsql);
+					
+					$penobyek = 0;
+					if ($resultobyekpen) {
+						if ($dataobyekpen = db_fetch_object($resultobyekpen)) {
+							$penobyek = $dataobyekpen->jumlahx;
+						}
+					}
+				
+					$persen = apbd_hitungpersen($penobyek, $dataobyek->jumlahx);
+					$rowsrek[] = array (
+										 array('data' => apbd_format_rek_obyek($dataobyek->kodeo),  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+										 array('data' => strtoupper($dataobyek->uraian),  'width' => '230x', 'colspan'=>'2', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;'),
+										 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => apbd_fn($penobyek),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1px solid black;text-align:right;font-size:small;font-weight:bold;'),
+
+										 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+										 array('data' => apbd_fn($dataobyek->jumlahx),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+										 array('data' => apbd_fn($dataobyek->jumlahx-$penobyek),  'width' => '70px', 'style' => 'border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+										 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+								 );		
+								 
+					//REKENING
+					$sql = 'select kodero,uraian,jumlah from {anggperkegrevisi} k where kodekeg=\'%s\' and mid(k.kodero,1,5)=\'%s\'';
+					$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($dataobyek->kodeo));
+					
+					////drupal_set_message( $fsql);
+					$fsql .= ' order by k.kodero';
+					$result = db_query($fsql);
+					if ($result) {
+						while ($data = db_fetch_object($result)) {
+						
+						
+						$sql = 'select kodero,uraian,jumlah from {anggperkeg} where kodekeg=\'%s\' and kodero=\'%s\'';
+						$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($data->kodero));
+						$resultpen = db_query($fsql);
+						
+						$penrekening = 0;
+						if ($resultpen) {
+							if ($datapen = db_fetch_object($resultpen)) {
+								$penrekening = $datapen->jumlah;
+							}
+						}
+						
+						$persen = apbd_hitungpersen($penrekening, $data->jumlah);
+						$rowsrek[] = array (
+											 array('data' => apbd_format_rek_rincianobyek($data->kodero),  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+											 array('data' => $data->uraian,  'width' => '230x', 'colspan'=>'2', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;'),
+											 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => apbd_fn($datapen->jumlah),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+											 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => '', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => '',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;'),
+											 array('data' => apbd_fn($data->jumlah),  'width' => '60px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+
+											 array('data' => apbd_fn($data->jumlah - $penrekening),  'width' => '70px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+											 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; border-bottom: 1.5px solid black; text-align:right;font-size:small;font-weight:bold;'),
+											 
+										);
+										
+							//DETIL
+							$sql = 'select iddetil,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan,harga,total, pengelompokan from {anggperkegdetilrevisi} where kodekeg=\'%s\' and kodero=\'%s\' order by nourut asc,iddetil';
+							$fsql = sprintf($sql, db_escape_string($kodekeg), db_escape_string($data->kodero));
+							////drupal_set_message($fsql);
+
+							$resultdetil = db_query($fsql);
+							
+							if ($resultdetil) {
+								while ($datadetil = db_fetch_object($resultdetil)) {
+									
+									if ($penrekening > 0) {
+									$sql = 'select iddetil,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan,harga,total, pengelompokan from {anggperkegdetil} where kodekeg=\'%s\' and kodero=\'%s\' and iddetil=\'%s\'';
+									$fsql = sprintf($sql, $kodekeg, $data->kodero, db_escape_string($datadetil->iddetil));
+									
+									//drupal_set_message($fsql);
+									$datadetilpenuraian = '';
+									$datadetilpentotal = 0;
+									$resultdetilpen = db_query($fsql);
+									if ($datadetilpen = db_fetch_object($resultdetilpen)) {
+										$datadetilpenuraian = $datadetilpen->uraian;
+										$datadetilpentotal = $datadetilpen->total;
+									}
+									} else {
+										$unitjumlahpen = '';
+										$volumjumlahpen = '';
+										$hargasatuanpen = '';
+
+										$datadetilpenuraian = '';
+										$datadetilpentotal = 0;
+										
+									}	
+									
+									if ($datadetil->pengelompokan) {
+										$unitjumlah = '';
+										$volumjumlah = '';
+										$hargasatuan = '';
+										$bullet = '#';
+
+										$unitjumlahpen = '';
+										$volumjumlahpen = '';
+										$hargasatuanpen = '';
+										
+									} else {
+										$unitjumlah = $datadetil->unitjumlah . ' ' . $datadetil->unitsatuan;
+										$volumjumlah = $datadetil->volumjumlah . ' ' . $datadetil->volumsatuan;
+										$hargasatuan = apbd_fn($datadetil->harga);
+										$bullet = '-';
+										
+										if ($penrekening > 0) {
+										$unitjumlahpen = $datadetilpen->unitjumlah . ' ' . $datadetilpen->unitsatuan;
+										$volumjumlahpen = $datadetilpen->volumjumlah . ' ' . $datadetilpen->volumsatuan;
+										$hargasatuanpen = apbd_fn($datadetilpen->harga);
+										//$bullet = '•';
+										}
+										
+									}
+									
+									
+									$persen = apbd_hitungpersen($datadetilpentotal, $datadetil->total);
+									if ($datadetil->uraian == $datadetilpenuraian) {
+										$rowsrek[] = array (
+															 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+			 												 array('data' => $bullet,  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+															 array('data' => $datadetil->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;'),
+															 array('data' => $unitjumlahpen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $volumjumlahpen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $hargasatuanpen,  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn($datadetilpentotal),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+
+															 array('data' => $unitjumlah, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $volumjumlah, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $hargasatuan,  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn($datadetil->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 
+															 array('data' => apbd_fn($datadetil->total - $datadetilpentotal),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 );
+									} else {
+										
+										//***
+										if (($datadetilpenuraian) !='' and ($datadetilpentotal>0)) {
+											$rowsrek[] = array (
+																 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+																 array('data' => $bullet,  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+																 array('data' => $datadetilpenuraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;'),
+																 array('data' => $unitjumlahpen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+																 array('data' => $volumjumlahpen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+																 array('data' => $hargasatuanpen,  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 array('data' => apbd_fn($datadetilpentotal),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 array('data' => apbd_fn1(0),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 
+																 array('data' => apbd_fn(-$datadetilpentotal),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 array('data' => apbd_fn1(-100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+																 );
+											//####
+											if ($datadetil->pengelompokan) {
+												//SUB DETIL
+												$sql = 'select idsub,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan, harga,total from {anggperkegdetilsub} where iddetil=\'%s\' order by nourut asc,idsub';
+												$fsql = sprintf($sql, db_escape_string($datadetil->iddetil));
+												////drupal_set_message($fsql);
+												
+												//$no = 0;
+												$resultsub = db_query($fsql);
+												if ($resultsub) {
+													while ($datasub = db_fetch_object($resultsub)) {
+														//$no += 1;
+														$rowsrek[] = array (
+																 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+																 array('data' => '',  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+																 array('data' => '- ' . $datasub->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => $datasub->unitjumlah . ' ' . $datasub->unitsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => $datasub->volumjumlah . ' ' . $datasub->volumsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn($datasub->harga),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn($datasub->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+																 array('data' => apbd_fn(-$datasub->total),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn1(-100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																);	
+													}
+												}
+											}
+											//###
+											
+										}
+										
+										if (($datadetil->uraian) !='' and ($datadetil->total>0)) {
+										$rowsrek[] = array (
+															 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+															 array('data' => $bullet,  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+															 array('data' => $datadetil->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;'),
+															 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn1(0),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+
+															 array('data' => $unitjumlah, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $volumjumlah, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;'),
+															 array('data' => $hargasatuan,  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn($datadetil->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 
+															 array('data' => apbd_fn($datadetil->total),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 array('data' => apbd_fn1(100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;'),
+															 );
+										}
+															 
+									}
+									if ($datadetil->pengelompokan) {
+										//SUB DETIL
+										$sql = 'select idsub,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan, harga,total from {anggperkegdetilsubrevisi} where iddetil=\'%s\' order by nourut asc,idsub';
+										$fsql = sprintf($sql, db_escape_string($datadetil->iddetil));
+										////drupal_set_message($fsql);
+										
+										//$no = 0;
+										$resultsub = db_query($fsql);
+										if ($resultsub) {
+											while ($datasub = db_fetch_object($resultsub)) {
+												//$no += 1;
+
+												$datasuburaian_pen = '';
+												$datasubunitjumlah_pen = '';
+												$datasubvolumjumlah_pen = '';
+												$datasubharga_pen = '';
+												$datasubtotal_pen = 0;
+
+												if ($penrekening > 0) {
+												$sql = 'select idsub,uraian,unitjumlah,unitsatuan,volumjumlah,volumsatuan, harga,total from {anggperkegdetilsub} where iddetil=\'%s\' and idsub=\'%s\'';
+												$fsql = sprintf($sql, db_escape_string($datadetil->iddetil), db_escape_string($datasub->idsub));
+												$resultsubpen = db_query($fsql);
+												if ($resultsubpen) {
+													if ($datasubpen = db_fetch_object($resultsubpen)) {
+														$datasuburaian_pen = $datasubpen->uraian;
+														$datasubunitjumlah_pen = $datasubpen->unitjumlah . ' ' . $datasubpen->unitsatuan;
+														$datasubvolumjumlah_pen = $datasubpen->volumjumlah . ' ' . $datasubpen->volumsatuan;
+														$datasubharga_pen = $datasubpen->harga;
+														$datasubtotal_pen = $datasubpen->total;
+													}
+												}
+												}
+												
+												if ($datasuburaian_pen == $datasub->uraian) {
+													$persen = apbd_hitungpersen($datasubtotal_pen, $datasub->total);
+												
+													$rowsrek[] = array (
+															 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+															 array('data' => '',  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+															 array('data' =>  '- ' . $datasub->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => $datasubunitjumlah_pen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => $datasubvolumjumlah_pen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasubharga_pen),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasubtotal_pen),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+															 array('data' => $datasub->unitjumlah . ' ' . $datasub->unitsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => $datasub->volumjumlah . ' ' . $datasub->volumsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasub->harga),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasub->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+															 array('data' => apbd_fn($datasub->total - $datasubtotal_pen),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 );	
+															 
+												} else {
+													if (($datasuburaian_pen) !='' and ($datasubtotal_pen>0)) {
+
+														$rowsrek[] = array (
+																 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+																 array('data' => '',  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+																 array('data' =>  '- ' . $datasuburaian_pen,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => $datasubunitjumlah_pen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => $datasubvolumjumlah_pen, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn($datasubharga_pen),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn($datasubtotal_pen),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+																 array('data' => apbd_fn(-$datasubtotal_pen),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 array('data' => apbd_fn1(-100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+																 );	
+													}
+
+													$rowsrek[] = array (
+															 array('data' => '',  'width'=> '60px', 'style' => 'border-left: 1px solid black;  border-right: 1px solid black; text-align:left;font-size:small;'),
+															 array('data' => '',  'width' => '15px', 'style' => 'text-align:right;font-size:small;'),
+															 array('data' =>  '- ' . $datasub->uraian,  'width' => '215px', 'style' => ' border-right: 1px solid black; text-align:left;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => '0', 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => '0',  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+															 array('data' => $datasub->unitjumlah . ' ' . $datasub->unitsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => $datasub->volumjumlah . ' ' . $datasub->volumsatuan, 'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:center;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasub->harga),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn($datasub->total),  'width' => '60px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+
+															 array('data' => apbd_fn($datasub->total),  'width' => '70px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															 array('data' => apbd_fn1(100),  'width' => '35px', 'style' => ' border-right: 1px solid black; text-align:right;font-size:small;font-weight:lighter;font-style: italic;'),
+															);	
+															 
+												}
+												//$$$
+											}
+										}
+										
+										//###
+									}
+								}
+							}												
+						///////					 
+						}
+					}								 
+										 
+				////////
+				}
+			}			
+
+		}
+	}
+	
+	$persen = apbd_hitungpersen($totalpen, $total);
+	$rowsrek[] = array (
+						 array('data' => 'JUMLAH BELANJA',  'width'=> '290px',  'colspan'=>'6',  'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+						 array('data' => apbd_fn($totalpen),  'width' => '240px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+
+						 array('data' => apbd_fn($total),  'width'=> '240px',  'colspan'=>'4',  'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+
+						 array('data' => apbd_fn($total-$totalpen),  'width' => '70px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+						 array('data' => apbd_fn1($persen),  'width' => '35px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; border-top: 1px solid black; text-align:right;font-size:small; font-weight:bold;'),
+
+						 );
+						 
+	$opttbl = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0');
+
+	$output .= theme_box('', apbd_theme_table($headersrek, $rowsrek, $opttbl));
+	
+	return $output;
+	
+}
+
+function GenReportFormFooterX($kodekeg, $tipedok) {
+	
+	if ($tipedok=='dpa') {
+		$pquery = sprintf("select tw1, tw2, tw3, tw4 from {kegiatanrevisi} where kodekeg='%s'", db_escape_string($kodekeg)) ;
+		$pres = db_query($pquery);
+		if ($data = db_fetch_object($pres)) {
+			
+			$tw1 = $data->tw1;
+			$tw2 = $data->tw2;
+			$tw3 = $data->tw3;
+			$tw4 = $data->tw4;
+			
+		}
+
+		$pquery = sprintf("select dpatgl1 dpatgl, budnama, budnip, budjabatan from {setupapp} where tahun='%s'", variable_get('apbdtahun', 0)) ;
+		////drupal_set_message($pquery);
+		$pres = db_query($pquery);
+		if ($data = db_fetch_object($pres)) {
+			$budnama = $data->budnama;
+			$budnip = $data->budnip;
+			$budjabatan = $data->budjabatan;
+			$dpatgl = $data->dpatgl;
+		}
+		
+		$rowsfooter[] = array (
+							 array('data' => '',  'width'=> '300px',  'colspan'=>'3',  'style' => 'text-align:center'),
+							 array('data' => '',  'width'=> '275px',  'colspan'=>'7',  'style' => 'text-align:center'),
+							 array('data' => '',  'width' => '300px', 'style' => 'text-align:center;'),
+							 );
+
+		$rowsfooter[] = array (
+							 array('data' => 'RENCANA BELANJA TRI WULAN',  'width'=> '300px',  'colspan'=>'3',  'style' => 'border-left: 1px solid black; border-top: 1px solid black; border-right: 1px solid black; text-align:center'),
+							 array('data' => '',  'width'=> '275px',  'colspan'=>'7',  'style' => 'text-align:center'),
+							 array('data' => 'Jepara, ' . $dpatgl,  'width' => '300px', 'style' => 'text-align:center;'),
+							 );
+		$rowsfooter[] = array (
+							 array('data' => 'Tri Wulan',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; text-align:center'),
+							 array('data' => 'Jumlah (Rp)',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; text-align:center'),
+							 array('data' => 'Keterangan',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black;  border-right: 1px solid black;text-align:center'),
+							 array('data' => '',  'width'=> '275px',  'colspan'=>'7',  'style' => 'text-align:center'),
+							 array('data' => 'Mengesahkan,',  'width' => '300px', 'style' => 'text-align:center;'),
+							 ); 
+		$rowsfooter[] = array (
+							 array('data' => 'I',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; text-align:center'),
+							 array('data' => apbd_fn($tw1),  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; text-align:right'),
+							 array('data' => '',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; border-right: 1px solid black; text-align:right'),
+							 array('data' => '',  'width'=> '275px',  'colspan'=>'7',  'style' => 'text-align:center'),
+							 array('data' => $budjabatan,  'width' => '300px', 'style' => 'text-align:center;'),
+							 );
+		$rowsfooter[] = array (
+							 array('data' => 'II',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; text-align:center'),
+							 array('data' => apbd_fn($tw2),  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; text-align:right'),
+							 array('data' => '',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; border-right: 1px solid black; text-align:right'),
+							 array('data' => '',  'width'=> '275px',  'colspan'=>'7',  'style' => 'text-align:center'),
+							 array('data' => '',  'width' => '300px', 'style' => 'text-align:center;'),
+							 );
+		$rowsfooter[] = array (
+							 array('data' => 'III',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; text-align:center'),
+							 array('data' => apbd_fn($tw3),  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; text-align:right'),
+							 array('data' => '',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; border-right: 1px solid black;text-align:right'),
+							 array('data' => '',  'width'=> '275px',  'colspan'=>'7',  'style' => 'text-align:center'),
+							 array('data' => '',  'width' => '300px', 'style' => 'text-align:center;text-decoration: underline'),
+							 );	
+		$rowsfooter[] = array (
+							 array('data' => 'IV',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; border-bottom: 1px solid black; text-align:center'),
+							 array('data' => apbd_fn($tw4),  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; border-bottom: 1px solid black; text-align:right'),
+							 array('data' => '',  'width'=> '100px', 'style' => 'border-left: 1px solid black; border-top: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black;  text-align:right'),
+							 array('data' => '',  'width'=> '275px',  'colspan'=>'7',  'style' => 'text-align:center'),
+							 array('data' => $budnama,  'width' => '300px', 'style' => 'text-align:center; text-decoration: underline;'),
+							 );
+		$rowsfooter[] = array (
+							 array('data' => '',  'width'=> '100px', 'style' => 'text-align:center'),
+							 array('data' => '',  'width'=> '100px', 'style' => 'text-align:right'),
+							 array('data' => '',  'width'=> '100px', 'style' => 'text-align:right'),
+							 array('data' => '',  'width'=> '275px',  'colspan'=>'7',  'style' => 'text-align:center'),
+							 array('data' => 'NIP. ' . $budnip,  'width' => '300px', 'style' => 'text-align:center;'),
+							 );
+	} else {
+		$namauk = '';
+		$pimpinannama='';
+		$pimpinannip='';
+		$pimpinanjabatan='';
+		$pquery = sprintf("select u.kodedinas, u.namauk, u.pimpinannama, u.pimpinannip, u.pimpinanjabatan, k.plafon, k.total from {unitkerja} u left join {kegiatanrevisi} k 
+				  on u.kodeuk=k.kodeuk where k.kodekeg='%s'", db_escape_string($kodekeg)) ;
+		$pres = db_query($pquery);
+		if ($data = db_fetch_object($pres)) {
+			
+			$namauk = $data->namauk;
+			$pimpinannama=$data->pimpinannama;
+			$pimpinannip=$data->pimpinannip;
+			$pimpinanjabatan=$data->pimpinanjabatan;
+			$plafon = $data->plafon;
+			$total = $data->total;
+			
+		}
+		//$strplafon = apbd_fn($total) . ' - ' . apbd_fn($plafon);
+		if ($total>$plafon) {	
+			//$strplafon .=  ' WARNING!';
+			$strplafon = '!!!USULAN ANGGARAN (' . apbd_fn($total) . ') MELEBIHI PLAFON (' . apbd_fn($plafon) . '), HARAP DIPERBAIKI!!!';
+		}
+		
+
+		$pquery = sprintf("select count(kodero) jmlrek from {anggperkegrevisi} where (jumlah mod 1000)>0 and  kodekeg='%s'", db_escape_string($kodekeg));
+		$pres = db_query($pquery);
+		////drupal_set_message($pquery); 
+		if ($data = db_fetch_object($pres)) {
+			if ($data->jmlrek > 0)	$str1000 = '!!!ADA SEJUMLAH REKENING YANG TIDAK BULAT PER 1000, HARAP DIPERBAIKI!!!';
+		}
+		
+
+		
+		$rowsfooter[] = array (
+							 array('data' => 'CATATAN',  'width'=> '675px',  'colspan'=>'12',  'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; text-align:center'),
+							 array('data' => 'KEPALA SKPD',  'width' => '200px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;'),
+							 );
+		$rowsfooter[] = array (
+							 array('data' => $str1000,  'width'=> '675px',  'colspan'=>'12',  'style' => 'border-left: 1px solid black; border-right: 1px solid black; text-align:center'),
+							 array('data' => '',  'width' => '200px', 'style' => 'border-right: 1px solid black; text-align:right;'),
+							 );
+		$rowsfooter[] = array (
+							 array('data' => $strplafon,  'width'=> '675px',  'colspan'=>'12',  'style' => 'border-left: 1px solid black; border-right: 1px solid black; text-align:center'),
+							 array('data' => '',  'width' => '200px', 'style' => 'border-right: 1px solid black; text-align:right;'),
+							 );
+		$rowsfooter[] = array (
+							 array('data' => '',  'width'=> '675px',  'colspan'=>'12',  'style' => 'border-left: 1px solid black; border-right: 1px solid black; text-align:center'),
+							 array('data' => $pimpinannama,  'width' => '200px', 'style' => 'border-right: 1px solid black; text-align:center; text-decoration: underline;'),
+							 );
+		$rowsfooter[] = array (
+							 array('data' => '',  'width'=> '675px',  'colspan'=>'12',  'style' => 'border-left: 1px solid black; border-bottom: 1px solid black; border-right: 1px solid black; text-align:center'),
+							 array('data' => 'NIP. ' . $pimpinannip,  'width' => '200px', 'style' => 'border-bottom: 1px solid black; border-right: 1px solid black; text-align:center;'),
+							 );		
+	}						
+	$opttbl = array('cellspacing'=>'1', 'cellpadding'=>'1', 'border' => '0');
+	$headerkosong = array();
+
+	//$output = theme_box('', apbd_theme_table($headerkosong, $rowsjudul, $opttbl));
+	$output = theme_box('', apbd_theme_table($headerkosong, $rowsfooter, $opttbl));
+	
+	$output .= $toutput;
+	return $output;
+	
+}
+
+
+
